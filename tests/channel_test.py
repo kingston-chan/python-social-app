@@ -10,7 +10,7 @@ from src.error import InputError
 
 def test_details_invalid_channel_id():
     clear_v1()
-    user_data = auth_register_v1("keefe@gmail.com", "hello", "keefe", "vuong")
+    user_data = auth_register_v1("keefe@gmail.com", "password", "keefe", "vuong")
     channel_id_1 = channels_create_v1(user_data['auth_user_id'], "channel_1", False)
     invalid_channel_id = 99999
     with pytest.raises(InputError):
@@ -18,7 +18,7 @@ def test_details_invalid_channel_id():
 
 def test_details_uninvited_member():
     clear_v1()
-    owner_user_data = auth_register_v1("keefe@gmail.com", "hello", "keefe", "vuong")
+    owner_user_data = auth_register_v1("keefe@gmail.com", "password", "keefe", "vuong")
     uninvited_user_data = auth_register_v1("eagle@gmail.com", "password", "team", "eagle")
     channel_id_1 = channels_create_v1(owner_user_data['auth_user_id'], "channel_1", False)
     with pytest.raises(AccessError):
@@ -26,7 +26,7 @@ def test_details_uninvited_member():
 
 def test_details_valid_channel_id():
     clear_v1()
-    user_data = auth_register_v1("keefe@gmail.com", "hello", "keefe", "vuong")
+    user_data = auth_register_v1("keefe@gmail.com", "password", "keefe", "vuong")
     channel_id_1 = channels_create_v1(user_data['auth_user_id'], "channel_1", False)
     channel_details = {
         "name": "channel_1",
@@ -46,7 +46,7 @@ def test_details_valid_channel_id():
 
 def test_details_invited_member():
     clear_v1()
-    owner_user_data = auth_register_v1("keefe@gmail.com", "hello", "keefe", "vuong")
+    owner_user_data = auth_register_v1("keefe@gmail.com", "password", "keefe", "vuong")
     second_user_data = auth_register_v1("eagle@gmail.com", "password", "team", "eagle")
     channel_id_1 = channels_create_v1(owner_user_data['auth_user_id'], "channel_1", False)
     channel_invite_v1(owner_user_data['auth_user_id'], channel_id_1, second_user_data)
@@ -83,7 +83,7 @@ def test_details_invited_member():
 
 def test_details_unauthorised_user_data():
     clear_v1()
-    user_data = auth_register_v1("keefe@gmail.com", "hello", "keefe", "vuong")
+    user_data = auth_register_v1("keefe@gmail.com", "password", "keefe", "vuong")
     channel_id_1 = channels_create_v1(user_data['auth_user_id'], "channel_1", True)
     fake_user_data = 99999
     with pytest.raises(AccessError):
