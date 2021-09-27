@@ -1,9 +1,6 @@
 from src.data_store import data_store
 from src.error import AccessError
 
-store = data_store.get()
-channels = store['channels']
-users = store['users']
 
 def channels_list_v1(auth_user_id):
     return {
@@ -16,6 +13,10 @@ def channels_list_v1(auth_user_id):
     }
 
 def channels_listall_v1(auth_user_id):
+    store = data_store.get()
+    channels = store['channels']
+    users = store['users']
+    
     user_exists = 0
     for user in users:
         if user['id'] == auth_user_id:
