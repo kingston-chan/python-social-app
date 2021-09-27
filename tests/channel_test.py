@@ -22,7 +22,7 @@ def test_details_uninvited_member():
     uninvited_user_data = auth_register_v1("eagle@gmail.com", "password", "team", "eagle")
     channel_id_1 = channels_create_v1(owner_user_data['auth_user_id'], "channel_1", False)
     with pytest.raises(AccessError):
-        channel_details_v1(uninvited_user_data['auth_user_id'], channel_id_1)
+        channel_details_v1(uninvited_user_data['auth_user_id'], channel_id_1["channel_id"])
 
 def test_details_valid_channel_id():
     clear_v1()
@@ -37,19 +37,27 @@ def test_details_valid_channel_id():
                 'email': 'keefe@gmail.com',
                 'name_first': 'keefe',
                 'name_last': 'vuong',
-                'handle_str': 'keefevuong',                
+                'handle': 'keefevuong',                
             }
         ],
-        "all_members": [{}]
+        "all_members": [
+            {
+                'id': user_data['auth_user_id'],
+                'email': 'keefe@gmail.com',
+                'name_first': 'keefe',
+                'name_last': 'vuong',
+                'handle': 'keefevuong',       
+            }
+        ]
     }
-    assert(channel_details_v1(user_data['auth_user_id'], channel_id_1) == channel_details)
+    assert(channel_details_v1(user_data['auth_user_id'], channel_id_1["channel_id"]) == channel_details)
 
 def test_details_invited_member():
     clear_v1()
     owner_user_data = auth_register_v1("keefe@gmail.com", "password", "keefe", "vuong")
     second_user_data = auth_register_v1("eagle@gmail.com", "password", "team", "eagle")
     channel_id_1 = channels_create_v1(owner_user_data['auth_user_id'], "channel_1", False)
-    channel_invite_v1(owner_user_data['auth_user_id'], channel_id_1, second_user_data)
+    channel_invite_v1(owner_user_data['auth_user_id'], channel_id_1["channel_id"], second_user_data)
     channel_details = {
         "name": "channel_1",
         "is_public": False,
@@ -59,7 +67,7 @@ def test_details_invited_member():
                 'email': 'keefe@gmail.com',
                 'name_first': 'keefe',
                 'name_last': 'vuong',
-                'handle_str': 'keefevuong',                
+                'handle': 'keefevuong',                
             }
         ],
         "all_members": [
@@ -68,18 +76,18 @@ def test_details_invited_member():
                 'email': 'keefe@gmail.com',
                 'name_first': 'keefe',
                 'name_last': 'vuong',
-                'handle_str': 'keefevuong',                
+                'handle': 'keefevuong',                
             },
             {
                 'id': second_user_data['auth_user_id'],
                 'email': 'eagle@gmail.com',
                 'name_first': 'team',
                 'name_last': 'eagle',
-                'handle_str': 'teameagle',                    
+                'handle': 'teameagle',                    
             }
         ]
     }
-    assert(channel_details_v1(second_user_data['auth_user_id'], channel_id_1) == channel_details)
+    assert(channel_details_v1(second_user_data['auth_user_id'], channel_id_1["channel_id"]) == channel_details)
 
 def test_details_unauthorised_user_data():
     clear_v1()
@@ -87,4 +95,4 @@ def test_details_unauthorised_user_data():
     channel_id_1 = channels_create_v1(user_data['auth_user_id'], "channel_1", True)
     fake_user_data = 99999
     with pytest.raises(AccessError):
-        channel_details_v1(fake_user_data, channel_id_1)
+        channel_details_v1(fake_user_data, channel_id_1["channel_id"])
