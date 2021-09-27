@@ -40,7 +40,6 @@ def channels_create_v1(auth_user_id, name, is_public):
 
     # Checks if given name is the same as an existing channel
     for channel in channels:
-        
         if channel['name'].lower() == name.lower():
             raise InputError("Channel name already exists")
 
