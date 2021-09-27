@@ -1,12 +1,14 @@
 import pytest
 
+from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channels import channels_create_v1
 from src.auth import auth_register_v1
 from src.error import AccessError
 
 def test_listall_private_channels():
-    user_data = auth_register_v1("keefe@gmail.com", "hello", "keefe", "vuong")
+    clear_v1()
+    user_data = auth_register_v1("keefe@gmail.com", "password", "keefe", "vuong")
     channel_id_1 = channels_create_v1(user_data['auth_user_id'], "channel_1", False)
     channel_id_2 = channels_create_v1(user_data['auth_user_id'], "channel_2", False)
     channel_id_3 = channels_create_v1(user_data['auth_user_id'], "channel_3", False)
@@ -20,7 +22,8 @@ def test_listall_private_channels():
     assert channels_listall_v1(user_data['auth_user_id']) == channel_info
 
 def test_listall_unauthorised_user_data():
-    user_data = auth_register_v1("keefe@gmail.com", "hello", "keefe", "vuong")
+    clear_v1()
+    user_data = auth_register_v1("keefe@gmail.com", "password", "keefe", "vuong")
     fake_user_data = 999999
     channel_id_1 = channels_create_v1(user_data['auth_user_id'], "channel_1", True)
     channel_id_2 = channels_create_v1(user_data['auth_user_id'], "channel_2", False)
@@ -33,10 +36,11 @@ def test_listall_unauthorised_user_data():
     }
 
     with pytest.raises(AccessError):
-        channels_listall_v1(user_data['auth_user_id'])
+        channels_listall_v1(fake_user_data)
 
 def test_listall_public_channels():
-    user_data = auth_register_v1("keefe@gmail.com", "hello", "keefe", "vuong")
+    clear_v1()
+    user_data = auth_register_v1("keefe@gmail.com", "password", "keefe", "vuong")
     channel_id_1 = channels_create_v1(user_data['auth_user_id'], "channel_1", True)
     channel_id_2 = channels_create_v1(user_data['auth_user_id'], "channel_2", True)
     channel_id_3 = channels_create_v1(user_data['auth_user_id'], "channel_3", True)
@@ -50,7 +54,8 @@ def test_listall_public_channels():
     assert channels_listall_v1(user_data['auth_user_id']) == channel_info
 
 def test_listall_public_and_private_channels():
-    user_data = auth_register_v1("keefe@gmail.com", "hello", "keefe", "vuong")
+    clear_v1()
+    user_data = auth_register_v1("keefe@gmail.com", "password", "keefe", "vuong")
     channel_id_1 = channels_create_v1(user_data['auth_user_id'], "channel_1", True)
     channel_id_2 = channels_create_v1(user_data['auth_user_id'], "channel_2", True)
     channel_id_3 = channels_create_v1(user_data['auth_user_id'], "channel_3", False)
@@ -64,6 +69,7 @@ def test_listall_public_and_private_channels():
     assert channels_listall_v1(user_data['auth_user_id']) == channel_info
 
 def test_listall_no_channels():
-    user_data = auth_register_v1("keefe@gmail.com", "hello", "keefe", "vuong")
+    clear_v1()
+    user_data = auth_register_v1("keefe@gmail.com", "password", "keefe", "vuong")
 
     assert channels_listall_v1(user_data['auth_user_id']) == {}
