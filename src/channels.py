@@ -20,7 +20,7 @@ def channels_list_v1(auth_user_id):
     channels_list = []
     # Append all the channels the user is part of, that being a member or an owner
     for channel in channels:
-        if auth_user_id in channel['all_members'] or auth_user_id in channel['owner_members']:
+        if auth_user_id in channel['all_members']:
             channels_list.append({
                 'channel_id': channel['id'], 
                 'name': channel['name']
