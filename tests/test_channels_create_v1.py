@@ -10,13 +10,14 @@ from src.other import clear_v1
 def clear_and_register_user():
     clear_v1()
     auth_id = auth_register_v1("random@gmail.com", "123abc!@#", "John", "Smith")
-    return auth_id
+    return auth_id['auth_user_id']
 
 # Channels_create_v1 returns correct channel_id
-# def test_returns_channel_id(clear_and_register_user):
-#     channel_id = channels_create_v1(auth_id['auth_user_id'], "newchannel", True)
-#     channel_list = channels_list_v1(auth_id['auth_user_id'])
-#     assert channel_list['channels'][0]['id'] == channel_id['channel_id']  
+def test_returns_channel_id(clear_and_register_user):
+    auth_id = clear_and_register_user
+    channel_id = channels_create_v1(auth_id, "newchannel", True)
+    channel_list = channels_list_v1(auth_id)
+    assert channel_list['channels'][0]['channel_id'] == channel_id['channel_id']  
 
 # Created channel contains a list for channel members
 # def test_channel_members(clear_and_register_user):
@@ -50,21 +51,21 @@ def clear_and_register_user():
 def test_invalid_channel_name(clear_and_register_user):
     auth_id = clear_and_register_user
     with pytest.raises(InputError):
-        channels_create_v1(auth_id['auth_user_id'], "", True)
-        channels_create_v1(auth_id['auth_user_id'], "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", True)
+        channels_create_v1(auth_id, "", True)
+        channels_create_v1(auth_id, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", True)
 
 # Cannot create a channel with same name
 def test_channel_same_name(clear_and_register_user):
     auth_id = clear_and_register_user
-    channels_create_v1(auth_id['auth_user_id'], "channel1", True)
+    channels_create_v1(auth_id, "channel1", True)
     with pytest.raises(InputError):
-        channels_create_v1(auth_id['auth_user_id'], "Channel1", True)
+        channels_create_v1(auth_id, "Channel1", True)
 
 # Auth_user_id must be valid, user must exist
 def test_invalid_auth_user_id(clear_and_register_user):
     auth_id = clear_and_register_user
     with pytest.raises(AccessError):
-        channels_create_v1(auth_id['auth_user_id']+1, "channel2", False)
+        channels_create_v1(auth_id+1, "channel2", False)
 
 # Channel stores messages
 # def test_channel_members(clear_and_register_user):
