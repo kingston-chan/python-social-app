@@ -15,14 +15,14 @@ def clear_and_register_user():
 # Returns the only channels that the user is in
 def test_correct_channels(clear_and_register_user):
     auth_id = clear_and_register_user
-    channel_id1 = channels_create_v1(auth_id, "channel1", True)
+    channel1 = channels_create_v1(auth_id, "channel1", True)
     auth2 = auth_register_v1("validemail@gmail.com", "123abc!@#", "Jane", "Smith")
     channels_create_v1(auth2['auth_user_id'], "channel2", True)
     num_channels = 0
     channels_list = channels_list_v1(auth_id)
-    for channel in channels_list:
+    for channel in channels_list['channels']:
         num_channels += 1
-        assert channel['channel_id'] == channel_id1
+        assert channel['channel_id'] == channel1['channel_id']
     assert num_channels == 1
 
 
@@ -37,10 +37,10 @@ def test_return_values(clear_and_register_user):
     auth_id = clear_and_register_user
     channel1 = channels_create_v1(auth_id, "channel1", True)
     channel_list = channels_list_v1(auth_id)
-    assert channel_list[0]['channel_id'] == channel1['channel_id']
-    assert type(channel_list[0]['channel_id']) == "int"
-    assert channel_list[0]['name'] == "channel1"
-    assert type(channel_list[0]['name']) == "str"
+    assert channel_list['channels'][0]['channel_id'] == channel1['channel_id']
+    assert type(channel_list['channels'][0]['channel_id']) is int
+    assert channel_list['channels'][0]['name'] == "channel1"
+    assert type(channel_list['channels'][0]['name']) is str
 
 # Empty list of channels is returned if user does not belong in any channel
 def test_user_not_in_any_channels(clear_and_register_user):
