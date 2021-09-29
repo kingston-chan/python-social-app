@@ -16,13 +16,7 @@ def channels_list_v1(auth_user_id):
     channels = store['channels']
 
     # Check if auth_user_id is valid
-    user_exist = 0
-    for user in users:
-        if user['id'] == auth_user_id:
-            user_exist = 1
-
-    if not user_exist:
-        raise AccessError("User does not exist")
+    user_exists(auth_user_id, users)
     
     channels_list = []
     # Append all the channels the user is part of, that being a member or an owner
@@ -44,13 +38,7 @@ def channels_listall_v1(auth_user_id):
     users = store['users']
     
     # Checks if the user exists
-    user_exists = 0
-    for user in users:
-        if user['id'] == auth_user_id:
-            user_exists = 1
-    
-    if not user_exists:
-        raise AccessError("User does not exist")
+    user_exists(auth_user_id, users)
     
     # Loops through 'channels' and appends a dictionary with 'channel_id' and
     # 'name' to a list.
