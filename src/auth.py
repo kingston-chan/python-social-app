@@ -24,6 +24,9 @@ def auth_register_v1(email, password, name_first, name_last):
         store = data_store.get()
 
         users = store['users']
+
+        if len(users) == 0: permission = 1
+        else: permission = 2
         
         if dict_search(email, users, 'email'):
             raise InputError('Email is already being used by another user')
@@ -52,7 +55,7 @@ def auth_register_v1(email, password, name_first, name_last):
             u_id += 1
 
         # add all given data into a dictionary to be added to the data store
-        user_dict = {'email': email, 'password': password, 'name_first': name_first, 'name_last': name_last, 'handle': handle, 'id': u_id, 'global': 0}
+        user_dict = {'email': email, 'password': password, 'name_first': name_first, 'name_last': name_last, 'handle': handle, 'id': u_id, 'permission': permission}
         
         users.append(user_dict)
         
