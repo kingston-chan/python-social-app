@@ -79,7 +79,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     else:
         end = index - 1
 
-    # The selected message, the start and the end values are returned.
+    # The selected messages, the start and the end values are returned.
     return {
         'messages': selected_messages,
         'start': start,
