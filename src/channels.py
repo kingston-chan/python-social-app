@@ -29,7 +29,7 @@ def channels_list_v1(auth_user_id):
     for channel in channels:
         if auth_user_id in channel['all_members']:
             channels_list.append({
-                'channel_id': channel['id'], 
+                'channel_id': channel['id'],
                 'name': channel['name']
             })
 
@@ -52,7 +52,7 @@ def channels_listall_v1(auth_user_id):
     if not user_exists:
         raise AccessError("User does not exist")
     
-    # Loops through 'channels' and appends a dictionary with 'channel_id' and 
+    # Loops through 'channels' and appends a dictionary with 'channel_id' and
     # 'name' to a list.
     channels_list = []
     for channel in channels:
