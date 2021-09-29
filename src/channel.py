@@ -36,20 +36,17 @@ def channel_details_v1(auth_user_id, channel_id):
             all_members_ids = channel["all_members"]
 
     if not channel_exists:
-        raise InputError("Channel does not exist")
-    
+        raise InputError("Channel does not exist") 
     
     for user_info in users:
-        for owners in owner_ids:
-            if user_info["id"] == owners:
-                user_info_placeholder = user_info
-                user_info_placeholder.pop("password", None) 
-                channel_details["owner_members"].append(user_info_placeholder)
-        for all_members in all_members_ids:
-            if user_info["id"] == all_members:
-                user_info_placeholder = user_info
-                user_info_placeholder.pop("password", None)
-                channel_details["all_members"].append(user_info_placeholder)
+        if user_info["id"] in owner_ids:
+            user_info_placeholder = user_info
+            user_info_placeholder.pop("password", None) 
+            channel_details["owner_members"].append(user_info_placeholder)
+        if user_info["id"] in all_members_ids:
+            user_info_placeholder = user_info
+            user_info_placeholder.pop("password", None)
+            channel_details["all_members"].append(user_info_placeholder)
 
     an_invited_member = 0
 
@@ -61,7 +58,6 @@ def channel_details_v1(auth_user_id, channel_id):
     if not an_invited_member:
         raise AccessError("User is not a member of the channel")
     
-    print(channel_details)
     return channel_details
 
 def channel_messages_v1(auth_user_id, channel_id, start):
