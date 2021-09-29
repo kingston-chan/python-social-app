@@ -25,15 +25,17 @@ def channels_listall_v1(auth_user_id):
     if not user_exists:
         raise AccessError("User does not exist")
     
-    channels_dict = {}
-    channels_dict['channel_id'] = []
-    channels_dict['name'] = []
+    channels_list = []
 
     for channel in channels:
-        channels_dict['channel_id'].append(channel['id'])
-        channels_dict['name'].append(channel['name'])
+        channels_list.append({
+            "channel_id": channel["id"],
+            "name": channel["name"]
+        })
 
-    return channels_dict
+    return {
+        "channels": channels_list
+    }
 
 def channels_create_v1(auth_user_id, name, is_public):
     # Channel contains channel_name, owner_members, is_public, all_members, 

@@ -13,12 +13,15 @@ def test_listall_private_channels():
     channel_2 = channels_create_v1(user_data['auth_user_id'], "channel_2", False)
     channel_3 = channels_create_v1(user_data['auth_user_id'], "channel_3", False)
     channel_4 = channels_create_v1(user_data['auth_user_id'], "channel_4", False)
+    
+    channel_1['name'] = "channel_1"
+    channel_2['name'] = "channel_2"
+    channel_3['name'] = "channel_3"
+    channel_4['name'] = "channel_4"
 
     channel_info = {
-        "channel_id": [channel_1["channel_id"], channel_2["channel_id"], channel_3["channel_id"], channel_4["channel_id"]],
-        "name": ["channel_1", "channel_2", "channel_3", "channel_4"],
+        "channels": [channel_1, channel_2, channel_3, channel_4],
     }
-
     assert channels_listall_v1(user_data['auth_user_id']) == channel_info
 
 def test_listall_unauthorised_user_data():
@@ -29,11 +32,6 @@ def test_listall_unauthorised_user_data():
     channel_2 = channels_create_v1(user_data['auth_user_id'], "channel_2", False)
     channel_3 = channels_create_v1(user_data['auth_user_id'], "channel_3", True)
     channel_4 = channels_create_v1(user_data['auth_user_id'], "channel_4", False)
-
-    channel_info = {
-        "channel_id": [channel_1["channel_id"], channel_2["channel_id"], channel_3["channel_id"], channel_4["channel_id"]],
-        "name": ["channel_1", "channel_2", "channel_3", "channel_4"],
-    }
 
     with pytest.raises(AccessError):
         channels_listall_v1(fake_user_data)
@@ -46,9 +44,13 @@ def test_listall_public_channels():
     channel_3 = channels_create_v1(user_data['auth_user_id'], "channel_3", True)
     channel_4 = channels_create_v1(user_data['auth_user_id'], "channel_4", True)
 
+    channel_1['name'] = "channel_1"
+    channel_2['name'] = "channel_2"
+    channel_3['name'] = "channel_3"
+    channel_4['name'] = "channel_4"
+
     channel_info = {
-        "channel_id": [channel_1["channel_id"], channel_2["channel_id"], channel_3["channel_id"], channel_4["channel_id"]],
-        "name": ["channel_1", "channel_2", "channel_3", "channel_4"],
+        "channels": [channel_1, channel_2, channel_3, channel_4],
     }
 
     assert channels_listall_v1(user_data['auth_user_id']) == channel_info
@@ -61,9 +63,13 @@ def test_listall_public_and_private_channels():
     channel_3 = channels_create_v1(user_data['auth_user_id'], "channel_3", False)
     channel_4 = channels_create_v1(user_data['auth_user_id'], "channel_4", False)
 
+    channel_1['name'] = "channel_1"
+    channel_2['name'] = "channel_2"
+    channel_3['name'] = "channel_3"
+    channel_4['name'] = "channel_4"
+
     channel_info = {
-        "channel_id": [channel_1["channel_id"], channel_2["channel_id"], channel_3["channel_id"], channel_4["channel_id"]],
-        "name": ["channel_1", "channel_2", "channel_3", "channel_4"],
+        "channels": [channel_1, channel_2, channel_3, channel_4],
     }
 
     assert channels_listall_v1(user_data['auth_user_id']) == channel_info
@@ -73,8 +79,7 @@ def test_listall_no_channels():
     user_data = auth_register_v1("keefe@gmail.com", "password", "keefe", "vuong")
 
     channel_info = {
-        "channel_id": [],
-        "name": []
+        "channels": [],
     }
 
     assert channels_listall_v1(user_data['auth_user_id']) == channel_info
