@@ -40,5 +40,46 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     }
 
 def channel_join_v1(auth_user_id, channel_id):
-    return {
-    }
+    
+    store = data_store.get()
+    users = store['users']
+    channels = store['channels']
+    
+    checklist = []
+    for user in users:
+        if auth_user_id == user['id']:
+            checklist.append(1)
+        else:
+            checklist.append(0)
+    if 1 not in checklist:
+        raise InputError("Invalid user")
+
+    checklist.clear()
+    
+    for channel in channels:
+        if channel_id == channel['id']:
+            checklist.append(1)
+        else:
+            checklist.append(0)
+        
+    if 1 not in checklist:
+        raise AccessError("Invalid Channel ID")
+        
+    checklist.clear()
+    
+    for channel in channels:
+        if channel_id == channel['id']:
+            if auth_user_id in channel['all_members']:
+                raise InputError("Already a member of channel")
+        
+            if channel['is_public'] != True:
+                raise AccessError("Channel is private")
+                
+    for channel in channels:
+        if channel_id == channel['id']: 
+            channel['all_members'].append(auth_user_id)
+
+    data_store.set(store)
+        
+    checklist.clear()        
+    return {}
