@@ -38,7 +38,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
 
     # Scans if the channel exists
     for channel in channels:
-        if channel['channel_id'] == channel_id:
+        if channel['id'] == channel_id:
             channel_valid = True
             # Checks if the start value is valid within the length of 
             # messages in the channel.
@@ -54,8 +54,8 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     
     # Checks if the authorised user is a member of the channel
     member_valid = False
-    for member in selected_channel[all_members]:
-        if member['u_id'] == auth_user_id:
+    for member in selected_channel['all_members']:
+        if member == auth_user_id:
             member_valid = True
 
     # If the user is not a member, then an error is raised.
@@ -65,21 +65,19 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     # The channel is scanned for its messages.
     index = start
     counter = 0
-    messages = selected_channel[messages]
+    channel_messages = selected_channel['messages']
     selected_messages = []
-    while index <= len(messages) and counter < 50:
-        for message in messages:
-            if message['message_id'] == index:
-                selected_messages.append(message)
+    while index < len(channel_messages) and counter <= 50:
+        selected_messages.append(channel_messages[len(channel_messages) - index - 1])
         index += 1
         counter += 1
 
     # If the scanner hits the end of the messages, the end is -1
     # else, the end is the final message index.
-    if counter != 50:
+    if counter != 51:
         end = -1
     else:
-        end = index
+        end = index - 1
 
     # The selected message, the start and the end values are returned.
     return {
