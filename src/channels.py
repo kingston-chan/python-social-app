@@ -1,7 +1,6 @@
 from src.error import InputError, AccessError
 from src.data_store import data_store
 
-
 def channels_list_v1(auth_user_id):
     return {
         'channels': [
@@ -23,7 +22,7 @@ def channels_listall_v1(auth_user_id):
     }
 
 def channels_create_v1(auth_user_id, name, is_public):
-    # Channel contains channel_name, owner_members, is_public, all_members, 
+    # Channel contains channel_name, owner_members, is_public, all_members,
     # channel_id, messages
     store = data_store.get()
     users = store['users']
@@ -40,16 +39,13 @@ def channels_create_v1(auth_user_id, name, is_public):
 
     # Trim any leading/trailing whitespace characters in name
     name = name.strip()
-        
     # Checks if the length of the name is valid
     if len(name) > 20 or len(name) < 1:
         raise InputError("Invalid channel name length")
-
     # Checks if given name is the same as an existing channel
     for channel in channels:
         if channel['name'].lower() == name.lower():
             raise InputError("Channel name already exists")
-    
     # Create new channel with given information
     new_channel = {
         'name': name,
@@ -60,15 +56,12 @@ def channels_create_v1(auth_user_id, name, is_public):
         'messages': [],
     }
 
-    # Add the creator of the channel to the list 
+    # Add the creator of the channel to the list
     # of owner_members and all_members
     new_channel['owner_members'].append(auth_user_id)
     new_channel['all_members'].append(auth_user_id)
-    
     channels.append(new_channel)
-
     data_store.set(store)
-    
     return {
         'channel_id': new_channel['id']
     }
