@@ -1,6 +1,7 @@
 from src.error import InputError, AccessError
 from src.data_store import data_store
 
+# Helper function to determine if user exists
 def user_exists(auth_user_id, users):
     user_exist = 0
     for user in users:
