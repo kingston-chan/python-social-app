@@ -1,20 +1,28 @@
 from src.error import InputError, AccessError
 from src.data_store import data_store
 
+def user_exists(auth_user_id, users):
+    user_exist = 0
+    for user in users:
+        if user['id'] == auth_user_id:
+            user_exist = 1
+
+    if not user_exist:
+        raise AccessError("User does not exist")
+
 def channels_list_v1(auth_user_id):
     store = data_store.get()
     users = store['users']
     channels = store['channels']
 
     # Check if auth_user_id is valid
-    user_exists = 0
+    user_exist = 0
     for user in users:
         if user['id'] == auth_user_id:
-            user_exists = 1
+            user_exist = 1
 
-    if not user_exists:
+    if not user_exist:
         raise AccessError("User does not exist")
-
     
     channels_list = []
     # Append all the channels the user is part of, that being a member or an owner
@@ -65,13 +73,7 @@ def channels_create_v1(auth_user_id, name, is_public):
     channels = store['channels']
 
     # Check if user exists
-    user_exists = 0
-    for user in users:
-        if user['id'] == auth_user_id:
-            user_exists = 1
-
-    if user_exists == 0:
-        raise AccessError("User does not exist")
+    user_exists(auth_user_id, users)
 
     # Trim any leading/trailing whitespace characters in name
     name = name.strip()
