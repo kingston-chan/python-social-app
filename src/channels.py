@@ -79,6 +79,9 @@ def channels_create_v1(auth_user_id, name, is_public):
         if channel['name'].lower() == name.lower():
             raise InputError("Channel name already exists")
 
+    # Trim any leading/trailing whitespace characters in name
+    name = name.strip()
+    
     # Checks if the length of the name is valid
     if len(name) > 20 or len(name) < 1:
         raise InputError("Invalid channel name length")
@@ -93,6 +96,8 @@ def channels_create_v1(auth_user_id, name, is_public):
         'messages': [],
     }
 
+    # Add the creator of the channel to the list 
+    # of owner_members and all_members
     new_channel['owner_members'].append(auth_user_id)
     new_channel['all_members'].append(auth_user_id)
     
