@@ -31,13 +31,31 @@ def channels_list_v1(auth_user_id):
     }
 
 def channels_listall_v1(auth_user_id):
+    # Grabs the items in the data_store
+    store = data_store.get()
+    channels = store['channels']
+    users = store['users']
+    
+    # Checks if the user exists
+    user_exists = 0
+    for user in users:
+        if user['id'] == auth_user_id:
+            user_exists = 1
+    
+    if not user_exists:
+        raise AccessError("User does not exist")
+    
+    # Loops through 'channels' and appends a dictionary with 'channel_id' and 
+    # 'name' to a list.
+    channels_list = []
+    for channel in channels:
+        channels_list.append({
+            "channel_id": channel["id"],
+            "name": channel["name"]
+        })
+
     return {
-        'channels': [
-        	{
-        		'channel_id': 1,
-        		'name': 'My Channel',
-        	}
-        ],
+        "channels": channels_list
     }
 
 def channels_create_v1(auth_user_id, name, is_public):
