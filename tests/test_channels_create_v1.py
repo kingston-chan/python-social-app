@@ -13,11 +13,11 @@ def clear_and_register_user():
     return auth_id['auth_user_id']
 
 # Channels_create_v1 returns correct channel_id
-# def test_returns_channel_id(clear_and_register_user):
-#     auth_id = clear_and_register_user  
-#     newchannel = channels_create_v1(auth_id, "newchannel", True)
-#     channel_list = channels_list_v1(auth_id)
-#     assert channel_list['channels'][0]['id'] == newchannel['channel_id']  
+def test_returns_channel_id(clear_and_register_user):
+    auth_id = clear_and_register_user  
+    newchannel = channels_create_v1(auth_id, "newchannel", True)
+    channel_list = channels_list_v1(auth_id)
+    assert channel_list['channels'][0]['channel_id'] == newchannel['channel_id']  
 
 # Created channel contains a list for channel members
 # def test_channel_members(clear_and_register_user):

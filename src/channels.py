@@ -2,13 +2,31 @@ from src.error import InputError, AccessError
 from src.data_store import data_store
 
 def channels_list_v1(auth_user_id):
+    store = data_store.get()
+    users = store['users']
+    channels = store['channels']
+
+    # Check if auth_user_id is valid
+    user_exists = 0
+    for user in users:
+        if user['id'] == auth_user_id:
+            user_exists = 1
+
+    if not user_exists:
+        raise AccessError("User does not exist")
+
+    
+    channels_list = []
+    # Append all the channels the user is part of, that being a member or an owner
+    for channel in channels:
+        if auth_user_id in channel['all_members']:
+            channels_list.append({
+                'channel_id': channel['id'], 
+                'name': channel['name']
+            })
+
     return {
-        'channels': [
-        	{
-        		'channel_id': 1,
-        		'name': 'My Channel',
-        	}
-        ],
+        'channels': channels_list
     }
 
 def channels_listall_v1(auth_user_id):
