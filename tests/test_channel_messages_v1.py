@@ -5,119 +5,188 @@ from src.channel import channel_messages_v1
 from src.other import clear_v1
 from src.error import InputError, AccessError
 
-
 # channel_messages_v1 tests
 
-# test fixtures
-@pytest.fixture
-def clear_and_create_user1():
+# test - errors
+def test_ch_mess_error_channel_invalid():
     clear_v1()
+    # make the user
     user = auth_register_v1(
         "fakeguy@fakeemail.com",
         "fakepassword",
         "fakefirstname",
         "fakelastname",
     )
-    return user['auth_user_id']
+    # no channel created
+    # raise error
+    with pytest.raises(InputError):
+        channel_messages_v1(user['auth_user_id'], 1, 0)
 
-@pytest.fixture
-def create_user2():
+def test_ch_mess_error_start_invalid():
+    clear_v1()
+     # make the user
     user = auth_register_v1(
+        "fakeguy@fakeemail.com",
+        "fakepassword",
+        "fakefirstname",
+        "fakelastname",
+    )
+
+    # make a channel
+    channel = channels_create_v1(
+        user['auth_user_id'],
+        "random_channel_name",
+        True,
+    )
+
+    # raise error
+    with pytest.raises(InputError):
+        channel_messages_v1(user['auth_user_id'], channel['channel_id'], 100)
+
+def test_ch_mess_error_member_invalid():
+    clear_v1()
+    # make the user
+    user = auth_register_v1(
+        "fakeguy@fakeemail.com",
+        "fakepassword",
+        "fakefirstname",
+        "fakelastname",
+    )
+
+    # make a channel
+    channel = channels_create_v1(
+        user['auth_user_id'],
+        "random_channel_name",
+        True,
+    )
+    # make an unauthorised user of the channel
+    unauth_user = auth_register_v1(
+        "fakeguytwo@fakeemail.com",
+        "fakepasswordtwo",
+        "fakefirstnametwo",
+        "fakesecondlastnametwo",
+    )
+    # raise error
+    with pytest.raises(AccessError):
+        channel_messages_v1(unauth_user['auth_user_id'], channel['channel_id'], 0)
+
+def test_ch_mess_error_member_invalid2():
+    clear_v1()
+
+    # make 2 users
+    user = auth_register_v1(
+        "fakeguy@fakeemail.com",
+        "fakepassword",
+        "fakefirstname",
+        "fakelastname",
+    )
+
+    user2 = auth_register_v1(
         "fakeguytwo@fakeemail.com",
         "fakepasswordtwo",
         "fakefirstnametwo",
         "fakelastnametwo",
     )
-    return user['auth_user_id']
 
-# helper functions
-def create_channel1(user):
+    # make two channels
     channel = channels_create_v1(
-        user,
-        "random_channel_name1",
+        user['auth_user_id'],
+        "random_channel_name",
         True,
     )
-    return channel
 
-def create_channel2(user):
-    channel = channels_create_v1(
-        user,
+    channel2 = channels_create_v1(
+        user2['auth_user_id'],
         "random_channel_name2",
-        False,
+        True,
     )
-    return channel
 
-# tests - errors
-def test_ch_mess_error_channel_invalid(clear_and_create_user1):
-    # no channel created
-    user = clear_and_create_user1
-    # raise error
-    with pytest.raises(InputError):
-        channel_messages_v1(user, 1, 0)
-
-def test_correct_channels(clear_and_create_user1):
-    user = clear_and_create_user1
-    channel = create_channel1(user)
-    # raise error
-    with pytest.raises(InputError):
-        channel_messages_v1(user, channel['channel_id'], 100)
-
-def test_ch_mess_error_member_invalid(clear_and_create_user1, create_user2):
-    # raise error
-    user1 = clear_and_create_user1
-    user2 = create_user2
-    channel1 = create_channel1(user1)
-    with pytest.raises(AccessError):
-        channel_messages_v1(user2, channel1['channel_id'], 0)
-
-def test_ch_mess_error_member_invalid2(clear_and_create_user1, create_user2):
-    user1 = clear_and_create_user1
-    user2 = create_user2
-    channel1 = create_channel1(user1)
-    channel2 = create_channel2(user2)
     # raise errors
     with pytest.raises(AccessError):
-        channel_messages_v1(user1, channel2['channel_id'], 0)
-
+        channel_messages_v1(user['auth_user_id'], channel2['channel_id'], 0)
     with pytest.raises(AccessError):
-        channel_messages_v1(user2, channel1['channel_id'], 0)
+        channel_messages_v1(user2['auth_user_id'], channel['channel_id'], 0)
 
 # test - valid scenarios
-def test_ch_mess_public_channel(clear_and_create_user1):
-    user1 = clear_and_create_user1
-    channel1 = create_channel1(user1)
+def test_ch_mess_public_channel():
+    clear_v1()
+    # make the user
+    user = auth_register_v1(
+        "fakeguy@fakeemail.com",
+        "fakepassword",
+        "fakefirstname",
+        "fakelastname",
+    )
+
+    # make a channel
+    channel = channels_create_v1(
+        user['auth_user_id'],
+        "random_channel_name",
+        True,
+    )
+
     # assert
-    assert channel_messages_v1(user1, channel1['channel_id'], 0) == {
+    assert channel_messages_v1(user['auth_user_id'], channel['channel_id'], 0) == {
         'messages': [],
         'start': 0,
         'end': -1,
     }
 
-def test_ch_mess_private_channel(clear_and_create_user1, create_user2):
-    user1 = clear_and_create_user1
-    user2 = create_user2
-    channel1 = create_channel1(user1)
-    channel2 = create_channel2(user2)
+def test_ch_mess_private_channel():
+    clear_v1()
+    # make the user
+    user = auth_register_v1(
+        "fakeguy@fakeemail.com",
+        "fakepassword",
+        "fakefirstname",
+        "fakelastname",
+    )
+
+    # make a channel
+    channel = channels_create_v1(
+        user['auth_user_id'],
+        "random_channel_name",
+        False,
+    )
+
     # assert
-    assert channel_messages_v1(user2, channel2['channel_id'], 0) == {
+    assert channel_messages_v1(user['auth_user_id'], channel['channel_id'], 0) == {
         'messages': [],
         'start': 0,
         'end': -1,
     }
 
-def test_ch_mess_multiple_channels(clear_and_create_user1):
-    user1 = clear_and_create_user1
-    channel1 = create_channel1(user1)
-    channel2 = create_channel2(user1)
+def test_ch_mess_multiple_channels():
+    clear_v1()
+    # make the user
+    user = auth_register_v1(
+        "fakeguy@fakeemail.com",
+        "fakepassword",
+        "fakefirstname",
+        "fakelastname",
+    )
+
+    # make two channel
+    channel = channels_create_v1(
+        user['auth_user_id'],
+        "random_channel_name",
+        True,
+    )
+
+    channel2 = channels_create_v1(
+        user['auth_user_id'],
+        "random_channel_name2",
+        True,
+    )
 
     # assert
-    assert channel_messages_v1(user1, channel1['channel_id'], 0) == {
+    assert channel_messages_v1(user['auth_user_id'], channel['channel_id'], 0) == {
         'messages': [],
         'start': 0,
         'end': -1,
     }
 
-    assert channel_messages_v1(user1, channel2['channel_id'], 0) == {
+    assert channel_messages_v1(user['auth_user_id'], channel2['channel_id'], 0) == {
         'messages': [],
         'start': 0,
         'end': -1,
