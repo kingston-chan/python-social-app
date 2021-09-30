@@ -18,7 +18,7 @@ def channels_list_v1(auth_user_id):
 
     # Check if auth_user_id is valid
     user_exists(auth_user_id, users)
-    
+
     channels_list = []
     # Append all the channels the user is part of, that being a member or an owner
     for channel in channels:
@@ -78,6 +78,7 @@ def channels_create_v1(auth_user_id, name, is_public):
         'name': name,
         'id': len(channels) + 1,
         'owner_members': [],
+        'owner_permissions': [],
         'all_members': [],
         'is_public': is_public,
         'messages': [],
@@ -86,6 +87,7 @@ def channels_create_v1(auth_user_id, name, is_public):
     # Add the creator of the channel to the list
     # of owner_members and all_members
     new_channel['owner_members'].append(auth_user_id)
+    new_channel['owner_permissions'].append(auth_user_id)
     new_channel['all_members'].append(auth_user_id)
     channels.append(new_channel)
     data_store.set(store)
