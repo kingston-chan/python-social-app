@@ -50,7 +50,14 @@ def test_authuser_not_valid():
     with pytest.raises(AccessError):
         channel_invite_v1(user1['auth_user_id'], channel_created['channel_id'], user1['auth_user_id'])
         
-
+ 
+    
+    
+    
+    
+    
+    
+    
     
 
     
