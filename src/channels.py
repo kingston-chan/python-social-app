@@ -37,10 +37,8 @@ def channels_listall_v1(auth_user_id):
     store = data_store.get()
     channels = store['channels']
     users = store['users']
-    
     # Checks if the user exists
     user_exists(auth_user_id, users)
-    
     # Loops through 'channels' and appends a dictionary with 'channel_id' and
     # 'name' to a list.
     channels_list = []
