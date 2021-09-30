@@ -6,11 +6,7 @@ from src.auth import auth_login_v1
 from src.channels import channels_create_v1
 from src.error import InputError
 from src.error import AccessError
-from src.other import clear_v1
-
-'''def pytest.fixture():  ---- return auth id
-                            return channel_id'''
-
+from src.other import clear_v1       
 
 
 def test_already_member():
@@ -19,7 +15,7 @@ def test_already_member():
     user = auth_register_v1("fakeguy@fakeemail.com","fakepassword","fakefirstname","fakelastname") 
     #make a channel
     channel_created = channels_create_v1(user['auth_user_id'], "random_channel_name",True)
-    #raising error
+    #raising error    
     with pytest.raises(InputError):
         channel_invite_v1(user['auth_user_id'], channel_created['channel_id'],user['auth_user_id'])
         
