@@ -11,7 +11,7 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     #checks for valid channel
     for channel in channels:
         if channel_id == channel['id']:
-            i =1
+            i = 1 #checks to see authorised member is sending channel invitation
             if auth_user_id not in channel['all_members']:
                 raise AccessError("not authorised user")
             break
@@ -29,9 +29,6 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     #checks to see if member
     if u_id in channel['all_members']:
         raise InputError("already member")
-    #checks to see authorised member is sending channel invitation
-   
-    
     
     channel['all_members'].append(u_id)
     
