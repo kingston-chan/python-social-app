@@ -68,7 +68,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     channel_messages = selected_channel['messages']
     selected_messages = []
     while index < len(channel_messages) and counter <= 50:
-        selected_messages.append(channel_messages[index])
+        selected_messages.append(channel_messages[len(channel_messages) - index - 1])
         index += 1
         counter += 1
 
