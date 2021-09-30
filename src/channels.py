@@ -1,8 +1,15 @@
+"""
+Functions to:
+- Create a channel
+- List all channels of user is in
+- List all channels
+"""
+
 from src.error import InputError, AccessError
 from src.data_store import data_store
 
-# Helper function to determine if user exists
 def user_exists(auth_user_id, users):
+    """Helper function to verify user"""
     user_exist = 0
     for user in users:
         if user['id'] == auth_user_id:
@@ -12,6 +19,7 @@ def user_exists(auth_user_id, users):
         raise AccessError("User does not exist")
 
 def channels_list_v1(auth_user_id):
+    """List all channels that the user is a member of"""
     store = data_store.get()
     users = store['users']
     channels = store['channels']
@@ -33,6 +41,7 @@ def channels_list_v1(auth_user_id):
     }
 
 def channels_listall_v1(auth_user_id):
+    """List all channels created, given a valid user id """
     # Grabs the items in the data_store
     store = data_store.get()
     channels = store['channels']
@@ -53,8 +62,7 @@ def channels_listall_v1(auth_user_id):
     }
 
 def channels_create_v1(auth_user_id, name, is_public):
-    # Channel contains channel_name, owner_members, is_public, all_members,
-    # channel_id, messages
+    """Create a new channel, given a valid user id"""
     store = data_store.get()
     users = store['users']
     channels = store['channels']
