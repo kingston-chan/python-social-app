@@ -35,8 +35,8 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     
     channel['all_members'].append(u_id)
     
-    '''if user['permission'] == 1:
-        channel['owner__permissions'].append(u_id)'''   
+    if user['permission'] == 1:
+        channel['owner__permissions'].append(u_id)   
         
         
         
