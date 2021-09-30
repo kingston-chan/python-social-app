@@ -19,6 +19,7 @@ def test_invalid_channel_name(clear_and_register_user):
     auth_id = clear_and_register_user
     with pytest.raises(InputError):
         channels_create_v1(auth_id, "", True)
+    with pytest.raises(InputError):
         channels_create_v1(auth_id, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", True)
 
 # Cannot create a channel with same name
