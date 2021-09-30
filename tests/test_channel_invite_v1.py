@@ -8,6 +8,11 @@ from src.error import InputError
 from src.error import AccessError
 from src.other import clear_v1
 
+def pytest.fixture():  ---- return auth id
+                            return channel_id
+
+
+
 def test_already_member():
     clear_v1()
     #making user
