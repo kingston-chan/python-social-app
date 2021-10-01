@@ -74,7 +74,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
 
     # If the scanner hits the end of the messages, the end is -1
     # else, the end is the final message index.
-    if counter != 50 or counter == len(channel_messages):
+    if counter != 50 or index == len(channel_messages):
         end = -1
     else:
         end = index
