@@ -31,20 +31,20 @@ def test_details_valid_channel_id():
         "is_public": False,
         "owner_members": [
             {
-                'id': user_data['auth_user_id'],
+                'u_id': user_data['auth_user_id'],
                 'email': 'keefe@gmail.com',
                 'name_first': 'keefe',
                 'name_last': 'vuong',
-                'handle': 'keefevuong',                
+                'handle_str': 'keefevuong',                
             }
         ],
         "all_members": [
             {
-                'id': user_data['auth_user_id'],
+                'u_id': user_data['auth_user_id'],
                 'email': 'keefe@gmail.com',
                 'name_first': 'keefe',
                 'name_last': 'vuong',
-                'handle': 'keefevuong',       
+                'handle_str': 'keefevuong',       
             }
         ]
     }
@@ -61,27 +61,27 @@ def test_details_invited_member():
         "is_public": False,
         "owner_members": [
             {
-                'id': owner_user_data['auth_user_id'],
+                'u_id': owner_user_data['auth_user_id'],
                 'email': 'keefe@gmail.com',
                 'name_first': 'keefe',
                 'name_last': 'vuong',
-                'handle': 'keefevuong',                
+                'handle_str': 'keefevuong',                
             }
         ],
         "all_members": [
             {
-                'id': owner_user_data['auth_user_id'],
+                'u_id': owner_user_data['auth_user_id'],
                 'email': 'keefe@gmail.com',
                 'name_first': 'keefe',
                 'name_last': 'vuong',
-                'handle': 'keefevuong',                
+                'handle_str': 'keefevuong',                
             },
             {
-                'id': second_user_data['auth_user_id'],
+                'u_id': second_user_data['auth_user_id'],
                 'email': 'eagle@gmail.com',
                 'name_first': 'team',
                 'name_last': 'eagle',
-                'handle': 'teameagle',                    
+                'handle_str': 'teameagle',                    
             }
         ]
     }
