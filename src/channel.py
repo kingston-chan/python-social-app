@@ -67,17 +67,17 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     counter = 0
     channel_messages = selected_channel['messages']
     selected_messages = []
-    while index < len(channel_messages) and counter <= 50:
+    while index < len(channel_messages) and counter < 50:
         selected_messages.append(channel_messages[index])
         index += 1
         counter += 1
 
     # If the scanner hits the end of the messages, the end is -1
     # else, the end is the final message index.
-    if counter != 51:
+    if counter != 50 or counter == len(channel_messages):
         end = -1
     else:
-        end = index - 1
+        end = index
 
     # The selected messages, the start and the end values are returned.
     return {
