@@ -5,10 +5,11 @@ import re
 def auth_login_v1(email, password):
     store = data_store.get()
     users = store['users']
-
+    # determine if the email has already been used
     if not dict_search(email, users, 'email'):
         raise InputError('Email does not exist')
     
+    # when the email is correct determine if the password matches
     for u in users:
         if u['email'] == email and not u['password'] == password:
             raise InputError('Password is incorrect')
