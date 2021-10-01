@@ -7,41 +7,37 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     channels = store['channels']
 
     #boolean operator
-    i = 0
+    valid_channel = 0
+    valid_user = 0
     #checks for valid channel
     for channel in channels:
         if channel_id == channel['id']:
-            i = 1 #checks to see authorised member is sending channel invitation
-            if auth_user_id not in channel['all_members']:
+            valid_channel = 1
+            if auth_user_id not in channel['all_members']: #checks to see authorised member is sending channel invitation
                 raise AccessError("not authorised user")
             break
-    if i == 0:
-        raise InputError("not valid user")   
+    if valid_channel == 0:
+        raise InputError("not valid channel ID")   
     #checks for valid user 
     for user in users:
-        i = 0
         if u_id == user['id']:
-            i = 1
+            valid_user = 1
             break
     
-    if i == 0:
+    if valid_user == 0:
         raise InputError("not valid user")   
     #checks to see if member
     if u_id in channel['all_members']:
         raise InputError("already member")
-    
+   
     channel['all_members'].append(u_id)
     
     if user['permission'] == 1:
         channel['owner__permissions'].append(u_id)   
-        
-        
-        
+    
     data_store.set(store)
-        
-
-
-    return {    }
+    
+    return {}
 
 def channel_details_v1(auth_user_id, channel_id):
     return {
