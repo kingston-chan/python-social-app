@@ -100,8 +100,6 @@ def channel_details_v1(auth_user_id, channel_id):
 
     if not an_invited_member:
         raise AccessError("User is not a member of the channel")
-    
-    print(channel_details)
 
     return channel_details
 
