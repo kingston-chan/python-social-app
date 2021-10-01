@@ -2,8 +2,42 @@ from src.error import InputError, AccessError
 from src.data_store import data_store
 
 def channel_invite_v1(auth_user_id, channel_id, u_id):
-    return {
-    }
+    store = data_store.get()
+    users = store['users']
+    channels = store['channels']
+
+    #boolean operator
+    valid_channel = 0
+    valid_user = 0
+    #checks for valid channel
+    for channel in channels:
+        if channel_id == channel['id']:
+            valid_channel = 1
+            if auth_user_id not in channel['all_members']: #checks to see authorised member is sending channel invitation
+                raise AccessError("not authorised user")
+            break
+    if valid_channel == 0:
+        raise InputError("not valid channel ID")   
+    #checks for valid user 
+    for user in users:
+        if u_id == user['id']:
+            valid_user = 1
+            break
+    
+    if valid_user == 0:
+        raise InputError("not valid user")   
+    #checks to see if member
+    if u_id in channel['all_members']:
+        raise InputError("already member")
+   
+    channel['all_members'].append(u_id)
+    
+    if user['permission'] == 1:
+        channel['owner__permissions'].append(u_id)   
+    
+    data_store.set(store)
+    
+    return {}
 
 def channel_details_v1(auth_user_id, channel_id):
     return {
