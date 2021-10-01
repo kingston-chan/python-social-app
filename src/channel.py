@@ -78,18 +78,12 @@ def channel_details_v1(auth_user_id, channel_id):
     # Finds a user's information based on their user IDs.
     for user_data in users:
         if user_data["id"] in owner_ids:
-            # Pops off keys from user_info_placeholder that aren't needed
-            user_data_placeholder = user_data
-            user_data_placeholder.pop("password", None) 
-            user_data_placeholder.pop("permission", None)
-            user_info = assign_user_info(user_data_placeholder)
+            # Assigns the necessary keys required from user_data.
+            user_info = assign_user_info(user_data)
             # Stores the owners' information into channel_details["owner_members"].
             channel_details["owner_members"].append(user_info)
         if user_data["id"] in all_members_ids:
-            user_data_placeholder = user_data
-            user_data_placeholder.pop("password", None)
-            user_data_placeholder.pop("permission", None)
-            user_info = assign_user_info(user_data_placeholder)
+            user_info = assign_user_info(user_data)
             channel_details["all_members"].append(user_info)
 
     an_invited_member = 0
