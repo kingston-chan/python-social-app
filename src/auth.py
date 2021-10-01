@@ -79,8 +79,8 @@ def auth_register_v1(email, password, name_first, name_last):
     }
 
 
-# function to search the data store for duplicate items
-def dict_search(item, users, type):
+# helper function to search the data store for duplicate items
+def dict_search(item, users, item_name):
     for u in users:
-        if u[type] == item:
+        if u[item_name] == item:
             return 1
