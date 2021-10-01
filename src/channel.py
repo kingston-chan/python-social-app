@@ -76,26 +76,22 @@ def channel_details_v1(auth_user_id, channel_id):
         raise InputError("Channel does not exist") 
     
     # Finds a user's information based on their user IDs.
-    for user_info in users:
-        if user_info["id"] in owner_ids:
-            # Pops off keys from user_info_placeholder that aren't needed
-            user_info_placeholder = user_info
-            user_info_placeholder.pop("password", None) 
-            user_info_placeholder.pop("permission", None)
+    for user_data in users:
+        if user_data["id"] in owner_ids:
+            # Assigns the necessary keys required from user_data.
+            user_info = assign_user_info(user_data)
             # Stores the owners' information into channel_details["owner_members"].
-            channel_details["owner_members"].append(user_info_placeholder)
-        if user_info["id"] in all_members_ids:
-            user_info_placeholder = user_info
-            user_info_placeholder.pop("password", None)
-            user_info_placeholder.pop("permission", None)
-            channel_details["all_members"].append(user_info_placeholder)
+            channel_details["owner_members"].append(user_info)
+        if user_data["id"] in all_members_ids:
+            user_info = assign_user_info(user_data)
+            channel_details["all_members"].append(user_info)
 
     an_invited_member = 0
     members = channel_details["all_members"]
 
     # Checks if the user is apart of the channel.
     for member in members:
-        if member["id"] == auth_user_id:
+        if member["u_id"] == auth_user_id:
             an_invited_member = 1
 
     if not an_invited_member:
@@ -205,3 +201,13 @@ def channel_join_v1(auth_user_id, channel_id):
         
     checklist.clear()        
     return {}
+
+# Assigns the user information with the appropriate key names required in the spec.
+def assign_user_info(user_data_placeholder):
+    return  {
+        'u_id': user_data_placeholder['id'],
+        'email': user_data_placeholder['email'],
+        'name_first': user_data_placeholder['name_first'],
+        'name_last': user_data_placeholder['name_last'],
+        'handle_str':user_data_placeholder['handle']
+    }
