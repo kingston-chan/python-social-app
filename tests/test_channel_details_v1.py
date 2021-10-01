@@ -55,7 +55,7 @@ def test_details_invited_member():
     owner_user_data = auth_register_v1("keefe@gmail.com", "password", "keefe", "vuong")
     second_user_data = auth_register_v1("eagle@gmail.com", "password", "team", "eagle")
     channel_id_1 = channels_create_v1(owner_user_data['auth_user_id'], "channel_1", False)
-    channel_invite_v1(owner_user_data['auth_user_id'], channel_id_1["channel_id"], second_user_data)
+    channel_invite_v1(owner_user_data['auth_user_id'], channel_id_1["channel_id"], second_user_data['auth_user_id'])
     channel_details = {
         "name": "channel_1",
         "is_public": False,
