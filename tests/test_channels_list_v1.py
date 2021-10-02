@@ -9,8 +9,7 @@ from src.other import clear_v1
 @pytest.fixture
 def clear_and_register_user():
     clear_v1()
-    auth_id = auth_register_v1("random@gmail.com", "123abc!@#", "John", "Smith")
-    return auth_id['auth_user_id']
+    return auth_register_v1("random@gmail.com", "123abc!@#", "John", "Smith")['auth_user_id']
 
 # Returns the only channels that the user is in
 def test_correct_channels(clear_and_register_user):
@@ -18,13 +17,9 @@ def test_correct_channels(clear_and_register_user):
     channel1 = channels_create_v1(auth_id, "channel1", True)
     auth2 = auth_register_v1("validemail@gmail.com", "123abc!@#", "Jane", "Smith")
     channels_create_v1(auth2['auth_user_id'], "channel2", True)
-    num_channels = 0
     channels_list = channels_list_v1(auth_id)
-    for channel in channels_list['channels']:
-        num_channels += 1
-        assert channel['channel_id'] == channel1['channel_id']
-    assert num_channels == 1
-
+    assert len(channels_list['channels']) == 1
+    assert channels_list['channels'][0]['channel_id'] == channel1['channel_id']
 
 # AccessError is thrown when invalid user id is given
 def test_invalid_auth_user_id(clear_and_register_user):
