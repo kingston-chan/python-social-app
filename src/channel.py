@@ -8,11 +8,34 @@ from src.error import InputError, AccessError
 from src.data_store import data_store
 
 def channel_invite_v1(auth_user_id, channel_id, u_id):
+    """
+    Members of the channel can invite non-member users into their channel.
+
+    Arguments: 
+        auth_user_id (integer) - ID of the member of the channel
+        channel_id (integer) - ID of the channel
+        u_id (integer) - ID of the user being invited
+
+    Exceptions:
+        InputError - Occurs when given:
+                        - channel_id is not valid
+                        - u_id is not valid/is not a registered user
+                        - user (u_id) being invited is already a member of 
+                          the channel
+
+        AccessError - Occurs when given:
+                        - auth_user_id corresponding to the user is not a 
+                          member of the given channel
+        
+    Return Value:
+        Returns an empty dictionary on successfully inviting and adding user
+        into the channel
+    
+    """
     store = data_store.get()
     users = store['users']
     channels = store['channels']
 
-    #boolean operator
     valid_channel = 0
     valid_user = 0
     #checks for valid channel
@@ -40,7 +63,7 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     channel['all_members'].append(u_id)
     
     if user['permission'] == 1:
-        channel['owner__permissions'].append(u_id)   
+        channel['owner_permissions'].append(u_id)   
     
     data_store.set(store)
     
@@ -226,11 +249,11 @@ def assign_user_info(user_data_placeholder):
         'handle_str':user_data_placeholder['handle']
     }
 
-def check_valid_user(auth_user_id, users):
-    """Helper function to check if user is valid"""
+def check_valid_user(id, users):
+    """Helper function to check if user is valid and returns the user if valid"""
     user_exists = 0
     for user in users:
-        if auth_user_id == user['id']:
+        if id == user['id']:
             user_exists = 1
             break
     
