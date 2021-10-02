@@ -151,14 +151,38 @@ def channel_details_v1(auth_user_id, channel_id):
     return channel_details
 
 def channel_messages_v1(auth_user_id, channel_id, start):
-    # Checks if channel and start are valid inputs
+    """
+    Given a channel with ID channel_id that the authorised user is a member of, 
+    return up to 50 messages between index "start" and "start + 50".
+
+    Arguments: 
+        auth_user_id (integer) - ID of the member of the channel
+        channel_id (integer) - ID of the channel
+        start (integer) - The index number of the first message to be returned.
+
+    Exceptions:
+        InputError - Occurs when given:
+                        - channel_id does not refer to a valid channel
+                        - start is greater than the total number of 
+                          messages in the channel
+
+        AccessError - Occurs when given:
+                        - channel_id is valid and the authorised user is not 
+                          a member of the channe
+        
+    Return Values:
+        Returns a dictionary of a list of messages from index["start"] to
+        index["start+50"], the start value and the end value.
+    
+    """
+    # Checks if channel and start are valid inputs.
     channel_valid = False
     start_valid = False
     selected_channel = {}
     store = data_store.get()
     channels = store['channels']
 
-    # Scans if the channel exists
+    # Scans if the channel exists.
     for channel in channels:
         if channel['id'] == channel_id:
             channel_valid = True
@@ -174,7 +198,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     if start_valid is False:
         raise InputError("This start is not valid.")
     
-    # Checks if the authorised user is a member of the channel
+    # Checks if the authorised user is a member of the channel.
     member_valid = False
     for member in selected_channel['all_members']:
         if member == auth_user_id:
