@@ -62,7 +62,26 @@ def channels_listall_v1(auth_user_id):
     }
 
 def channels_create_v1(auth_user_id, name, is_public):
-    """Create a new channel, given a valid user id"""
+    """
+    Create a new channel, given a valid user id
+
+    Arguments: 
+        auth_user_id (integer) - id of user creating the channel
+        name (string) - chosen name of channel being created
+        is_public(boolean) - either private or public channel
+
+    Exceptions:
+        InputError - Occurs when given:
+                        - name for channel is not between 1 and 20
+                          characters inclusive
+                        - channel name already exists (case sensitive)
+        AccessError - Occurs when auth_user_id is invalid
+
+    Return Value:
+        Return a dictionary containing the channel id on successful 
+        creation of channel
+                        
+    """
     store = data_store.get()
     users = store['users']
     channels = store['channels']
