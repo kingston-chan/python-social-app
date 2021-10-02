@@ -5,10 +5,11 @@ import re
 def auth_login_v1(email, password):
     store = data_store.get()
     users = store['users']
-
+    # determine if the email has already been used
     if not dict_search(email, users, 'email'):
         raise InputError('Email does not exist')
     
+    # when the email is correct determine if the password matches
     for u in users:
         if u['email'] == email and not u['password'] == password:
             raise InputError('Password is incorrect')
@@ -66,10 +67,10 @@ def auth_register_v1(email, password, name_first, name_last):
     elif len(password) < 6:
         raise InputError('Password too short')
     
-    elif 50 < len(name_first) < 1:
+    elif not 1 <= len(name_first) <= 50:
         raise InputError('First name too long or short')
     
-    elif 50 < len(name_last) < 1:
+    elif not 1 <= len(name_last) <= 50:
         raise InputError('Last name too long or short')
     else:
         raise InputError('Email is an invalid format')
@@ -79,8 +80,8 @@ def auth_register_v1(email, password, name_first, name_last):
     }
 
 
-# function to search the data store for duplicate items
-def dict_search(item, users, type):
+# helper function to search the data store for duplicate items
+def dict_search(item, users, item_name):
     for u in users:
-        if u[type] == item:
+        if u[item_name] == item:
             return 1
