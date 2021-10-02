@@ -78,7 +78,8 @@ def channels_create_v1(auth_user_id, name, is_public):
         AccessError - Occurs when auth_user_id is invalid
 
     Return Value:
-        Return the channel id on successful creation of channel
+        Return a dictionary containing the channel id on successful 
+        creation of channel
                         
     """
     store = data_store.get()
