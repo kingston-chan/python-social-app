@@ -206,7 +206,7 @@ def channel_join_v1(auth_user_id, channel_id):
         raise AccessError("Channel is private")
     
     # Give channel owner permissions to global owners
-    if user['id'] == 1:
+    if user['permission'] == 1:
         channel['owner_permissions'].append(auth_user_id)
     
     channel['all_members'].append(auth_user_id)
