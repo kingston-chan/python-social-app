@@ -10,10 +10,10 @@ from src.data_store import data_store
 
 def user_exists(auth_user_id, users):
     """Helper function to verify user"""
-    user_exist = 0
+    user_exist = False
     for user in users:
         if user['id'] == auth_user_id:
-            user_exist = 1
+            user_exist = True
 
     if not user_exist:
         raise AccessError("User does not exist")
@@ -56,7 +56,21 @@ def channels_list_v1(auth_user_id):
     }
 
 def channels_listall_v1(auth_user_id):
-    """List all channels created, given a valid user id """
+    """
+    List all channels created, given a valid user id 
+    
+    Arguments:
+        auth_user_id (integer) - ID of the user requesting to list all channels.
+    
+    Exceptions:
+        InputError - Does not occur in this function
+        AccessError - Occurs when the user doesn't exist.
+    
+    Return Value:
+        Returns a list of dictionaries containing:
+            - channel_id (integer)
+            - name (string)
+    """
     # Grabs the items in the data_store
     store = data_store.get()
     channels = store['channels']
