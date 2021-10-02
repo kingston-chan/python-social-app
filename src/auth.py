@@ -67,10 +67,10 @@ def auth_register_v1(email, password, name_first, name_last):
     elif len(password) < 6:
         raise InputError('Password too short')
     
-    elif 50 < len(name_first) < 1:
+    elif not 1 <= len(name_first) <= 50:
         raise InputError('First name too long or short')
     
-    elif 50 < len(name_last) < 1:
+    elif not 1 <= len(name_last) <= 50:
         raise InputError('Last name too long or short')
     else:
         raise InputError('Email is an invalid format')
