@@ -19,7 +19,22 @@ def user_exists(auth_user_id, users):
         raise AccessError("User does not exist")
 
 def channels_list_v1(auth_user_id):
-    """List all channels that the user is a member of"""
+    """
+    List all channels that the user is a member of
+    
+    Arguments:
+        auth_user_id (integer) - id of user to list channels they are a member of
+
+    Exceptions:
+        InputError - does not occur in this function
+        AccessError - occurs when given auth_user_id is invalid
+
+    Return Value:
+        Returns a dictionary containing 'channels' which is a list of channels
+        containing the id and name of the channel the auth_user_id is a member of 
+        given that the auth_user_id is valid.
+
+    """
     store = data_store.get()
     users = store['users']
     channels = store['channels']
