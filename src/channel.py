@@ -202,7 +202,7 @@ def channel_join_v1(auth_user_id, channel_id):
         raise InputError("Already a member of channel")
 
     # Global members cannot join private channels
-    if channel['is_public'] == False and user['id'] == 2:
+    if channel['is_public'] is False and user['id'] == 2:
         raise AccessError("Channel is private")
     
     # Give channel owner permissions to global owners
