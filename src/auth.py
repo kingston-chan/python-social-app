@@ -3,8 +3,26 @@ from src.error import InputError
 import re
 
 def auth_login_v1(email, password):
+    """
+    Given a users email and password return their user id
+    
+    Arguments:
+        email (string) - the email input by the user
+        password (string) - the password input by the user
+
+    Exceptions:
+        InputError - occurs when the email does not exist in the data store or the 
+        password does not match the email
+        AccessError - does not occur in this function
+
+    Return Value:
+        Returns a dictionary containing the user id if the user has succesfully logged in
+
+    """
+
     store = data_store.get()
     users = store['users']
+
     # determine if the email has already been used
     if not dict_search(email, users, 'email'):
         raise InputError('Email does not exist')
@@ -18,7 +36,36 @@ def auth_login_v1(email, password):
 
 
 def auth_register_v1(email, password, name_first, name_last):
+    """
+    Given a users email, password, first name and last name, generate a handle and return their user id
     
+    Arguments:
+        email (string) - the email input by the user
+        password (string) - the password input by the user
+        name_first (string) - the first name input by the user
+        name_last (string) - the last name input by the user
+
+    Exceptions:
+        InputError - occurs if any of the following is satisfied:
+            - the email does not follow the specified format
+            - the password is shorter than 6 characters
+            - the first name is not between 1 and 50 characters inclusive
+            - the last name is not between 1 and 50 characters inclusive
+        AccessError - does not occur in this function
+
+    Return Value:
+        Returns a dictionary containing the user id
+        Adds the following information to data_store in a dictionary:
+            - email
+            - password
+            - name_first
+            - name_last
+            - handle
+            - id
+            - permission
+
+    """
+
     # Check for all input conditions to be correct
     if re.match(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$', email) and len(password) >= 6 and 1 <= len(name_first) <= 50 and 1 <= len(name_last) <= 50:
         
@@ -40,6 +87,7 @@ def auth_register_v1(email, password, name_first, name_last):
         if len(handle) > 20:
             handle = handle[:20]
 
+
         # search the data store for existing handles and produce a handle that has not
         # been taken already
         i = -1
@@ -49,11 +97,13 @@ def auth_register_v1(email, password, name_first, name_last):
             handle = handle[:handleCut]
             handle += str(i)
 
+
         # search the data store for existing u_id's and produce an id that has
         # not been taken already
         u_id = 1
         while dict_search(u_id, users, 'id'):
             u_id += 1
+
 
         # add all given data into a dictionary to be added to the data store
         user_dict = {'email': email, 'password': password, 'name_first': name_first, 'name_last': name_last, 'handle': handle, 'id': u_id, 'permission': permission}

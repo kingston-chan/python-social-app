@@ -1,5 +1,8 @@
 Assumptions:
 
+auth_register_v1:
+- accepts all characters for name_first, name_last and password, including leading and trailing whitespace
+
 channels_create_v1:
 - Cannot create channel with the same name (case sensitive)
 - Channel name accepts all characters
