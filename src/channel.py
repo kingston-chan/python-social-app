@@ -1,3 +1,9 @@
+"""
+Various methods to interact with channels such as inviting users to the channel,
+returning the details of the channel, joining channels and returning messages 
+of the channel
+"""
+
 from src.error import InputError, AccessError
 from src.data_store import data_store
 
@@ -13,7 +19,8 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     for channel in channels:
         if channel_id == channel['id']:
             valid_channel = 1
-            if auth_user_id not in channel['all_members']: #checks to see authorised member is sending channel invitation
+            #checks to see authorised member is sending channel invitation
+            if auth_user_id not in channel['all_members']: 
                 raise AccessError("not authorised user")
             break
     if valid_channel == 0:
@@ -47,13 +54,7 @@ def channel_details_v1(auth_user_id, channel_id):
     channel_details = {}
 
     # Checks if user exist
-    user_exists = 0
-    for user in users:
-        if user['id'] == auth_user_id:
-            user_exists = 1
-    
-    if not user_exists:
-        raise AccessError("User does not exist")
+    check_valid_user(auth_user_id, users)
     
     channel_exists = 0
     owner_ids = None
@@ -158,56 +159,82 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     }
     
 def channel_join_v1(auth_user_id, channel_id):
+    """
+    Auth_user_id joins the channel by being appended to the channels
+    members' list.
+
+    Arguments:
+    auth_user_id (<integer>) - id of the user joining the channel
+    channel_id (<integer>) - id of the channel
+
+    Exceptions:
+    InputError - Occurs when given:
+                    - channel_id does not exist/invalid
+                    - auth_user_id is already a member of the channel
+    AccessError - Occurs when given:
+                    - auth_user_id does not exist/invalid
+                    - channel_id corresponding to channel is private and 
+                      the user is not a global owner or a member of the 
+                      channel
+
+    Return value:
+        Returns an empty dictionary when user successfully joins the channel
+    """
     
     store = data_store.get()
     users = store['users']
     channels = store['channels']
-    
-    checklist = []
-    for user in users:
-        if auth_user_id == user['id']:
-            checklist.append(1)
-        else:
-            checklist.append(0)
-    if 1 not in checklist:
-        raise InputError("Invalid user")
 
-    checklist.clear()
+    # Check if user is valid
+    user = check_valid_user(auth_user_id, users)
     
+    # Check if channel is valid
+    channel_exists = 0
     for channel in channels:
         if channel_id == channel['id']:
-            checklist.append(1)
-        else:
-            checklist.append(0)
+            channel_exists = 1
+            break
         
-    if 1 not in checklist:
-        raise AccessError("Invalid Channel ID")
-        
-    checklist.clear()
+    if not channel_exists:
+        raise InputError("Invalid Channel ID")
     
-    for channel in channels:
-        if channel_id == channel['id']:
-            if auth_user_id in channel['all_members']:
-                raise InputError("Already a member of channel")
-        
-            if channel['is_public'] != True:
-                raise AccessError("Channel is private")
-                
-    for channel in channels:
-        if channel_id == channel['id']: 
-            channel['all_members'].append(auth_user_id)
+    if auth_user_id in channel['all_members']:
+        raise InputError("Already a member of channel")
 
+    # Global members cannot join private channels
+    if channel['is_public'] == False and user['id'] == 2:
+        raise AccessError("Channel is private")
+    
+    # Give channel owner permissions to global owners
+    if user['id'] == 1:
+        channel['owner_permissions'].append(auth_user_id)
+    
+    channel['all_members'].append(auth_user_id)
+    
     data_store.set(store)
-        
-    checklist.clear()        
+
     return {}
 
-# Assigns the user information with the appropriate key names required in the spec.
+
 def assign_user_info(user_data_placeholder):
-    return  {
+    """Assigns the user information with the appropriate key names required in the spec"""
+    return {
         'u_id': user_data_placeholder['id'],
         'email': user_data_placeholder['email'],
         'name_first': user_data_placeholder['name_first'],
         'name_last': user_data_placeholder['name_last'],
         'handle_str':user_data_placeholder['handle']
     }
+
+def check_valid_user(auth_user_id, users):
+    """Helper function to check if user is valid"""
+    user_exists = 0
+    for user in users:
+        if auth_user_id == user['id']:
+            user_exists = 1
+            break
+    
+    if not user_exists:
+        raise AccessError("User is not authorised.")
+    else:
+        return user
