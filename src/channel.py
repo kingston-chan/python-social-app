@@ -8,11 +8,34 @@ from src.error import InputError, AccessError
 from src.data_store import data_store
 
 def channel_invite_v1(auth_user_id, channel_id, u_id):
+    """
+    Members of the channel can invite non-member users into their channel.
+
+    Arguments: 
+        auth_user_id (integer) - ID of the member of the channel
+        channel_id (integer) - ID of the channel
+        u_id (integer) - ID of the user being invited
+
+    Exceptions:
+        InputError - Occurs when given:
+                        - channel_id is not valid
+                        - u_id is not valid/is not a registered user
+                        - user (u_id) being invited is already a member of 
+                          the channel
+
+        AccessError - Occurs when given:
+                        - auth_user_id corresponding to the user is not a 
+                          member of the given channel
+        
+    Return Value:
+        Returns an empty dictionary on successfully inviting and adding user
+        into the channel
+    
+    """
     store = data_store.get()
     users = store['users']
     channels = store['channels']
 
-    #boolean operator
     valid_channel = 0
     valid_user = 0
     #checks for valid channel
@@ -40,13 +63,40 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     channel['all_members'].append(u_id)
     
     if user['permission'] == 1:
-        channel['owner__permissions'].append(u_id)   
+        channel['owner_permissions'].append(u_id)   
     
     data_store.set(store)
     
     return {}
 
 def channel_details_v1(auth_user_id, channel_id):
+    """
+    If the authorised user is a member of the channel with 'channel_id', 
+    provide basic details about the channel.
+
+    Arguments:
+        auth_user_id (integer) - ID of the user requesting for channel details.
+        channel_id (integer) - ID of the channel requested for channel details.
+    
+    Exceptions:
+        InputError - Occurs when channel_id does not refer to a valid channel.
+        AccessError - Occurs when channel_id is valid but the authorised user is
+        not a member of the channel.
+    
+    Return Value:
+        Returns 'channel_details', 
+        a dictionary containing the following information about the channel:
+            - name (string)
+            - is_public (boolean)
+            - owner_members (list of dictionaries)
+            - all_members (list of dictionaries)
+        Both list of dictionaries contain the following:
+            - u_id (integer)
+            - email (string)
+            - name_first (string)
+            - name_last (string)
+            - handle_str (string)
+    """
     # Grabbing the items from the data_store.
     store = data_store.get()
     channels = store['channels']
@@ -56,7 +106,7 @@ def channel_details_v1(auth_user_id, channel_id):
     # Checks if user exist
     check_valid_user(auth_user_id, users)
     
-    channel_exists = 0
+    channel_exists = False
     owner_ids = None
     all_members_ids = None
 
@@ -64,7 +114,7 @@ def channel_details_v1(auth_user_id, channel_id):
     # Also checks if a channel exists.
     for channel in channels:
         if channel["id"] == channel_id:
-            channel_exists = 1
+            channel_exists = True
             channel_details["name"] = channel["name"]
             channel_details["is_public"] = channel["is_public"]
             channel_details["owner_members"] = []
@@ -87,13 +137,13 @@ def channel_details_v1(auth_user_id, channel_id):
             user_info = assign_user_info(user_data)
             channel_details["all_members"].append(user_info)
 
-    an_invited_member = 0
+    an_invited_member = False
     members = channel_details["all_members"]
 
     # Checks if the user is apart of the channel.
     for member in members:
         if member["u_id"] == auth_user_id:
-            an_invited_member = 1
+            an_invited_member = True
 
     if not an_invited_member:
         raise AccessError("User is not a member of the channel")
@@ -101,14 +151,38 @@ def channel_details_v1(auth_user_id, channel_id):
     return channel_details
 
 def channel_messages_v1(auth_user_id, channel_id, start):
-    # Checks if channel and start are valid inputs
+    """
+    Given a channel with ID channel_id that the authorised user is a member of, 
+    return up to 50 messages between index "start" and "start + 50".
+
+    Arguments: 
+        auth_user_id (integer) - ID of the member of the channel
+        channel_id (integer) - ID of the channel
+        start (integer) - The index number of the first message to be returned.
+
+    Exceptions:
+        InputError - Occurs when given:
+                        - channel_id does not refer to a valid channel
+                        - start is greater than the total number of 
+                          messages in the channel
+
+        AccessError - Occurs when given:
+                        - channel_id is valid and the authorised user is not 
+                          a member of the channe
+        
+    Return Values:
+        Returns a dictionary of a list of messages from index["start"] to
+        index["start+50"], the start value and the end value.
+    
+    """
+    # Checks if channel and start are valid inputs.
     channel_valid = False
     start_valid = False
     selected_channel = {}
     store = data_store.get()
     channels = store['channels']
 
-    # Scans if the channel exists
+    # Scans if the channel exists.
     for channel in channels:
         if channel['id'] == channel_id:
             channel_valid = True
@@ -124,7 +198,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     if start_valid is False:
         raise InputError("This start is not valid.")
     
-    # Checks if the authorised user is a member of the channel
+    # Checks if the authorised user is a member of the channel.
     member_valid = False
     for member in selected_channel['all_members']:
         if member == auth_user_id:
@@ -226,12 +300,12 @@ def assign_user_info(user_data_placeholder):
         'handle_str':user_data_placeholder['handle']
     }
 
-def check_valid_user(auth_user_id, users):
-    """Helper function to check if user is valid"""
-    user_exists = 0
+def check_valid_user(id, users):
+    """Helper function to check if user is valid and returns the user if valid"""
+    user_exists = False
     for user in users:
-        if auth_user_id == user['id']:
-            user_exists = 1
+        if id == user['id']:
+            user_exists = True
             break
     
     if not user_exists:
