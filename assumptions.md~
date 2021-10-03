@@ -14,5 +14,3 @@ channel_message_v1:
 channel_invite_v1:
 - For iteration 1, none of the user id  present in the users list of dictionary were ever equal in number value
 
-channel_join_v1:
-- For iteration 1, none of the channel id  present in the channels list of dictionary were ever equal in number value
