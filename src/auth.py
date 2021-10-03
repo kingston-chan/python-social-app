@@ -91,10 +91,10 @@ def auth_register_v1(email, password, name_first, name_last):
         # search the data store for existing handles and produce a handle that has not
         # been taken already
         i = -1
-        handle_cut = len(handle)
+        handleCut = len(handle)
         while dict_search(handle, users, 'handle'):
             i += 1
-            handle = handle[:handle_cut]
+            handle = handle[:handleCut]
             handle += str(i)
 
 
