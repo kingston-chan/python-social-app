@@ -63,4 +63,4 @@ tests/test_channels_listall_v1.py::test_listall_no_channels PASSED       [100%]
 ====== Marks recorded: 53.00 ======
 
 
-============================== 53 passed in 0.26s ==============================
+============================== 53 passed in 0.24s ==============================
