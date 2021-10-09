@@ -17,7 +17,7 @@ def register_second_user():
 
 def test_details_invalid_channel_id(clear_and_register_user):
     user_data = clear_and_register_user
-    channel_id_1 = channels_create_v1(user_data["auth_user_id"], "channel_1", False)
+    channels_create_v1(user_data["auth_user_id"], "channel_1", False)
     invalid_channel_id = 99999
     with pytest.raises(InputError):
         channel_details_v1(user_data["auth_user_id"], invalid_channel_id)

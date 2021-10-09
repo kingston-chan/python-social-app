@@ -35,10 +35,10 @@ def test_listall_private_channels(clear_and_register_user):
 def test_listall_unauthorised_user_data(clear_and_register_user):
     user_data = clear_and_register_user
 
-    channel_1 = channels_create_v1(user_data['auth_user_id'], "channel_1", True)
-    channel_2 = channels_create_v1(user_data['auth_user_id'], "channel_2", False)
-    channel_3 = channels_create_v1(user_data['auth_user_id'], "channel_3", True)
-    channel_4 = channels_create_v1(user_data['auth_user_id'], "channel_4", False)
+    channels_create_v1(user_data['auth_user_id'], "channel_1", True)
+    channels_create_v1(user_data['auth_user_id'], "channel_2", False)
+    channels_create_v1(user_data['auth_user_id'], "channel_3", True)
+    channels_create_v1(user_data['auth_user_id'], "channel_4", False)
 
     fake_user_data = 999999
 
