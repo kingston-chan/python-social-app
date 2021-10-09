@@ -96,7 +96,7 @@ def test_ch_mess_public_channel(clear_and_create_user1):
 def test_ch_mess_private_channel(clear_and_create_user1, create_user2):
     user1 = clear_and_create_user1
     user2 = create_user2
-    channel1 = create_channel1(user1)
+    create_channel1(user1)
     channel2 = create_channel2(user2)
     # assert
     assert channel_messages_v1(user2, channel2['channel_id'], 0) == {
