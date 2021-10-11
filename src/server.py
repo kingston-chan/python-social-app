@@ -151,7 +151,7 @@ def dm_remove():
 
 # dm/details/v1
 @APP.route("/dm/details/v1", methods=['GET'])
-def login():
+def dm_details():
     return {}
 
 # dm/leave/v1
