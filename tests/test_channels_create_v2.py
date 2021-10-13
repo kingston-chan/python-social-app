@@ -2,7 +2,7 @@ import requests, pytest
 
 BASE_URL = 'http://127.0.0.1:8080'
 
-@pytest.fixtures
+@pytest.fixture
 def clear_and_register():
     requests.delete(f"{BASE_URL}/clear/v1")
 
