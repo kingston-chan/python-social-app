@@ -41,11 +41,10 @@ def test_listall_private_channels():
     response_data = response.json()
     
     expected_info = {
-        "channel_id": channel_1,
-        "name": "channel_1"
+        "channels": [channel_1, channel_2],
     }
 
-    assert response_data["channels"][0] == expected_info
+    assert response_data == expected_info
 
 def test_listall_public_channels():
     requests.delete(f"{BASE_URL}/clear/v1")
@@ -85,11 +84,10 @@ def test_listall_public_channels():
     response_data = response.json()
     
     expected_info = {
-        "channel_id": channel_1,
-        "name": "channel_1"
+        "channels": [channel_1, channel_2],
     }
 
-    assert response_data["channels"][0] == expected_info
+    assert response_data == expected_info
 
 def test_listall_private_and_public_channels():
     requests.delete(f"{BASE_URL}/clear/v1")
@@ -129,11 +127,10 @@ def test_listall_private_and_public_channels():
     response_data = response.json()
     
     expected_info = {
-        "channel_id": channel_1,
-        "name": "channel_1"
+        "channels": [channel_1, channel_2],
     }
     
-    assert response_data["channels"][0] == expected_info
+    assert response_data == expected_info
 
 def test_unauthorised_token():
     requests.delete(f"{BASE_URL}/clear/v1")
@@ -156,8 +153,6 @@ def test_unauthorised_token():
     }
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
-    response_data = response.json()
-    channel_1 = response_data["channel_id"]
 
     response = requests.get(f"{BASE_URL}/channels/listall/v2", json={"token": "oiasjfoaifj"})
-    assert response.status_code == 400
+    assert response.status_code == 403
