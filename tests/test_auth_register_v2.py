@@ -175,7 +175,7 @@ def test_register_valid_multiple_identical():
     assert response_data["auth_user_id"] == 1
 
     user_data2 = {
-        "email": "email@email.com",
+        "email": "email2@email.com",
         "password": "password",
         "name_first": "Julian",
         "name_last": "Winzer"
