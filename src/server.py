@@ -5,6 +5,8 @@ from flask import Flask, request
 from flask_cors import CORS
 from src.error import InputError
 from src import config
+from src.data_store import data_store
+import pickle, json
 
 def quit_gracefully(*args):
     '''For coverage'''
@@ -27,6 +29,7 @@ CORS(APP)
 APP.config['TRAP_HTTP_EXCEPTIONS'] = True
 APP.register_error_handler(Exception, defaultHandler)
 
+
 #### NO NEED TO MODIFY ABOVE THIS POINT, EXCEPT IMPORTS
 
 # Example
@@ -38,6 +41,21 @@ APP.register_error_handler(Exception, defaultHandler)
 #     return dumps({
 #         'data': data
 #     })
+
+def save():
+    store = data_store.get()
+    with open("datastore.json", "wb") as FILE:
+        json.dump(store, FILE)
+
+data = {}
+
+try:
+    data = json.load(open("datastore.json", "rb"))
+except Exception:
+    pass
+
+if data:
+    data_store.set(data)
 
 #====== auth.py =====#
 
