@@ -30,6 +30,8 @@ def test_can_create_channel(clear_and_register):
     }
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_info)
+    assert response.status_code == 200
+    
     response_data = response.json()
     channel1_id = response_data['channel_id']
 
