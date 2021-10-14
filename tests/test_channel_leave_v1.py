@@ -38,7 +38,7 @@ def list_all_channels(token):
     return requests.get(f"{BASE_URL}/channels/list/v2", params={ "token": token }).json()
 
 # Leave the given channel
-def leave_channel(token, channel_id)
+def leave_channel(token, channel_id):
     return requests.post(f"{BASE_URL}/channels/list/v2", json={ "token": token, "channel_id": channel_id })
 
 @pytest.fixture
