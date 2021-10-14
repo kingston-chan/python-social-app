@@ -3,8 +3,13 @@ import signal
 from json import dumps
 from flask import Flask, request
 from flask_cors import CORS
-from src.error import InputError
+from src.error import InputError, AccessError
 from src import config
+from src.channels import channels_create_v1
+from src.data_store import data_store
+import jwt
+
+HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
 def quit_gracefully(*args):
     '''For coverage'''
@@ -39,6 +44,11 @@ APP.register_error_handler(Exception, defaultHandler)
 #         'data': data
 #     })
 
+store = data_store.get()
+users = store["users"]
+channels = store["channels"]
+sessions = store["sessions"]
+
 #====== auth.py =====#
 
 # auth/login/v2
@@ -61,7 +71,14 @@ def auth_logout():
 # channels/create/v2
 @APP.route("/channels/create/v2", methods=['POST'])
 def channels_create():
-    return {}
+    data = request.get_json()
+    user_session = jwt.decode(data["token"], HASHCODE, algorithms=['HS256'])
+    if user_session is None:
+        raise AccessError("Invalid JWT token")
+    if not user_session["session_id"] in sessions:
+        raise AccessError("Invalid session id")
+    new_channel = channels_create_v1(user_session["user_id"], data["name"], data["is_public"])
+    return dumps(new_channel)
 
 # channels/list/v2
 @APP.route("/channels/list/v2", methods=['GET'])
