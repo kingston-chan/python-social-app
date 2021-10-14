@@ -5,6 +5,11 @@ from flask import Flask, request
 from flask_cors import CORS
 from src.error import InputError
 from src import config
+from src.auth import auth_register_v1
+import jwt
+from src.other import clear_v1
+
+HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
 def quit_gracefully(*args):
     '''For coverage'''
@@ -49,7 +54,11 @@ def auth_login():
 # auth/register/v2
 @APP.route("/auth/register/v2", methods=['POST'])
 def auth_register():
-    return {}
+    info = request.get_json()
+    user_info = auth_register_v1(info['email'], info['password'], info['name_first'], info['name_last'])
+    #print(jwt.decode(user_info['token'], HASHCODE, algorithms=['HS256']))
+    return dumps(user_info)
+
 
 # auth/logout/v1
 @APP.route("/auth/logout/v1", methods=['POST'])
@@ -207,8 +216,9 @@ def admin_userpermission_change():
 
 # clear/v1
 @APP.route("/clear/v1", methods=['DELETE'])
-def clear_v1():
-    return {}
+def clear():
+    clear_v1()
+    return dumps({})
 
 #### NO NEED TO MODIFY BELOW THIS POINT
 
