@@ -1,6 +1,6 @@
 import requests
 
-BASE_URL = 'http://127.0.0.1:8080'
+BASE_URL = 'http://127.0.0.1:6969'
 
 # Invalid input tests:
 
@@ -106,9 +106,9 @@ def test_register_valid_input():
     }
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json
+    response_data = response.json()
 
-    assert response_data["users"][0]["auth_user_id"] == 1
+    assert response_data["auth_user_id"] == 1
     #assert response_data["users"][0]["token"] == token
 
 def test_register_valid_numbers():
@@ -122,9 +122,9 @@ def test_register_valid_numbers():
     }
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json
+    response_data = response.json()
 
-    assert response_data["users"][0]["auth_user_id"] == 1
+    assert response_data["auth_user_id"] == 1
     #assert response_data["users"][0]["token"] == token
 
 def test_register_valid_symbols():
@@ -138,9 +138,9 @@ def test_register_valid_symbols():
     }
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json
+    response_data = response.json()
 
-    assert response_data["users"][0]["auth_user_id"] == 1
+    assert response_data["auth_user_id"] == 1
     #assert response_data["users"][0]["token"] == token
 
 def test_register_valid_spaces():
@@ -154,9 +154,9 @@ def test_register_valid_spaces():
     }
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json
+    response_data = response.json()
 
-    assert response_data["users"][0]["auth_user_id"] == 1
+    assert response_data["auth_user_id"] == 1
     #assert response_data["users"][0]["token"] == token
 
 def test_register_valid_multiple_identical():
@@ -170,9 +170,9 @@ def test_register_valid_multiple_identical():
     }
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json
+    response_data = response.json()
 
-    assert response_data["users"][0]["auth_user_id"] == 1
+    assert response_data["auth_user_id"] == 1
 
     user_data2 = {
         "email": "email@email.com",
@@ -182,9 +182,9 @@ def test_register_valid_multiple_identical():
     }
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data2)
-    response_data = response.json
+    response_data = response.json()
 
-    assert response_data["users"][0]["auth_user_id"] == 2
+    assert response_data["auth_user_id"] == 2
 
 
     #assert response_data["users"][0]["token"] == token
