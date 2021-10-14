@@ -33,7 +33,10 @@ def test_list_all_users():
     user3_id = response_data["auth_user_id"] 
 
     response = requests.get(f"{BASE_URL}/users/all/v1", json={ "token": user_token1 })
+    assert response.status_code == 200
+
     response_data = response.json()
+
     assert len(response_data["users"]) == 3
 
     assert response_data["users"][0]["u_id"] == user1_id
