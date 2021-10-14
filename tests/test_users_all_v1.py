@@ -32,7 +32,7 @@ def test_list_all_users():
     response_data = response.json()
     user3_id = response_data["auth_user_id"] 
 
-    response = requests.get(f"{BASE_URL}/users/all/v1", json={ "token": user_token1 })
+    response = requests.get(f"{BASE_URL}/users/all/v1", params={ "token": user_token1 })
     assert response.status_code == 200
 
     response_data = response.json()
@@ -56,5 +56,5 @@ def test_list_all_users():
 # Invalid token
 def test_invalid_token():
     requests.delete(f"{BASE_URL}/clear/v1")
-    response = requests.get(f"{BASE_URL}/users/all/v1", json={ "token": "invalidtoken" })
+    response = requests.get(f"{BASE_URL}/users/all/v1", params={ "token": "invalidtoken" })
     assert response.status_code == 400
