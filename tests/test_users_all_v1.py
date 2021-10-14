@@ -2,34 +2,30 @@ import pytest, requests
 
 BASE_URL = 'http://127.0.0.1:8080'
 
+# ==== Helper function ==== #
+def register_user(email, password, first_name, last_name):
+    user_info = {
+        "email": email, 
+        "password": password, 
+        "name_first": first_name, 
+        "name_last": last_name
+    }
+    return requests.post(f"{BASE_URL}/auth/register/v2", json=user_info).json()
+
 # ==== Tests with correct input ==== #
 
 # Lists all users given valid token
 def test_list_all_users():
     requests.delete(f"{BASE_URL}/clear/v1")
 
-    user_info = {
-        "email": "random@gmail.com", 
-        "password": "123abc!@#", 
-        "name_first": "John", 
-        "name_last": "Smith"
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_info)
-    response_data = response.json()
+    response_data = register_user("random@gmail.com", "123abc!@#", "John", "Smith")
     user_token1 = response_data["token"]
     user1_id = response_data["auth_user_id"]
 
-    user_info["email"] = "random1@gmail.com"
-    user_info["name_first"] = "Bob"
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_info)
-    response_data = response.json()
-    user2_id = response_data["auth_user_id"] 
+    response_data = register_user("random1@gmail.com", "123abc!@#", "Bob", "Smith")
+    user2_id = response_data["auth_user_id"]
 
-    user_info["email"] = "random2@gmail.com"
-    user_info["name_first"] = "Dan"
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_info)
-    response_data = response.json()
+    response_data = register_user("random1@gmail.com", "123abc!@#", "Dan", "Smith")
     user3_id = response_data["auth_user_id"] 
 
     response = requests.get(f"{BASE_URL}/users/all/v1", params={ "token": user_token1 })
