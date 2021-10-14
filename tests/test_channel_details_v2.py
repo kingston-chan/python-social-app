@@ -27,7 +27,7 @@ def test_details_invalid_channel_id():
 
     fake_channel_id = 9999
 
-    response = requests.get(f"{BASE_URL}/channel/details/v2", json={"token": user_token, "channel_id": fake_channel_id})
+    response = requests.get(f"{BASE_URL}/channel/details/v2", params={"token": user_token, "channel_id": fake_channel_id})
 
     assert response.status_code == 400
 
@@ -66,7 +66,7 @@ def test_details_uninvited_member():
     response_data = response.json()
     channel_1 = response_data["channel_id"]
 
-    response = requests.get(f"{BASE_URL}/channel/details/v2", json={"token": uninvited_user_token, "channel_id": channel_1})
+    response = requests.get(f"{BASE_URL}/channel/details/v2", params={"token": uninvited_user_token, "channel_id": channel_1})
     assert response.status_code == 403
 
 def test_details_valid_channel_id():
@@ -117,7 +117,7 @@ def test_details_valid_channel_id():
         ]
     }
 
-    response = requests.get(f"{BASE_URL}/channel/details/v2", json={"token": user_token, "channel_id": channel_1})
+    response = requests.get(f"{BASE_URL}/channel/details/v2", params={"token": user_token, "channel_id": channel_1})
     response_data = response.json()
     assert response_data == expected_output
 
@@ -147,7 +147,7 @@ def test_details_unauthorised_user():
 
     fake_user_token = "asfapasokfapok"
 
-    response = requests.get(f"{BASE_URL}/channel/details/v2", json={"token": fake_user_token, "channel_id": channel_1})
+    response = requests.get(f"{BASE_URL}/channel/details/v2", params={"token": fake_user_token, "channel_id": channel_1})
     assert response.status_code == 403
 
 def test_details_invited_member():
@@ -225,6 +225,6 @@ def test_details_invited_member():
         ]
     }
 
-    response = requests.get(f"{BASE_URL}/channel/details/v2", json={"token": invited_user_token, "channel_id": channel_1})
+    response = requests.get(f"{BASE_URL}/channel/details/v2", params={"token": invited_user_token, "channel_id": channel_1})
     response_data = response.json()
     assert response_data == expected_output
