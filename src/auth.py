@@ -152,4 +152,4 @@ def create_session():
 def create_jwt(u_id, session_id = None):
     if session_id is None:
         session_id = create_session()
-    return jwt.encode({'id': u_id, 'session_id': session_id}, HASHCODE, algorithm='HS256')
+    return jwt.encode({'user_id': u_id, 'session_id': session_id}, HASHCODE, algorithm='HS256')
