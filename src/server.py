@@ -5,6 +5,7 @@ from flask import Flask, request
 from flask_cors import CORS
 from src.error import InputError
 from src import config
+from src.other import clear_v1
 
 def quit_gracefully(*args):
     '''For coverage'''
@@ -207,8 +208,9 @@ def admin_userpermission_change():
 
 # clear/v1
 @APP.route("/clear/v1", methods=['DELETE'])
-def clear_v1():
-    return {}
+def clear():
+    clear_v1()
+    return dumps({})
 
 #### NO NEED TO MODIFY BELOW THIS POINT
 
