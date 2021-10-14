@@ -2,6 +2,9 @@ from src.data_store import data_store
 
 def clear_v1():
     store = data_store.get()
-    store['users'] = []
-    store['channels'] = []
+    store['users'].clear()
+    store['sessions'].clear()
+    store['dms'].clear()
+    store['channels'].clear()
+    store['message_count'] = 0
     data_store.set(store)
