@@ -35,7 +35,7 @@ def test_can_create_channel(clear_and_register):
     response_data = response.json()
     channel1_id = response_data['channel_id']
 
-    response = requests.get(f"{BASE_URL}/channels/list/v2", json={ "token": user_token })
+    response = requests.get(f"{BASE_URL}/channels/list/v2", params={ "token": user_token })
     response_data = response.json()
     
     assert response_data["channels"][0]["channel_id"] == channel1_id
