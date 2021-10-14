@@ -6,7 +6,7 @@ from flask_cors import CORS
 from src.error import InputError
 from src import config
 from src.data_store import data_store
-import pickle, json
+import json
 from src.other import clear_v1
 
 def quit_gracefully(*args):
