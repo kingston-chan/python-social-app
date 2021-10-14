@@ -38,7 +38,9 @@ def test_user_list_channel(clear_and_register):
     response_data = response.json()
     channel2_id = response_data["channel_id"]
 
-    response = requests.get(f"{BASE_URL}/channels/list/v2", json={ "token": user_token })
+    response = requests.get(f"{BASE_URL}/channels/list/v2", params={ "token": user_token })
+    assert response.status_code == 200
+
     response_data = response.json()
     assert len(response_data["channels"]) == 2
     assert response_data["channels"][0]["channel_id"] == channel1_id
@@ -74,7 +76,7 @@ def test_only_list_authorised_user_channels(clear_and_register):
 
     requests.post(f"{BASE_URL}/channels/create/v2", json=channel_info)
 
-    response = requests.get(f"{BASE_URL}/channels/list/v2", json={ "token": user_token1 })
+    response = requests.get(f"{BASE_URL}/channels/list/v2", params={ "token": user_token1 })
     response_data = response.json()
     assert len(response_data["channels"]) == 1
     assert response_data["channels"][0]["channel_id"] == channel1_id
@@ -85,7 +87,7 @@ def test_only_list_authorised_user_channels(clear_and_register):
 # Invalid token
 def test_invalid_token():
     requests.delete(f"{BASE_URL}/clear/v1")
-    response = requests.get(f"{BASE_URL}/channels/list/v2", json={ "token": "invalidtoken" })
+    response = requests.get(f"{BASE_URL}/channels/list/v2", params={ "token": "invalidtoken" })
     assert response.status_code == 400
 
 
