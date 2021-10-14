@@ -7,6 +7,7 @@ from src.error import InputError
 from src import config
 from src.auth import auth_register_v1
 import jwt
+from src.other import clear_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -215,8 +216,10 @@ def admin_userpermission_change():
 
 # clear/v1
 @APP.route("/clear/v1", methods=['DELETE'])
-def clear_v1():
-    return {}
+def clear():
+    clear_v1()
+    return dumps({})
+
 
 #### NO NEED TO MODIFY BELOW THIS POINT
 
