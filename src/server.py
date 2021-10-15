@@ -49,17 +49,13 @@ APP.register_error_handler(Exception, defaultHandler)
 
 def save():
     store = data_store.get()
-    with open("datastore.json", "wb") as FILE:
+    with open("datastore.json", "w") as FILE:
         json.dump(store, FILE)
-
-def clear_file():
-    with open("datastore.json", "wb") as FILE:
-        json.dump({}, FILE)
 
 data = {}
 
 try:
-    data = json.load(open("datastore.json", "rb"))
+    data = json.load(open("datastore.json", "r"))
 except Exception:
     pass
 
@@ -240,7 +236,7 @@ def admin_userpermission_change():
 @APP.route("/clear/v1", methods=['DELETE'])
 def clear():
     clear_v1()
-    clear_file()
+    save()
     return dumps({})
 
 #### NO NEED TO MODIFY BELOW THIS POINT
