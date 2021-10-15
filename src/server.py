@@ -7,7 +7,10 @@ from src.error import InputError, AccessError
 from src import config
 from src.channels import channels_create_v1
 from src.data_store import data_store
+from src.auth import auth_register_v1
 import jwt
+from src.other import clear_v1
+import ast
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -59,7 +62,11 @@ def auth_login():
 # auth/register/v2
 @APP.route("/auth/register/v2", methods=['POST'])
 def auth_register():
-    return {}
+    info = request.get_json()
+    user_info = auth_register_v1(info['email'], info['password'], info['name_first'], info['name_last'])
+    #print(jwt.decode(user_info['token'], HASHCODE, algorithms=['HS256']))
+    return dumps(user_info)
+
 
 # auth/logout/v1
 @APP.route("/auth/logout/v1", methods=['POST'])
@@ -77,7 +84,7 @@ def channels_create():
         raise AccessError("Invalid JWT token")
     if not user_session["session_id"] in sessions:
         raise AccessError("Invalid session id")
-    new_channel = channels_create_v1(user_session["user_id"], data["name"], data["is_public"])
+    new_channel = channels_create_v1(user_session["user_id"], data["name"], ast.literal_eval(data["is_public"]))
     return dumps(new_channel)
 
 # channels/list/v2
@@ -224,8 +231,9 @@ def admin_userpermission_change():
 
 # clear/v1
 @APP.route("/clear/v1", methods=['DELETE'])
-def clear_v1():
-    return {}
+def clear():
+    clear_v1()
+    return dumps({})
 
 #### NO NEED TO MODIFY BELOW THIS POINT
 
