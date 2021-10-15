@@ -110,7 +110,24 @@ def channel_details():
 # channel/join/v2
 @APP.route("/channel/join/v2", methods=['POST'])
 def channel_join():
-    return {}
+    store = data_store.get()
+    sessions = store["sessions"]
+    users = store["users"]
+    channel = store["channels"]
+    data = request.get_json()
+    user_sessions = {}
+    try:
+        user_sessions = jwt.decode(data["token"], HASHCODE, algorithms=["HS256"])
+    except Exception:
+        raise AccesError("Invalid JWT")
+    if not user_session["sessions_id"] in sessions[user_session["user_id"]]:
+        raise AccessError("Invalid sessions")
+    if data["channel_id"] not in channel:
+        raise InputError("Invalid vhannel ID")
+    else:
+        channel_join_v1(user_sessions["user_id"], data["channel_id"]   
+        save()
+    return dumps({})     
 
 # channel/invite/v2
 @APP.route("/channel/invite/v2", methods=['POST'])
