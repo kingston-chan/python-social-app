@@ -1,7 +1,7 @@
 import pytest
 import requests
 from src.config import url
-from src.error import InputError, AccessError
+import datetime 
 
 BASE_URL = url
 # 403 - > access
@@ -14,7 +14,7 @@ def clear():
     response = requests.delete(f"{BASE_URL}/clear/v1")
 
 @pytest.fixture
-def create_user1():
+def user1():
     '''
     clear_v1()
     user = auth_register(
@@ -35,7 +35,7 @@ def create_user1():
     return response.json()
 
 @pytest.fixture
-def create_user2():
+def user2():
     '''
     user = auth_register(
         "fakeguytwo@fakeemail.com",
@@ -95,79 +95,71 @@ def send_message(token, channel_id, message):
         'message': message,
     }
     response = requests.post(f"{BASE_URL}/message/send/v1", json=message_dict)
-    return response.json()
-
+    time = datetime.datetime.now()
+    return response.json(), time
 
 # tests - errors
-def test_ch_mess_error_channel_invalid(clear, create_user1):
+def test_ch_mess_error_channel_invalid(clear, user1):
     # no channel created
     # raise error
-    with pytest.raises(InputError):
-        # channel_messages_v1(user, 1, 0)
-        messages_dict = {
-            "token": create_user1, 
-            "channel_id": 1, 
-            "start": 0, 
-        }
-        requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
-
-def test_ch_mess_incorrect_start(clear, create_user1):
-    channel = create_channel1(create_user1['token'])
-    # raise error
-    # channel_messages_v1(user, channel['channel_id'], 100)
+    # channel_messages_v1(user, 1, 0)
     messages_dict = {
-        "token": create_user1['token'], 
-        "channel_id": channel['channel_id'], 
-        "start": 100, 
+        "token": user1['token'], 
+        "channel_id": 1, 
+        "start": 0, 
     }
     response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
 
     assert response.status_code == 400
 
-def test_ch_mess_error_member_invalid(clear_and_create_user1, create_user2):
+def test_ch_mess_incorrect_start(clear, user1):
+    channel = create_channel1(user1['token'])
     # raise error
-    token1 = clear_and_create_user1
-    token2 = create_user2
-    channel1 = create_channel1(token1)
-    with pytest.raises(AccessError):
-        # channel_messages_v1(user2, channel1['channel_id'], 0)
-        messages_dict = {
-            "token": token2, 
-            "channel_id": channel1['channel_id'], 
-            "start": 0, 
-        }
-        response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict) 
+    # channel_messages_v1(user, channel['channel_id'], 100)
+    messages_dict = {
+        "token": user1['token'], 
+        "channel_id": channel['channel_id'], 
+        "start": 100, 
+    }
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
+    assert response.status_code == 400
 
-        assert response.status_code == 403 
+def test_ch_mess_error_member_invalid(clear, user1, user2):
+    # raise error
+    channel1 = create_channel1(user1['token'])
+    # channel_messages_v1(user2, channel1['channel_id'], 0)
+    messages_dict = {
+        "token": user1['token'],
+        "channel_id": channel1['channel_id'], 
+        "start": 0,
+    }
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict) 
+    assert response.status_code == 403
 
-def test_ch_mess_error_member_invalid2(clear_and_create_user1, create_user2):
-    token1 = clear_and_create_user1
-    token2 = create_user2
-    channel1 = create_channel1(token1)
-    channel2 = create_channel2(token2)
+def test_ch_mess_error_member_invalid2(clear, user1, user2):
+    channel1 = create_channel1(user1['token'])
+    channel2 = create_channel2(user2['token'])
     # raise errors
-    with pytest.raises(AccessError):
-        # channel_messages_v1(user1, channel2['channel_id'], 0)
-        messages_dict = {
-            "token": token1, 
-            "channel_id": channel2['channel_id'], 
-            "start": 0, 
-        }        
-        requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict) 
+    # channel_messages_v1(user1, channel2['channel_id'], 0)
+    messages_dict = {
+        "token": user1['token'], 
+        "channel_id": channel2['channel_id'], 
+        "start": 0, 
+    }        
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict) 
+    assert response.status_code == 403
 
-    with pytest.raises(AccessError):
-        # channel_messages_v1(user2, channel1['channel_id'], 0)
-        messages_dict = {
-            "token": token2, 
-            "channel_id": channel1['channel_id'], 
-            "start": 0, 
-        }        
-        requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict) 
+    messages_dict = {
+        "token": user2['token'], 
+        "channel_id": channel1['channel_id'], 
+        "start": 0, 
+    }        
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
+    assert response.status_code == 403 
 
 # test - valid scenarios
-def test_ch_mess_public_channel(clear_and_create_user1):
-    token1 = clear_and_create_user1
-    channel1 = create_channel1(token1)
+def test_ch_mess_public_channel(clear, user1):
+    channel1 = create_channel1(user1['token'])
     # assert
     '''
     assert channel_messages(user1, channel1['channel_id'], 0) == {
@@ -177,7 +169,7 @@ def test_ch_mess_public_channel(clear_and_create_user1):
     }
     '''
     messages_dict = {
-        "token": clear_and_create_user1, 
+        "token": user1['token'], 
         "channel_id": channel1['channel_id'], 
         "start": 0, 
     }        
@@ -190,11 +182,8 @@ def test_ch_mess_public_channel(clear_and_create_user1):
     }
     assert response_data == expected_result
 
-def test_ch_mess_private_channel(clear_and_create_user1, create_user2):
-    token1 = clear_and_create_user1
-    token2 = create_user2
-    create_channel1(token1)
-    channel2 = create_channel2(token2)
+def test_ch_mess_private_channel(clear, user2):
+    channel2 = create_channel2(user2['token'])
     # assert
     '''
     assert channel_messages_v1(user2, channel2['channel_id'], 0) == {
@@ -204,24 +193,21 @@ def test_ch_mess_private_channel(clear_and_create_user1, create_user2):
     }
     '''
     messages_dict = {
-        "token": token2, 
+        "token": user2['token'], 
         "channel_id": channel2['channel_id'], 
         "start": 0, 
     }        
     response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
-    response_data = response.json()
     expected_result = {
         "messages": [],
         "start": 0,
         "end": -1,
     }
-    assert response_data == expected_result
+    assert response.json() == expected_result
 
-def test_ch_mess_multiple_channels(clear_and_create_user1):
-    token1 = clear_and_create_user1
-    channel1 = create_channel1(token1)
-    channel2 = create_channel2(token1)
-
+def test_ch_mess_multiple_channels(clear, user1):
+    channel1 = create_channel1(user1['token'])
+    channel2 = create_channel2(user1['token'])
     # assert
     '''
     assert channel_messages_v1(user1, channel1['channel_id'], 0) == {
@@ -231,18 +217,17 @@ def test_ch_mess_multiple_channels(clear_and_create_user1):
     }
     '''
     messages_dict = {
-        "token": token1, 
+        "token": user1['token'], 
         "channel_id": channel1['channel_id'], 
         "start": 0, 
     }        
     response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
-    response_data = response.json()
     expected_result = {
         "messages": [],
         "start": 0,
         "end": -1,
     }
-    assert response_data == expected_result
+    assert response.json() == expected_result
 
     '''
     assert channel_messages_v1(user1, channel2['channel_id'], 0) == {
@@ -252,35 +237,39 @@ def test_ch_mess_multiple_channels(clear_and_create_user1):
     }
     '''
     messages_dict = {
-        "token": token1, 
+        "token": user1['token'], 
         "channel_id": channel2['channel_id'], 
         "start": 0, 
     }        
     response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
-    response_data = response.json()
     expected_result = {
         "messages": [],
         "start": 0,
         "end": -1,
     }
-    assert response_data == expected_result
+    assert response.json() == expected_result
 
-def test_ch_mess_1_message_in_channel(clear_and_create_user1):
-    token1 = clear_and_create_user1
-    channel1 = create_channel1(token1)
+def test_ch_mess_1_message_in_channel(clear, user1):
+    channel1 = create_channel1(user1['token'])
     
-    send_message(token1, channel1, "hello")
+    send_message(user1['token'], channel1, "hello")
+    current_time = datetime.datetime.now()
 
     messages_dict = {
-        "token": token1, 
+        "token": user1['token'], 
         "channel_id": channel1['channel_id'], 
         "start": 0, 
-    }        
+    }
     response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
     response_data = response.json()
     expected_result = {
         "messages": [
-
+            {
+                "message_id": 1,
+                "u_id": user1['auth_user_id'],
+                "message": "hello",
+                "time_created": current_time
+            }
         ],
         "start": 0,
         "end": -1,
