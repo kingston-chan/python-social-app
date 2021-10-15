@@ -3,13 +3,14 @@ import signal
 from json import dumps
 from flask import Flask, request
 from flask_cors import CORS
-from src.error import InputError
+from src.error import InputError, AccessError
 from src import config
 from src.data_store import data_store
 import json
 from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
+from src.channel import channel_join_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -119,15 +120,14 @@ def channel_join():
     try:
         user_sessions = jwt.decode(data["token"], HASHCODE, algorithms=["HS256"])
     except Exception:
-        raise AccesError("Invalid JWT")
-    if not user_session["sessions_id"] in sessions[user_session["user_id"]]:
+        raise AccessError("Invalid JWT")
+    if not user_sessions["sessions_id"] in sessions[user_sessions["user_id"]]:
         raise AccessError("Invalid sessions")
     if data["channel_id"] not in channel:
         raise InputError("Invalid vhannel ID")
     else:
-        channel_join_v1(user_sessions["user_id"], data["channel_id"]   
-        save()
-    return dumps({})     
+        channel_join_v1(user_sessions["user_id"], data["channel_id"])  
+    return dumps({})  
 
 # channel/invite/v2
 @APP.route("/channel/invite/v2", methods=['POST'])
