@@ -1,3 +1,4 @@
+from os import error
 import sys
 import signal
 from json import dumps
@@ -98,8 +99,8 @@ def channels_create():
     user_session = {}
     try:
         user_session = jwt.decode(data["token"], HASHCODE, algorithms=['HS256'])
-    except Exception:
-        raise AccessError("Invalid JWT")
+    except Exception as invalid_jwt:
+        raise AccessError("Invalid JWT") from invalid_jwt
     if not user_session["session_id"] in sessions[user_session["user_id"]]:
         raise AccessError("Invalid session")
     new_channel = channels_create_v1(user_session["user_id"], data["name"], data["is_public"])
