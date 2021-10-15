@@ -81,7 +81,7 @@ def auth_login():
 def auth_register():
     info = request.get_json()
     user_info = auth_register_v1(info['email'], info['password'], info['name_first'], info['name_last'])
-    #print(jwt.decode(user_info['token'], HASHCODE, algorithms=['HS256']))
+    save()
     return dumps(user_info)
 
 
