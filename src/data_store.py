@@ -29,8 +29,9 @@ initial_object = {
     'users': [],
     'channels': [],
     'dms': [],
-    'sessions': [],
-    'message_count': 0
+    'sessions': {},
+    'message_count': 0,
+    'session_count': 0,
 }
 ## YOU SHOULD MODIFY THIS OBJECT ABOVE
 

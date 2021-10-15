@@ -4,8 +4,6 @@ import hashlib
 import jwt
 import re
 
-SESSION_TRACKER = 0
-
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
 def auth_login_v1(email, password):
@@ -134,7 +132,7 @@ def auth_register_v1(email, password, name_first, name_last):
     
     return {
         'auth_user_id': u_id,
-        'token': create_jwt(u_id, None)
+        'token': create_jwt(u_id)
     }
 
 
@@ -145,11 +143,17 @@ def dict_search(item, users, item_name):
             return 1
 
 def create_session():
-    global SESSION_TRACKER
-    SESSION_TRACKER += 1
-    return SESSION_TRACKER
+    store = data_store.get()
+    store["session_count"] += 1
+    data_store.set(store)
+    return store["session_count"]
 
-def create_jwt(u_id, session_id = None):
-    if session_id is None:
-        session_id = create_session()
+def create_jwt(u_id):
+    store = data_store.get()
+    session_id = create_session()
+    if u_id in store["sessions"]:
+        store["sessions"].append(session_id)
+    else:
+        store["sessions"][u_id] = [session_id]
+    data_store.set(store)
     return jwt.encode({'user_id': u_id, 'session_id': session_id}, HASHCODE, algorithm='HS256')

@@ -1,10 +1,16 @@
+from os import error
 import sys
 import signal
 from json import dumps
 from flask import Flask, request
+from requests.models import DecodeError
+from requests.sessions import session
 from flask_cors import CORS
-from src.error import InputError
+from src.error import InputError, AccessError
 from src import config
+from src.channels import channels_create_v1
+from src.data_store import data_store
+import json
 from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
@@ -32,6 +38,7 @@ CORS(APP)
 APP.config['TRAP_HTTP_EXCEPTIONS'] = True
 APP.register_error_handler(Exception, defaultHandler)
 
+
 #### NO NEED TO MODIFY ABOVE THIS POINT, EXCEPT IMPORTS
 
 # Example
@@ -43,6 +50,22 @@ APP.register_error_handler(Exception, defaultHandler)
 #     return dumps({
 #         'data': data
 #     })
+
+
+def save():
+    store = data_store.get()
+    with open("datastore.json", "w") as FILE:
+        json.dump(store, FILE)
+
+data = {}
+
+try:
+    data = json.load(open("datastore.json", "r"))
+except Exception:
+    pass
+
+if data:
+    data_store.set(data)
 
 #====== auth.py =====#
 
@@ -56,7 +79,7 @@ def auth_login():
 def auth_register():
     info = request.get_json()
     user_info = auth_register_v1(info['email'], info['password'], info['name_first'], info['name_last'])
-    #print(jwt.decode(user_info['token'], HASHCODE, algorithms=['HS256']))
+    save()
     return dumps(user_info)
 
 
@@ -70,7 +93,19 @@ def auth_logout():
 # channels/create/v2
 @APP.route("/channels/create/v2", methods=['POST'])
 def channels_create():
-    return {}
+    store = data_store.get()
+    sessions = store["sessions"]
+    data = json.loads(request.get_json())
+    user_session = {}
+    try:
+        user_session = jwt.decode(data["token"], HASHCODE, algorithms=['HS256'])
+    except Exception as invalid_jwt:
+        raise AccessError("Invalid JWT") from invalid_jwt
+    if not user_session["session_id"] in sessions[user_session["user_id"]]:
+        raise AccessError("Invalid session")
+    new_channel = channels_create_v1(user_session["user_id"], data["name"], data["is_public"])
+    save()
+    return dumps(new_channel)
 
 # channels/list/v2
 @APP.route("/channels/list/v2", methods=['GET'])
@@ -218,6 +253,7 @@ def admin_userpermission_change():
 @APP.route("/clear/v1", methods=['DELETE'])
 def clear():
     clear_v1()
+    save()
     return dumps({})
 
 #### NO NEED TO MODIFY BELOW THIS POINT
