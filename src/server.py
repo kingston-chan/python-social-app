@@ -52,6 +52,10 @@ def save():
     with open("datastore.json", "wb") as FILE:
         json.dump(store, FILE)
 
+def clear_file():
+    with open("datastore.json", "wb") as FILE:
+        json.dump({}, FILE)
+
 data = {}
 
 try:
@@ -236,6 +240,7 @@ def admin_userpermission_change():
 @APP.route("/clear/v1", methods=['DELETE'])
 def clear():
     clear_v1()
+    clear_file()
     return dumps({})
 
 #### NO NEED TO MODIFY BELOW THIS POINT
