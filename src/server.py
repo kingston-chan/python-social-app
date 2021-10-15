@@ -2,15 +2,16 @@ import sys
 import signal
 from json import dumps
 from flask import Flask, request
+from requests.sessions import session
 from flask_cors import CORS
 from src.error import InputError, AccessError
 from src import config
 from src.channels import channels_create_v1
 from src.data_store import data_store
+import json
 from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
-import ast
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -35,6 +36,7 @@ CORS(APP)
 APP.config['TRAP_HTTP_EXCEPTIONS'] = True
 APP.register_error_handler(Exception, defaultHandler)
 
+
 #### NO NEED TO MODIFY ABOVE THIS POINT, EXCEPT IMPORTS
 
 # Example
@@ -51,6 +53,21 @@ store = data_store.get()
 users = store["users"]
 channels = store["channels"]
 sessions = store["sessions"]
+
+def save():
+    store = data_store.get()
+    with open("datastore.json", "w") as FILE:
+        json.dump(store, FILE)
+
+data = {}
+
+try:
+    data = json.load(open("datastore.json", "r"))
+except Exception:
+    pass
+
+if data:
+    data_store.set(data)
 
 #====== auth.py =====#
 
@@ -82,9 +99,9 @@ def channels_create():
     user_session = jwt.decode(data["token"], HASHCODE, algorithms=['HS256'])
     if user_session is None:
         raise AccessError("Invalid JWT token")
-    if not user_session["session_id"] in sessions:
-        raise AccessError("Invalid session id")
-    new_channel = channels_create_v1(user_session["user_id"], data["name"], ast.literal_eval(data["is_public"]))
+    if not user_session["session_id"] in sessions[user_session["user_id"]]:
+        raise AccessError("Invalid session")
+    new_channel = channels_create_v1(user_session["user_id"], data["name"], data["is_public"])
     return dumps(new_channel)
 
 # channels/list/v2
@@ -233,6 +250,7 @@ def admin_userpermission_change():
 @APP.route("/clear/v1", methods=['DELETE'])
 def clear():
     clear_v1()
+    save()
     return dumps({})
 
 #### NO NEED TO MODIFY BELOW THIS POINT

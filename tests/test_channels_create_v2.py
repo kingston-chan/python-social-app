@@ -79,3 +79,9 @@ def test_channel_name_already_exists(clear_and_register):
 
     response = create_channel(clear_and_register, "     CHannEL1     ", "True")
     assert response.status_code == 400
+
+# Invalid session id
+def test_invalid_session(clear_and_register):
+    requests.post(f"{BASE_URL}/auth/logout/v1", json={ "token": clear_and_register })
+    response = create_channel(clear_and_register, "channel1", "True")
+    assert response.status_code == 403
