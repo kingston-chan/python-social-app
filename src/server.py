@@ -5,6 +5,8 @@ from flask import Flask, request
 from flask_cors import CORS
 from src.error import InputError
 from src import config
+from src.data_store import data_store
+import json
 from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
@@ -32,6 +34,7 @@ CORS(APP)
 APP.config['TRAP_HTTP_EXCEPTIONS'] = True
 APP.register_error_handler(Exception, defaultHandler)
 
+
 #### NO NEED TO MODIFY ABOVE THIS POINT, EXCEPT IMPORTS
 
 # Example
@@ -43,6 +46,21 @@ APP.register_error_handler(Exception, defaultHandler)
 #     return dumps({
 #         'data': data
 #     })
+
+def save():
+    store = data_store.get()
+    with open("datastore.json", "w") as FILE:
+        json.dump(store, FILE)
+
+data = {}
+
+try:
+    data = json.load(open("datastore.json", "r"))
+except Exception:
+    pass
+
+if data:
+    data_store.set(data)
 
 #====== auth.py =====#
 
@@ -218,6 +236,7 @@ def admin_userpermission_change():
 @APP.route("/clear/v1", methods=['DELETE'])
 def clear():
     clear_v1()
+    save()
     return dumps({})
 
 #### NO NEED TO MODIFY BELOW THIS POINT
