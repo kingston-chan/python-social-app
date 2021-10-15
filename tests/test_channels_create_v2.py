@@ -1,6 +1,7 @@
-import requests, pytest
+import requests, pytest, json
+from src.config import port
 
-BASE_URL = 'http://127.0.0.1:8080'
+BASE_URL = 'http://127.0.0.1:' + str(port)
 
 @pytest.fixture
 def clear_and_register():
@@ -23,8 +24,8 @@ def create_channel(token, name, is_public):
         "name": name, 
         "is_public": is_public
     }
-
-    return requests.post(f"{BASE_URL}/channels/create/v2", json=channel_info)
+    payload = json.dumps(channel_info)
+    return requests.post(f"{BASE_URL}/channels/create/v2", json=payload)
 
 def list_channels(token):
     return requests.get(f"{BASE_URL}/channels/list/v2", params={ "token": token })
@@ -48,9 +49,13 @@ def test_can_create_channel(clear_and_register):
 
 # ==== Tests with incorrect/invalid input ==== #
 
+# Invalid token
+def test_invalid_token(clear_and_register):
+    response = create_channel("invalid_token", "channel1", True)
+    assert response.status_code == 403
+
 # Invalid name (less than 1 character, more than 20 characters)
 def test_invalid_name(clear_and_register):
-
     response = create_channel(clear_and_register, "", True)
     assert response.status_code == 400
 

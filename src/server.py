@@ -2,6 +2,7 @@ import sys
 import signal
 from json import dumps
 from flask import Flask, request
+from requests.models import DecodeError
 from requests.sessions import session
 from flask_cors import CORS
 from src.error import InputError, AccessError
@@ -49,10 +50,6 @@ APP.register_error_handler(Exception, defaultHandler)
 #         'data': data
 #     })
 
-store = data_store.get()
-users = store["users"]
-channels = store["channels"]
-sessions = store["sessions"]
 
 def save():
     store = data_store.get()
@@ -95,13 +92,18 @@ def auth_logout():
 # channels/create/v2
 @APP.route("/channels/create/v2", methods=['POST'])
 def channels_create():
-    data = request.get_json()
-    user_session = jwt.decode(data["token"], HASHCODE, algorithms=['HS256'])
-    if user_session is None:
-        raise AccessError("Invalid JWT token")
+    store = data_store.get()
+    sessions = store["sessions"]
+    data = json.loads(request.get_json())
+    user_session = {}
+    try:
+        user_session = jwt.decode(data["token"], HASHCODE, algorithms=['HS256'])
+    except Exception:
+        raise AccessError("Invalid JWT")
     if not user_session["session_id"] in sessions[user_session["user_id"]]:
         raise AccessError("Invalid session")
     new_channel = channels_create_v1(user_session["user_id"], data["name"], data["is_public"])
+    save()
     return dumps(new_channel)
 
 # channels/list/v2
