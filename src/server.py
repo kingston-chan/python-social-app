@@ -7,7 +7,11 @@ from src.error import InputError
 from src import config
 from src.data_store import data_store
 import json
+from src.auth import auth_register_v1
+import jwt
 from src.other import clear_v1
+
+HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
 def quit_gracefully(*args):
     '''For coverage'''
@@ -68,7 +72,11 @@ def auth_login():
 # auth/register/v2
 @APP.route("/auth/register/v2", methods=['POST'])
 def auth_register():
-    return {}
+    info = request.get_json()
+    user_info = auth_register_v1(info['email'], info['password'], info['name_first'], info['name_last'])
+    #print(jwt.decode(user_info['token'], HASHCODE, algorithms=['HS256']))
+    return dumps(user_info)
+
 
 # auth/logout/v1
 @APP.route("/auth/logout/v1", methods=['POST'])
