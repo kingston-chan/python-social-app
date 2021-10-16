@@ -1,13 +1,21 @@
+from os import error
 import sys
 import signal
 from json import dumps
 from flask import Flask, request
+from requests.models import DecodeError
+from requests.sessions import session
 from flask_cors import CORS
-from src.error import InputError
+from src.error import InputError, AccessError
 from src import config
+from src.channels import channels_create_v1
+from src.data_store import data_store
+import json
 from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
+from src.channels import channels_listall_v1
+from src.channel import channel_join_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -32,6 +40,7 @@ CORS(APP)
 APP.config['TRAP_HTTP_EXCEPTIONS'] = True
 APP.register_error_handler(Exception, defaultHandler)
 
+
 #### NO NEED TO MODIFY ABOVE THIS POINT, EXCEPT IMPORTS
 
 # Example
@@ -43,6 +52,34 @@ APP.register_error_handler(Exception, defaultHandler)
 #     return dumps({
 #         'data': data
 #     })
+
+
+def check_valid_token_and_session(token):
+    """Helper function to check if token is valid and session is valid"""
+    sessions = data_store.get()["sessions"]
+    user_session = {}
+    try:
+        user_session = jwt.decode(token, HASHCODE, algorithms=['HS256'])
+    except Exception as invalid_jwt:
+        raise AccessError("Invalid JWT") from invalid_jwt
+    if not user_session["session_id"] in sessions[user_session["user_id"]]:
+        raise AccessError("Invalid session")
+    return user_session["user_id"]
+
+def save():
+    store = data_store.get()
+    with open("datastore.json", "w") as FILE:
+        json.dump(store, FILE)
+    
+data = {}
+
+try:
+    data = json.load(open("datastore.json", "r"))
+except Exception:
+    pass
+
+if data:
+    data_store.set(data)
 
 #====== auth.py =====#
 
@@ -56,7 +93,7 @@ def auth_login():
 def auth_register():
     info = request.get_json()
     user_info = auth_register_v1(info['email'], info['password'], info['name_first'], info['name_last'])
-    #print(jwt.decode(user_info['token'], HASHCODE, algorithms=['HS256']))
+    save()
     return dumps(user_info)
 
 
@@ -70,7 +107,11 @@ def auth_logout():
 # channels/create/v2
 @APP.route("/channels/create/v2", methods=['POST'])
 def channels_create():
-    return {}
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    new_channel = channels_create_v1(user_id, data["name"], data["is_public"])
+    save()
+    return dumps(new_channel)
 
 # channels/list/v2
 @APP.route("/channels/list/v2", methods=['GET'])
@@ -80,7 +121,11 @@ def channels_list():
 # channels/listall/v2
 @APP.route("/channels/listall/v2", methods=['GET'])
 def channels_listall():
-    return {}
+    response = request.args.get("token")
+    user_id = check_valid_token_and_session(response)
+    channels_info = channels_listall_v1(user_id)
+    save()
+    return dumps(channels_info)
 
 #====== channel.py =====#
 
@@ -92,7 +137,13 @@ def channel_details():
 # channel/join/v2
 @APP.route("/channel/join/v2", methods=['POST'])
 def channel_join():
-    return {}
+    data = request.get_json()
+
+    user_id = check_valid_token_and_session(data["token"])
+
+    channel_join_v1(user_id, data["channel_id"])  
+    save()
+    return dumps({})  
 
 # channel/invite/v2
 @APP.route("/channel/invite/v2", methods=['POST'])
@@ -218,6 +269,7 @@ def admin_userpermission_change():
 @APP.route("/clear/v1", methods=['DELETE'])
 def clear():
     clear_v1()
+    save()
     return dumps({})
 
 #### NO NEED TO MODIFY BELOW THIS POINT

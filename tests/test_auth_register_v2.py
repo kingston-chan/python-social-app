@@ -1,6 +1,10 @@
 import requests
+import jwt
+
 
 BASE_URL = 'http://127.0.0.1:6969'
+
+HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
 # Invalid input tests:
 
@@ -109,7 +113,7 @@ def test_register_valid_input():
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    #assert response_data["users"][0]["token"] == token
+    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
 
 def test_register_valid_numbers():
     requests.delete(f"{BASE_URL}/clear/v1")
@@ -125,7 +129,7 @@ def test_register_valid_numbers():
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    #assert response_data["users"][0]["token"] == token
+    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
 
 def test_register_valid_symbols():
     requests.delete(f"{BASE_URL}/clear/v1")
@@ -141,7 +145,7 @@ def test_register_valid_symbols():
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    #assert response_data["users"][0]["token"] == token
+    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
 
 def test_register_valid_spaces():
     requests.delete(f"{BASE_URL}/clear/v1")
@@ -157,7 +161,7 @@ def test_register_valid_spaces():
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    #assert response_data["users"][0]["token"] == token
+    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
 
 def test_register_valid_multiple_identical():
     requests.delete(f"{BASE_URL}/clear/v1")
@@ -186,5 +190,4 @@ def test_register_valid_multiple_identical():
 
     assert response_data["auth_user_id"] == 2
 
-
-    #assert response_data["users"][0]["token"] == token
+    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 2, 'session_id': 2}
