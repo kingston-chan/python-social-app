@@ -15,6 +15,7 @@ from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
+from src.channel import channel_join_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -136,7 +137,13 @@ def channel_details():
 # channel/join/v2
 @APP.route("/channel/join/v2", methods=['POST'])
 def channel_join():
-    return {}
+    data = request.get_json()
+
+    user_id = check_valid_token_and_session(data["token"])
+
+    channel_join_v1(user_id, data["channel_id"])  
+    save()
+    return dumps({})  
 
 # channel/invite/v2
 @APP.route("/channel/invite/v2", methods=['POST'])
