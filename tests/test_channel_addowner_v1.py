@@ -7,6 +7,8 @@ BASE_URL = url
 def test_addowner_valid():
     requests.delete(f"{BASE_URL}/clear/v1")
 
+    owner_list = []
+
     owner_data = {
         "email": "keefe@gmail.com",
         "password": "password",
@@ -30,7 +32,6 @@ def test_addowner_valid():
     response_data = response.json()
     invited_member_token = response_data["token"]
     invited_member_u_id = response_data["auth_user_id"]
-
 
     channel_1_info = {
         "token": owner_token,
@@ -67,7 +68,10 @@ def test_addowner_valid():
 
     expected_outcome = [owner_u_id, invited_member_u_id]
 
-    assert response_data == expected_outcome
+    owner_list.append(response_data["owner_members"][0]["u_id"])
+    owner_list.append(response_data["owner_members"][1]["u_id"])
+
+    assert owner_list == expected_outcome
 
 def test_addowner_invalid_channel_id():
     requests.delete(f"{BASE_URL}/clear/v1")
@@ -331,6 +335,8 @@ def test_addowner_no_owner_perms():
 def test_addowner_global_owner():
     requests.delete(f"{BASE_URL}/clear/v1")
 
+    owner_list = []
+
     invited_member_data = {
         "email": "eagle@gmail.com",
         "password": "password",
@@ -388,9 +394,12 @@ def test_addowner_global_owner():
     response = requests.get(f"{BASE_URL}/channel/details/v2", params=channel_info)
     response_data = response.json()
 
-    expected_outcome = [owner_u_id, invited_member_u_id]
+    expected_outcome = [invited_member_u_id, owner_u_id]
 
-    assert response_data["owner_members"] == expected_outcome
+    owner_list.append(response_data["owner_members"][0]["u_id"])
+    owner_list.append(response_data["owner_members"][1]["u_id"])
+
+    assert owner_list == expected_outcome
 
 
 def test_addowner_unauthorised_token():
