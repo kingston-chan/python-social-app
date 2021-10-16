@@ -213,7 +213,7 @@ def channel_addowner(token, channel_id, u_id):
     }
     return requests.post(f"{url}/channel/addowner/v1", json=info)
 
-def channel_addowner(token, channel_id, u_id):
+def channel_removeowner(token, channel_id, u_id):
     """
     Remove user with user id u_id as an owner of the channel.
 
@@ -461,7 +461,7 @@ def user_profile_setemail(token, email):
     """
     return requests.put(f"{url}/user/profile/setemail/v1", json={ "token": token, "email": email })
 
-def user_profile_setemail(token, handle_str):
+def user_profile_sethandle(token, handle_str):
     """
     Update the authorised user's handle (i.e. display name)
 
