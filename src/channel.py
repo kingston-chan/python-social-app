@@ -323,6 +323,7 @@ def channel_leave_v1(auth_user_id, channel_id):
                 channel["all_members"].remove(auth_user_id)
             else:
                 raise AccessError("Authorised user is not member of the channel")
+            data_store.set(store)
             return {}
     raise InputError("Invalid channel id")
     
