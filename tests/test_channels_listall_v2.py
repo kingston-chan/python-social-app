@@ -41,7 +41,7 @@ def test_listall_private_channels():
     response_data = response.json()
     
     expected_info = {
-        "channels": [channel_1, channel_2],
+        "channels": [{"channel_id": channel_1, "name": "channel_1"}, {"channel_id": channel_2, "name": "channel_2"}],
     }
 
     assert response_data == expected_info
@@ -84,9 +84,9 @@ def test_listall_public_channels():
     response_data = response.json()
     
     expected_info = {
-        "channels": [channel_1, channel_2],
+        "channels": [{"channel_id": channel_1, "name": "channel_1"}, {"channel_id": channel_2, "name": "channel_2"}],
     }
-
+    
     assert response_data == expected_info
 
 def test_listall_private_and_public_channels():
@@ -127,7 +127,7 @@ def test_listall_private_and_public_channels():
     response_data = response.json()
     
     expected_info = {
-        "channels": [channel_1, channel_2],
+        "channels": [{"channel_id": channel_1, "name": "channel_1"}, {"channel_id": channel_2, "name": "channel_2"}],
     }
     
     assert response_data == expected_info
@@ -144,7 +144,7 @@ def test_unauthorised_token():
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
     response_data = response.json()
-    user_token = response_data["token"]
+    user_token = response_data["auth_user_id"]
 
     channel_1_info = {
         "token": user_token,

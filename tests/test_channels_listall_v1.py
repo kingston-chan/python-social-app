@@ -28,7 +28,7 @@ def test_listall_private_channels(clear_and_register_user):
     channel_info = {
         "channels": [channel_1, channel_2, channel_3, channel_4],
     }
-
+    
     assert channels_listall_v1(user_data['auth_user_id']) == channel_info
 
 # Tests that an AccessError is thrown for an unauthorised user
