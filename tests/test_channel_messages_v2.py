@@ -21,7 +21,6 @@ def user1():
         "name_last": "name"
     }
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
-    print(response.json())
     return response.json()
 
 @pytest.fixture
@@ -44,8 +43,22 @@ def create_channel(token, name, is_public):
     }
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_info)
     response_data = response.json()
-    print(f"Channel: {response.json()}")
     return int(response_data['channel_id'])
+
+def join_channel(token, channel_id):
+    join_info = {
+        "token": token,
+        "channel_id": channel_id
+    }
+    requests.post(f"{BASE_URL}/channel/join/v2", json=join_info)
+
+def invite_channel(token, channel_id, u_id):
+    invite_info = {
+        "token": token,
+        "channel_id": channel_id,
+        "u_id": u_id
+    }
+    requests.post(f"{BASE_URL}/channel/invite/v2", json=invite_info) 
 
 # ==== Future functions ==== #
 '''
@@ -177,7 +190,75 @@ def test_ch_mess_multiple_channels(clear, user1):
     }
     assert response.json() == expected_result
 
+def test_ch_mess_multiple_users_in_public_channel(clear, user1, user2):
+    channel_id = create_channel(user1['token'], "chan_name", True)
+    messages_dict = {
+        "token": user1['token'], 
+        "channel_id": channel_id, 
+        "start": 0, 
+    }        
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict)
+    expected_result = {
+        "messages": [],
+        "start": 0,
+        "end": -1,
+    }
+    assert response.status_code == 200
+    assert response.json() == expected_result
+
+    join_channel(user2['token'], channel_id)
+
+    messages_dict = {
+        "token": user2['token'], 
+        "channel_id": channel_id, 
+        "start": 0, 
+    }        
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict)
+    expected_result = {
+        "messages": [],
+        "start": 0,
+        "end": -1,
+    }
+    assert response.status_code == 200
+    assert response.json() == expected_result
+
 # ==== Future Tests for Future Functions ==== #
+
+def test_ch_mess_multiple_users_in_private_channel(clear, user1, user2):
+    '''
+    channel_id = create_channel(user1['token'], "chan_name", False)
+    messages_dict = {
+        "token": user1['token'], 
+        "channel_id": channel_id, 
+        "start": 0, 
+    }        
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict)
+    expected_result = {
+        "messages": [],
+        "start": 0,
+        "end": -1,
+    }
+    assert response.status_code == 200
+    assert response.json() == expected_result
+
+    invite_channel(user1['token'], channel_id, user2['token'])
+
+    messages_dict = {
+        "token": user2['token'], 
+        "channel_id": channel_id, 
+        "start": 0, 
+    }        
+
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict)
+    expected_result = {
+        "messages": [],
+        "start": 0,
+        "end": -1,
+    }
+    assert response.status_code == 200
+    assert response.json() == expected_result
+    '''
+    pass
 
 def test_ch_mess_1_message_in_channel(clear, user1):
     '''
