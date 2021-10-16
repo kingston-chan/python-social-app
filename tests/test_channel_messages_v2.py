@@ -47,6 +47,7 @@ def create_channel(token, name, is_public):
     print(f"Channel: {response.json()}")
     return int(response_data['channel_id'])
 
+# ==== Future functions ==== #
 '''
 def send_message(token, channel_id, message):
     message_dict = {
@@ -60,7 +61,7 @@ def send_message(token, channel_id, message):
 '''
 
 # ==== Tests - Errors ==== #
-def test_ch_mess_error_invalid_channnel(clear, user1):
+def test_ch_mess_error_invalid_channel(clear, user1):
     # No channel created
     messages_dict = {
         "token": user1['token'], 
@@ -71,7 +72,7 @@ def test_ch_mess_error_invalid_channnel(clear, user1):
     # Raise error
     assert response.status_code == 400
 
-def test_ch_mess_incorrect_start(clear, user1, capsys):
+def test_ch_mess_incorrect_start(clear, user1):
     channel_id = create_channel(user1['token'], "chan_name", True)
     messages_dict = {
         "token": user1['token'], 
