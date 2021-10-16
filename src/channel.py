@@ -327,6 +327,43 @@ def channel_leave_v1(auth_user_id, channel_id):
             return {}
     raise InputError("Invalid channel id")
     
+def channel_removeowner_v1(auth_user_id, channel_id, u_id):
+    store = data_store.get()
+    channels = store["channels"]
+    users = store["users"]
+    
+    owner_ids = None
+    owner_perms_ids = None
+
+    channel_exists = False
+    for channel in channels:
+        if channel["id"] == channel_id:
+            channel_exists = True
+            owner_ids = channel["owner_members"]
+            owner_perms_ids = channel["owner_permissions"]
+
+    if not channel_exists:
+        raise InputError("Channel does not exist")
+    
+    check_valid_user(u_id, users)
+
+    if u_id not in owner_ids and u_id not in owner_perms_ids:
+        raise InputError("User is not an owner/does not have owner perms")
+    
+    if u_id in owner_ids and len(owner_ids) == 1:
+        raise InputError("User is currently the only owner of the channel")
+
+    if auth_user_id not in owner_ids and auth_user_id not in owner_perms_ids:
+        raise InputError("User is not an owner/does not have owner perms")
+    
+    for channel in channels:
+        if channel["id"] == channel_id:
+            channel["owner_members"].remove(u_id)
+            channel["owner_permissions"].remove(u_id)
+    
+    data_store.set(store)
+
+    return {}
 
 
 def assign_user_info(user_data_placeholder):
