@@ -238,8 +238,8 @@ def channel_join_v1(auth_user_id, channel_id):
     members' list.
 
     Arguments:
-    auth_user_id (<integer>) - id of the user joining the channel
-    channel_id (<integer>) - id of the channel
+    auth_user_id (integer) - id of the user joining the channel
+    channel_id (integer) - id of the channel
 
     Exceptions:
     InputError - Occurs when given:
@@ -288,6 +288,44 @@ def channel_join_v1(auth_user_id, channel_id):
     data_store.set(store)
 
     return {}
+
+def channel_leave_v1(auth_user_id, channel_id):
+    """
+    Auth_user_id leaves the channel by being removed from the channels
+    all_members list and if owner, owner_members and owner_permissions lists
+
+    Arguments:
+    auth_user_id (integer) - id of the user joining the channel
+    channel_id (integer) - id of the channel
+
+    Exceptions:
+    InputError - Occurs when given:
+                    - channel_id does not exist/invalid
+    AccessError - Occurs when given:
+                    - Authorised user is not a member of the channel
+
+    Return value:
+        Returns an empty dictionary when user successfully leaves the channel
+    """
+    store = data_store.get()
+    channels = store["channels"]
+    for channel in channels:
+        # Find channel corresponding to channel_id
+        if channel["id"] == channel_id:
+            # Check if auth user id is in the members list
+            if auth_user_id in channel["all_members"]:
+                # Check if auth user is a owner
+                if auth_user_id in channel["owner_members"]:
+                    channel["owner_members"].remove(auth_user_id)
+                # Revoke permissions if owner/global owner
+                if auth_user_id in channel["owner_permissions"]:
+                    channel["owner_permissions"].remove(auth_user_id)
+                channel["all_members"].remove(auth_user_id)
+            else:
+                raise AccessError("Authorised user is not member of the channel")
+            return {}
+    raise InputError("Invalid channel id")
+    
 
 
 def assign_user_info(user_data_placeholder):
