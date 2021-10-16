@@ -16,7 +16,7 @@ from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
-from src.channel import channel_invite_v1, channel_join_v1
+from src.channel import channel_join_v1, channel_messages_v1, channel_invite_v1
 from src.user import list_all_users
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
@@ -148,6 +148,7 @@ def channel_join():
     save()
     return dumps({})  
 
+
 # channel/invite/v2
 @APP.route("/channel/invite/v2", methods=['POST'])
 def channel_invite():
@@ -182,7 +183,11 @@ def channel_invite():
 # channel/messages/v2
 @APP.route("/channel/messages/v2", methods=['GET'])
 def channel_messages():
-    return {}
+    token = request.args.get("token")
+    user_id = check_valid_token_and_session(token)
+    channel_messages = channel_messages_v1(user_id, int(request.args.get("channel_id")), int(request.args.get("start")))
+    save()
+    return dumps(channel_messages)
 
 # channel/leave/v1
 @APP.route("/channel/leave/v1", methods=['POST'])
