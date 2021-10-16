@@ -52,18 +52,22 @@ APP.register_error_handler(Exception, defaultHandler)
 #     })
 
 
+def check_valid_token_and_session(token):
+    """Helper function to check if token is valid and session is valid"""
+    sessions = data_store.get()["sessions"]
+    user_session = {}
+    try:
+        user_session = jwt.decode(token, HASHCODE, algorithms=['HS256'])
+    except Exception as invalid_jwt:
+        raise AccessError("Invalid JWT") from invalid_jwt
+    if not user_session["session_id"] in sessions[user_session["user_id"]]:
+        raise AccessError("Invalid session")
+    return user_session["user_id"]
+
 def save():
     store = data_store.get()
     with open("datastore.json", "w") as FILE:
         json.dump(store, FILE)
-
-def check_valid_token(token):
-    user_session = {}
-    try:
-        user_session = jwt.decode(token, HASHCODE, algorithms=['HS256'])
-        return user_session
-    except Exception as invalid_jwt:
-        raise AccessError("Invalid JWT") from invalid_jwt
     
 data = {}
 
@@ -101,13 +105,9 @@ def auth_logout():
 # channels/create/v2
 @APP.route("/channels/create/v2", methods=['POST'])
 def channels_create():
-    store = data_store.get()
-    sessions = store["sessions"]
     data = request.get_json()
-    user_session = check_valid_token(data["token"])
-    if not user_session["session_id"] in sessions[user_session["user_id"]]:
-        raise AccessError("Invalid session")
-    new_channel = channels_create_v1(user_session["user_id"], data["name"], data["is_public"])
+    user_id = check_valid_token_and_session(data["token"])
+    new_channel = channels_create_v1(user_id, data["name"], data["is_public"])
     save()
     return dumps(new_channel)
 
