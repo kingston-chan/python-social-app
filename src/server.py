@@ -15,7 +15,7 @@ from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
-from src.channel import channel_join_v1
+from src.channel import channel_join_v1, channel_addowner_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -166,6 +166,9 @@ def channel_leave():
 # channel/addowner/v1
 @APP.route("/channel/addowner/v1", methods=['POST'])
 def channel_addowner():
+    response = request.get_json()
+    check_valid_token_and_session(response["token"])
+    channel_addowner_v1(response["token"], response["channel_id"], response["u_id"])
     return {}
 
 # channel/removeowner/v1

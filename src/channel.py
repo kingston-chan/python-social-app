@@ -6,6 +6,10 @@ of the channel
 
 from src.error import InputError, AccessError
 from src.data_store import data_store
+import jwt
+
+HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
+
 
 def channel_invite_v1(auth_user_id, channel_id, u_id):
     """
@@ -285,6 +289,59 @@ def channel_join_v1(auth_user_id, channel_id):
     
     channel['all_members'].append(auth_user_id)
     
+    data_store.set(store)
+
+    return {}
+
+def channel_addowner_v1(token, channel_id, u_id):
+    store = data_store.get()
+    users = store['users']
+    channels = store['channels']
+
+    user_info = jwt.decode(token, HASHCODE, algorithms=['HS256'])
+
+    user_exists = False
+    for user in users:
+        if u_id == user['id']:
+            user_exists = True
+            break
+    
+    if not user_exists:
+        raise InputError("User is not authorised.")
+
+    channel_exists = False
+    owner_ids = None
+    all_members_ids = None
+    owner_perms_ids = None
+
+    # Searches for a channel with the same ID and stores its information.
+    # Also checks if a channel exists.
+    for channel in channels:
+        if channel["id"] == channel_id:
+            channel_exists = True
+            # channel["owner_members"] and channel["all_members"] are lists of user IDs.
+            owner_ids = channel["owner_members"]
+            all_members_ids = channel["all_members"]
+            owner_perms_ids = channel["owner_permissions"]
+
+    if not channel_exists:
+        raise InputError("Channel does not exist") 
+    
+    if user_info["user_id"] not in owner_ids and user_info["user_id"] not in owner_perms_ids:
+        raise AccessError("User is not an owner/does not have the owner permissions.")
+
+    if u_id not in all_members_ids:
+        raise InputError("User is not a member of the channel")
+
+    if u_id in owner_ids:
+        raise InputError("User is already an owner of the channel")
+
+    for channel in channels:
+        if channel["id"] == channel_id:
+            channel["owner_members"].append(u_id)
+            channel["owner_permissions"].append(u_id)
+
+
     data_store.set(store)
 
     return {}
