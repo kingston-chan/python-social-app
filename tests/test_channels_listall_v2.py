@@ -1,7 +1,7 @@
 import requests
 import pytest
 
-BASE_URL = "http://127.0.0.1:8080"
+BASE_URL = "http://127.0.0.1:7070"
 
 def test_listall_private_channels():
     requests.delete(f"{BASE_URL}/clear/v1")

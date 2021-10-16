@@ -3,13 +3,14 @@ import signal
 from json import dumps
 from flask import Flask, request
 from flask_cors import CORS
-from src.error import InputError
+from src.error import AccessError, InputError
 from src import config
 from src.data_store import data_store
 import json
 from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
+from src.channels import channels_listall_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -98,7 +99,13 @@ def channels_list():
 # channels/listall/v2
 @APP.route("/channels/listall/v2", methods=['GET'])
 def channels_listall():
-    return {}
+    response = request.get_json()
+    payload_info = jwt.decode(response, HASHCODE, algorithms=['HS256'])
+    u_id = payload_info["user_id"]
+    if payload_info["session_id"] not in data[u_id]:
+        raise AccessError
+    
+    return dumps(channels_listall_v1(u_id))
 
 #====== channel.py =====#
 
