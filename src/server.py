@@ -57,6 +57,14 @@ def save():
     with open("datastore.json", "w") as FILE:
         json.dump(store, FILE)
 
+def check_valid_token(token):
+    user_session = {}
+    try:
+        user_session = jwt.decode(token, HASHCODE, algorithms=['HS256'])
+        return user_session
+    except Exception as invalid_jwt:
+        raise AccessError("Invalid JWT") from invalid_jwt
+    
 data = {}
 
 try:
@@ -95,12 +103,8 @@ def auth_logout():
 def channels_create():
     store = data_store.get()
     sessions = store["sessions"]
-    data = json.loads(request.get_json())
-    user_session = {}
-    try:
-        user_session = jwt.decode(data["token"], HASHCODE, algorithms=['HS256'])
-    except Exception as invalid_jwt:
-        raise AccessError("Invalid JWT") from invalid_jwt
+    data = request.get_json()
+    user_session = check_valid_token(data["token"])
     if not user_session["session_id"] in sessions[user_session["user_id"]]:
         raise AccessError("Invalid session")
     new_channel = channels_create_v1(user_session["user_id"], data["name"], data["is_public"])
