@@ -1,6 +1,10 @@
 from src.data_store import data_store
 from src.error import InputError
+import hashlib
+import jwt
 import re
+
+HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
 def auth_login_v1(email, password):
     """
@@ -104,9 +108,10 @@ def auth_register_v1(email, password, name_first, name_last):
         while dict_search(u_id, users, 'id'):
             u_id += 1
 
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
         # add all given data into a dictionary to be added to the data store
-        user_dict = {'email': email, 'password': password, 'name_first': name_first, 'name_last': name_last, 'handle': handle, 'id': u_id, 'permission': permission}
+        user_dict = {'email': email, 'password': hashed_password, 'name_first': name_first, 'name_last': name_last, 'handle': handle, 'id': u_id, 'permission': permission}
         
         users.append(user_dict)
         
@@ -124,9 +129,10 @@ def auth_register_v1(email, password, name_first, name_last):
         raise InputError('Last name too long or short')
     else:
         raise InputError('Email is an invalid format')
-
+    
     return {
         'auth_user_id': u_id,
+        'token': create_jwt(u_id)
     }
 
 
@@ -135,3 +141,19 @@ def dict_search(item, users, item_name):
     for u in users:
         if u[item_name] == item:
             return 1
+
+def create_session():
+    store = data_store.get()
+    store["session_count"] += 1
+    data_store.set(store)
+    return store["session_count"]
+
+def create_jwt(u_id):
+    store = data_store.get()
+    session_id = create_session()
+    if u_id in store["sessions"]:
+        store["sessions"].append(session_id)
+    else:
+        store["sessions"][u_id] = [session_id]
+    data_store.set(store)
+    return jwt.encode({'user_id': u_id, 'session_id': session_id}, HASHCODE, algorithm='HS256')
