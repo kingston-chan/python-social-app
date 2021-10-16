@@ -27,7 +27,11 @@ Example usage:
 ## YOU SHOULD MODIFY THIS OBJECT BELOW
 initial_object = {
     'users': [],
-    'channels': []
+    'channels': [],
+    'dms': [],
+    'sessions': {},
+    'message_count': 0,
+    'session_count': 0,
 }
 ## YOU SHOULD MODIFY THIS OBJECT ABOVE
 
@@ -47,4 +51,3 @@ print('Loading Datastore...')
 
 global data_store
 data_store = Datastore()
-
