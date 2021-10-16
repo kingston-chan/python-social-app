@@ -73,7 +73,6 @@ def test_ch_mess_error_invalid_channnel(clear, user1):
 
 def test_ch_mess_incorrect_start(clear, user1, capsys):
     channel_id = create_channel(user1['token'], "chan_name", True)
-    channel_id2 = create_channel(user1['token'], "chan_name2", True)
     messages_dict = {
         "token": user1['token'], 
         "channel_id": channel_id, 
