@@ -142,9 +142,9 @@ def channel_invite():
 # channel/messages/v2
 @APP.route("/channel/messages/v2", methods=['GET'])
 def channel_messages():
-    data = request.get_json()
-    user_id = check_valid_token_and_session(data["token"])
-    channel_messages = channel_messages_v1(user_id, data["channel_id"], data["start"])
+    token = request.args.get("token")
+    user_id = check_valid_token_and_session(token)
+    channel_messages = channel_messages_v1(user_id, int(request.args.get("channel_id")), int(request.args.get("start")))
     save()
     return dumps(channel_messages)
 
