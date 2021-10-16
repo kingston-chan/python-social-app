@@ -151,6 +151,7 @@ def channel_join():
 # channel/invite/v2
 @APP.route("/channel/invite/v2", methods=['POST'])
 def channel_invite():
+    
     return {}
 
 # channel/messages/v2
