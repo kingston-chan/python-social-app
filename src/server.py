@@ -16,6 +16,7 @@ import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channel import channel_join_v1
+from src.user import list_all_users
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -228,18 +229,19 @@ def dm_leave():
 def login():
     return {}
 
-#===== users.py =====#
+#===== user.py =====#
 
 # users/all/v1
 @APP.route("/users/all/v1", methods=['GET'])
 def users_all():
-    return {}
-
-#===== user.py =====#
+    token = request.args.get("token")
+    check_valid_token_and_session(token)
+    users = list_all_users()
+    return dumps(users)
 
 # user/profile/v1
 @APP.route("/user/profile/v1", methods=['GET'])
-def user_profile():
+def user_profile(): 
     return {}
 
 # user/profile/setname/v1
