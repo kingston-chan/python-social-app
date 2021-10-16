@@ -8,13 +8,15 @@ from requests.sessions import session
 from flask_cors import CORS
 from src.error import InputError, AccessError
 from src import config
-from src.channels import channels_create_v1
+from src.channels import channels_create_v1, channels_list_v1
 from src.data_store import data_store
 import json
 from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
-from src.channel import channel_messages_v1
+from src.channels import channels_listall_v1
+from src.channel import channel_join_v1, channel_messages_v1
+from src.user import list_all_users
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -115,12 +117,19 @@ def channels_create():
 # channels/list/v2
 @APP.route("/channels/list/v2", methods=['GET'])
 def channels_list():
-    return {}
+    token = request.args.get("token")
+    user_id = check_valid_token_and_session(token)
+    channels = channels_list_v1(user_id)
+    return dumps(channels)
 
 # channels/listall/v2
 @APP.route("/channels/listall/v2", methods=['GET'])
 def channels_listall():
-    return {}
+    response = request.args.get("token")
+    user_id = check_valid_token_and_session(response)
+    channels_info = channels_listall_v1(user_id)
+    save()
+    return dumps(channels_info)
 
 #====== channel.py =====#
 
@@ -132,7 +141,13 @@ def channel_details():
 # channel/join/v2
 @APP.route("/channel/join/v2", methods=['POST'])
 def channel_join():
-    return {}
+    data = request.get_json()
+
+    user_id = check_valid_token_and_session(data["token"])
+
+    channel_join_v1(user_id, data["channel_id"])  
+    save()
+    return dumps({})  
 
 # channel/invite/v2
 @APP.route("/channel/invite/v2", methods=['POST'])
@@ -217,18 +232,19 @@ def dm_leave():
 def login():
     return {}
 
-#===== users.py =====#
+#===== user.py =====#
 
 # users/all/v1
 @APP.route("/users/all/v1", methods=['GET'])
 def users_all():
-    return {}
-
-#===== user.py =====#
+    token = request.args.get("token")
+    check_valid_token_and_session(token)
+    users = list_all_users()
+    return dumps(users)
 
 # user/profile/v1
 @APP.route("/user/profile/v1", methods=['GET'])
-def user_profile():
+def user_profile(): 
     return {}
 
 # user/profile/setname/v1
