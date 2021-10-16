@@ -1,5 +1,5 @@
 import pytest
-from tests.route_helpers import auth_register, channel_leave, channels_create, channels_list, channels_listall, clear 
+from tests.route_helpers import auth_logout, auth_register, channel_leave, channels_create, channels_list, channels_listall, clear 
 
 @pytest.fixture
 def clear_and_register():
@@ -10,7 +10,7 @@ def clear_and_register():
 
 # Owner is able to leave the channel, but channel still exists, even with no members
 def test_owner_leaves_channel_still_exists(clear_and_register):
-    channel1_id = channels_create(clear_and_register, "channel1", "True").json()["channel_id"]
+    channel1_id = channels_create(clear_and_register, "channel1", True).json()["channel_id"]
     
     channel_leave(clear_and_register, channel1_id)
     
@@ -24,7 +24,7 @@ def test_owner_leaves_channel_still_exists(clear_and_register):
 
 # Invalid token, but valid channel id
 def test_invalid_token(clear_and_register):
-    channel1_id = channels_create(clear_and_register, "channel1", "True")
+    channel1_id = channels_create(clear_and_register, "channel1", True)
     response = channel_leave("invalidtoken", channel1_id)
     assert response.status_code == 403
 
@@ -33,10 +33,17 @@ def test_invalid_channel_id(clear_and_register):
     response = channel_leave(clear_and_register, 1)
     assert response == 400
 
-# Valid token and channel_id but token's payload contains unauthorised id
+# Valid token and channel_id but token's payload contains unauthorised id i.e. not a member of channel
 def test_unauthorised_id(clear_and_register):
-    channel1_id = channels_create(clear_and_register, "channel1", "True")
+    channel1_id = channels_create(clear_and_register, "channel1", True)
     user2_token = auth_register("random2@gmail.com", "123abc!@#", "Bob", "Smith").json()["token"]
     response = channel_leave(user2_token, channel1_id)
     assert response.status_code == 403
+
+# Invalid session
+# def test_invalid_session(clear_and_register):
+#     channel1_id = channels_create(clear_and_register, "channel1", True)
+#     auth_logout(clear_and_register)
+#     response = channel_leave(clear_and_register, channel1_id)
+#     assert response.status_code == 403
 
