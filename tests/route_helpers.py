@@ -2,7 +2,6 @@
 Helper functions for route requests for testing
 """
 
-import json
 import requests
 from src.config import url
 
