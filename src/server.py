@@ -6,6 +6,7 @@ from flask import Flask, request
 from requests.models import DecodeError
 from requests.sessions import session
 from flask_cors import CORS
+from src import channel
 from src.error import InputError, AccessError
 from src import config
 from src.channels import channels_create_v1, channels_list_v1
@@ -15,7 +16,7 @@ from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
-from src.channel import channel_join_v1
+from src.channel import channel_invite_v1, channel_join_v1
 from src.user import list_all_users
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
@@ -143,8 +144,6 @@ def channel_details():
 def channel_join():
     data = request.get_json()
 
-    user_id = check_valid_token_and_session(data["token"])
-
     channel_join_v1(user_id, data["channel_id"])  
     save()
     return dumps({})  
@@ -152,7 +151,32 @@ def channel_join():
 # channel/invite/v2
 @APP.route("/channel/invite/v2", methods=['POST'])
 def channel_invite():
+    info = data_store()
+    data = request.get_json() # { token, channel_id, u_id }
     
+    #channel = data_store.get()["channel"]
+
+    user_info = check_valid_token_and_session(data["token"])
+
+
+    
+    '''
+    list_channels = requests.get(f"{BASE_URL}/channels/list/v2", params={data["token"]})
+
+    if data["channel_id"] not in list_channels:
+        raise AccessError("not an authorised user")
+    elif data["u_id"] not in info["users"]:
+        raise InputError("Not a valid user")
+    elif data["u_id"] in channel["members"]:
+        raise InputError("User in channel already")
+
+    else:
+    '''
+        channel_invite_v1(user_info, data["channel_id"], data["u_id"])
+    
+    
+
+
     return {}
 
 # channel/messages/v2
