@@ -58,6 +58,7 @@ def send_message(token, channel_id, message):
     time = datetime.datetime.now()
     return response.json(), time
 '''
+
 # ==== Tests - Errors ==== #
 def test_ch_mess_error_invalid_channnel(clear, user1):
     # No channel created
