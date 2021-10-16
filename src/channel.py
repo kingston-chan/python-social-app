@@ -293,12 +293,10 @@ def channel_join_v1(auth_user_id, channel_id):
 
     return {}
 
-def channel_addowner_v1(token, channel_id, u_id):
+def channel_addowner_v1(auth_user_id, channel_id, u_id):
     store = data_store.get()
     users = store['users']
     channels = store['channels']
-
-    user_info = jwt.decode(token, HASHCODE, algorithms=['HS256'])
 
     user_exists = False
     for user in users:
@@ -327,7 +325,7 @@ def channel_addowner_v1(token, channel_id, u_id):
     if not channel_exists:
         raise InputError("Channel does not exist") 
     
-    if user_info["user_id"] not in owner_ids and user_info["user_id"] not in owner_perms_ids:
+    if auth_user_id not in owner_ids and auth_user_id not in owner_perms_ids:
         raise AccessError("User is not an owner/does not have the owner permissions.")
 
     if u_id not in all_members_ids:

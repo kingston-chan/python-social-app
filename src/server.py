@@ -186,8 +186,8 @@ def channel_leave():
 @APP.route("/channel/addowner/v1", methods=['POST'])
 def channel_addowner():
     response = request.get_json()
-    check_valid_token_and_session(response["token"])
-    channel_addowner_v1(response["token"], response["channel_id"], response["u_id"])
+    user_id = check_valid_token_and_session(response["token"])
+    channel_addowner_v1(user_id, response["channel_id"], response["u_id"])
     return {}
 
 # channel/removeowner/v1
