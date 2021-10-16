@@ -18,7 +18,6 @@ def test_invalid_channel():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
     response_data = response.json()
     auth_user_token = response_data["token"]
-    #new_user_id = response_data["u_id"]
 
     channel_data = {"token" : auth_user_token, "name" : "joshuasucks", "is_public": True} 
 
@@ -32,24 +31,12 @@ def test_invalid_channel():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user1) 
     response_data = response.json()
     new_user_token = response_data["token"]
+    new_user_id = response_data["auth_user_id"]
 
-    new_user_id =jwt.decode(new_user_token, HASHCODE, algorithms=['HS256'])
-
-    response = requests.post(f"{BASE_URL}/channel/invite/v2", json={"token": auth_user_token, "channel_id": invalid_channel_id, "u_id" : new_user_id["auth_user_id"]})
+    response = requests.post(f"{BASE_URL}/channel/invite/v2", json={"token": auth_user_token, "channel_id": invalid_channel_id, "u_id" : new_user_id})
     
 
     assert response.status_code == 400
-    
-'''def u_id_no_sessions():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_laker" }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
-    response_data = response.json()
-    new_user_token = response_data["token"]
-    new_user_id = response_data["u_id"]
-'''
 
 def test_already_member():
     requests.delete(f"{BASE_URL}/clear/v1")
@@ -59,7 +46,8 @@ def test_already_member():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
     response_data = response.json()
     auth_user_token = response_data["token"]
-    new_user_id = jwt.decode(auth_user_token, HASHCODE, algorithms=['HS256'])
+    new_user_id = response_data["auth_user_id"]
+
     channel_data = {"token" : auth_user_token, "name" : "joshuasucks", "is_public": True} 
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_data)
@@ -68,7 +56,7 @@ def test_already_member():
 
     channel_id = response_data["channel_id"]
 
-    response = requests.post(f"{BASE_URL}/channel/invite/v2", json={"token": auth_user_token, "channel_id": channel_id, "u_id" : new_user_id["auth_user_id"]})
+    response = requests.post(f"{BASE_URL}/channel/invite/v2", json={"token": auth_user_token, "channel_id": channel_id, "u_id" : new_user_id})
 
     assert response.status_code == 400
 
@@ -80,7 +68,7 @@ def test_invalid_user_id():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
     response_data = response.json()
     auth_user_token = response_data["token"]
-    auth_user_id = jwt.decode(auth_user_token, HASHCODE, algorithms=['HS256'])
+    new_user_id = response_data["auth_user_id"]
     channel_data = {"token" : auth_user_token, "name" : "joshuasucks", "is_public": True} 
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_data)
@@ -89,7 +77,7 @@ def test_invalid_user_id():
 
     channel_id = response_data["channel_id"]
 
-    invalid_u_id = auth_user_id["auth_user_id"] + 1
+    invalid_u_id = new_user_id + 1
 
     response = requests.post(f"{BASE_URL}/channel/invite/v2", json={"token": auth_user_token, "channel_id": channel_id, "u_id" : invalid_u_id})
 
@@ -104,7 +92,7 @@ def test_not_auth_user():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
     response_data = response.json()
     auth_user_token = response_data["token"]
-    auth_user_id = jwt.decode(auth_user_token, HASHCODE, algorithms=['HS256'])
+    new_user_id = response_data["auth_user_id"]
     channel_data = {"token" : auth_user_token, "name" : "joshuasucks", "is_public": True} 
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_data)
@@ -113,7 +101,7 @@ def test_not_auth_user():
 
     channel_id = response_data["channel_id"]
 
-    invalid_u_id = auth_user_id["auth_user_id"] + 1
+    invalid_u_id = new_user_id + 1
 
     response = requests.post(f"{BASE_URL}/channel/invite/v2", json={"token": invalid_u_id, "channel_id": channel_id, "u_id" : invalid_u_id})
 
