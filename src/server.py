@@ -12,11 +12,11 @@ from src import config
 from src.channels import channels_create_v1, channels_list_v1
 from src.data_store import data_store
 import json
-from src.auth import auth_register_v1
+from src.auth import auth_register_v1, auth_login_v1
 import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
-from src.channel import channel_join_v1, channel_messages_v1, channel_invite_v1
+from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1
 from src.user import list_all_users
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
@@ -88,7 +88,10 @@ if data:
 # auth/login/v2
 @APP.route("/auth/login/v2", methods=['POST'])
 def auth_login():
-    return {}
+    info = request.get_json()
+    user_info = auth_login_v1(info['email'], info['password'])
+    save()
+    return dumps(user_info)
 
 # auth/register/v2
 @APP.route("/auth/register/v2", methods=['POST'])
@@ -169,6 +172,10 @@ def channel_messages():
 # channel/leave/v1
 @APP.route("/channel/leave/v1", methods=['POST'])
 def channel_leave():
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    channel_leave_v1(user_id, data["channel_id"])
+    save()
     return {}
 
 # channel/addowner/v1
