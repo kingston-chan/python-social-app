@@ -1,7 +1,5 @@
 import requests, pytest, json
-from src.config import port
-
-BASE_URL = 'http://127.0.0.1:' + str(port)
+from src.config import url
 
 
 # ==== Helper functions ==== #
@@ -14,7 +12,7 @@ def register_user(email, password, first_name, last_name):
         "name_first": first_name, 
         "name_last": last_name
     }
-    return requests.post(f"{BASE_URL}/auth/register/v2", json=user_info).json()
+    return requests.post(f"{url}/auth/register/v2", json=user_info).json()
 
 
 # Creates channel and returns created channel_id
@@ -25,15 +23,15 @@ def create_channel(token, name, is_public):
         "is_public": is_public
     }
     payload = json.dumps(channel_info)
-    return requests.post(f"{BASE_URL}/channels/create/v2", json=payload).json()["channel_id"]
+    return requests.post(f"{url}/channels/create/v2", json=payload).json()["channel_id"]
 
 # Lists all channels user is in
 def list_channels(token):
-    return requests.get(f"{BASE_URL}/channels/list/v2", params={ "token": token })
+    return requests.get(f"{url}/channels/list/v2", params={ "token": token })
 
 @pytest.fixture
 def clear_and_register():
-    requests.delete(f"{BASE_URL}/clear/v1")
+    requests.delete(f"{url}/clear/v1")
     return register_user("random@gmail.com", "123abc!@#", "John", "Smith")['token']
 
 
@@ -79,7 +77,7 @@ def test_invalid_token():
 # Invalid session
 def test_invalid_session(clear_and_register):
     create_channel(clear_and_register, "channel1", True)
-    requests.post(f"{BASE_URL}/auth/logout/v1", json={ "token": clear_and_register })
+    requests.post(f"{url}/auth/logout/v1", json={ "token": clear_and_register })
     response = list_channels(clear_and_register)
     assert response.status_code == 403
     
