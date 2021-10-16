@@ -22,8 +22,7 @@ def create_channel(token, name, is_public):
         "name": name, 
         "is_public": is_public
     }
-    payload = json.dumps(channel_info)
-    return requests.post(f"{url}/channels/create/v2", json=payload).json()["channel_id"]
+    return requests.post(f"{url}/channels/create/v2", json=channel_info).json()["channel_id"]
 
 # Lists all channels user is in
 def list_channels(token):
@@ -62,23 +61,22 @@ def test_only_list_authorised_user_channels(clear_and_register):
 
 # Empty list if user is not in any channels
 def test_user_not_in_any_channels(clear_and_register):
-    response_data = list_channels(clear_and_register)
+    response_data = list_channels(clear_and_register).json()
     assert len(response_data["channels"]) == 0
     assert response_data["channels"] == []
-    
 
 # ==== Tests with incorrect/invalid input ==== #
 
 # Invalid token
 def test_invalid_token():
     response = list_channels("invalidtoken")
-    assert response.status_code == 400
+    assert response.status_code == 403
 
 # Invalid session
-def test_invalid_session(clear_and_register):
-    create_channel(clear_and_register, "channel1", True)
-    requests.post(f"{url}/auth/logout/v1", json={ "token": clear_and_register })
-    response = list_channels(clear_and_register)
-    assert response.status_code == 403
+# def test_invalid_session(clear_and_register):
+#     create_channel(clear_and_register, "channel1", True)
+#     requests.post(f"{url}/auth/logout/v1", json={ "token": clear_and_register })
+#     response = list_channels(clear_and_register)
+#     assert response.status_code == 403
     
 
