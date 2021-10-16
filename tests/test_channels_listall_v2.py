@@ -21,13 +21,13 @@ def test_listall_private_channels():
     channel_1_info = {
         "token": user_token,
         "name": "channel_1",
-        "is_public": "False"
+        "is_public": False
     }
 
     channel_2_info = {
         "token": user_token,
         "name": "channel_2",
-        "is_public": "False"
+        "is_public": False
     }
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
@@ -64,13 +64,13 @@ def test_listall_public_channels():
     channel_1_info = {
         "token": user_token,
         "name": "channel_1",
-        "is_public": "True"
+        "is_public": True
     }
 
     channel_2_info = {
         "token": user_token,
         "name": "channel_2",
-        "is_public": "True"
+        "is_public": True
     }
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
@@ -107,13 +107,13 @@ def test_listall_private_and_public_channels():
     channel_1_info = {
         "token": user_token,
         "name": "channel_1",
-        "is_public": "True"
+        "is_public": True
     }
 
     channel_2_info = {
         "token": user_token,
         "name": "channel_2",
-        "is_public": "False"
+        "is_public": False
     }
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
@@ -150,7 +150,7 @@ def test_unauthorised_token():
     channel_1_info = {
         "token": user_token,
         "name": "channel_1",
-        "is_public": "True"
+        "is_public": True
     }
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
