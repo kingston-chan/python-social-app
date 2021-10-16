@@ -8,7 +8,7 @@ from requests.sessions import session
 from flask_cors import CORS
 from src.error import InputError, AccessError
 from src import config
-from src.channels import channels_create_v1
+from src.channels import channels_create_v1, channels_list_v1
 from src.data_store import data_store
 import json
 from src.auth import auth_register_v1
@@ -116,7 +116,10 @@ def channels_create():
 # channels/list/v2
 @APP.route("/channels/list/v2", methods=['GET'])
 def channels_list():
-    return {}
+    token = request.args.get("token")
+    user_id = check_valid_token_and_session(token)
+    channels = channels_list_v1(user_id)
+    return dumps(channels)
 
 # channels/listall/v2
 @APP.route("/channels/listall/v2", methods=['GET'])
