@@ -16,22 +16,21 @@ def register_user(email, password, first_name, last_name):
 # Lists all users given valid token
 def test_list_all_users():
     requests.delete(f"{url}/clear/v1")
-
+    
     response_data = register_user("random@gmail.com", "123abc!@#", "John", "Smith")
     user_token1 = response_data["token"]
     user1_id = response_data["auth_user_id"]
-
     response_data = register_user("random1@gmail.com", "123abc!@#", "Bob", "Smith")
     user2_id = response_data["auth_user_id"]
 
-    response_data = register_user("random1@gmail.com", "123abc!@#", "Dan", "Smith")
+    response_data = register_user("random2@gmail.com", "123abc!@#", "Dan", "Smith")
     user3_id = response_data["auth_user_id"] 
 
     response = requests.get(f"{url}/users/all/v1", params={ "token": user_token1 })
     assert response.status_code == 200
 
     response_data = response.json()
-
+    print(response_data)
     assert len(response_data["users"]) == 3
 
     assert response_data["users"][0]["u_id"] == user1_id
@@ -52,7 +51,7 @@ def test_list_all_users():
 def test_invalid_token():
     requests.delete(f"{url}/clear/v1")
     response = requests.get(f"{url}/users/all/v1", params={ "token": "invalidtoken" })
-    assert response.status_code == 400
+    assert response.status_code == 403
 
 # Invalid session
 # def test_invalid_session():
