@@ -142,16 +142,11 @@ def channel_invite():
 # channel/messages/v2
 @APP.route("/channel/messages/v2", methods=['GET'])
 def channel_messages():
-    store = data_store.get()
-    sessions = store["sessions"]
     data = request.get_json()
-    user_session = check_valid_token(data["token"])
-    if not user_session["session_id"] in sessions[user_session["user_id"]]:
-        raise AccessError("Invalid session")
-    channel_messages = channel_messages_v1(user_session["user_id"], data["channel_id"], data["start"])
+    user_id = check_valid_token_and_session(data["token"])
+    channel_messages = channel_messages_v1(user_id, data["channel_id"], data["start"])
     save()
     return dumps(channel_messages)
-
 
 # channel/leave/v1
 @APP.route("/channel/leave/v1", methods=['POST'])
