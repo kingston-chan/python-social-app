@@ -1,6 +1,5 @@
 import pytest, requests
-
-BASE_URL = 'http://127.0.0.1:8080'
+from src.config import url
 
 # ==== Helper function ==== #
 def register_user(email, password, first_name, last_name):
@@ -10,13 +9,13 @@ def register_user(email, password, first_name, last_name):
         "name_first": first_name, 
         "name_last": last_name
     }
-    return requests.post(f"{BASE_URL}/auth/register/v2", json=user_info).json()
+    return requests.post(f"{url}/auth/register/v2", json=user_info).json()
 
 # ==== Tests with correct input ==== #
 
 # Lists all users given valid token
 def test_list_all_users():
-    requests.delete(f"{BASE_URL}/clear/v1")
+    requests.delete(f"{url}/clear/v1")
 
     response_data = register_user("random@gmail.com", "123abc!@#", "John", "Smith")
     user_token1 = response_data["token"]
@@ -28,7 +27,7 @@ def test_list_all_users():
     response_data = register_user("random1@gmail.com", "123abc!@#", "Dan", "Smith")
     user3_id = response_data["auth_user_id"] 
 
-    response = requests.get(f"{BASE_URL}/users/all/v1", params={ "token": user_token1 })
+    response = requests.get(f"{url}/users/all/v1", params={ "token": user_token1 })
     assert response.status_code == 200
 
     response_data = response.json()
@@ -51,6 +50,14 @@ def test_list_all_users():
 
 # Invalid token
 def test_invalid_token():
-    requests.delete(f"{BASE_URL}/clear/v1")
-    response = requests.get(f"{BASE_URL}/users/all/v1", params={ "token": "invalidtoken" })
+    requests.delete(f"{url}/clear/v1")
+    response = requests.get(f"{url}/users/all/v1", params={ "token": "invalidtoken" })
     assert response.status_code == 400
+
+# Invalid session
+# def test_invalid_session():
+#     requests.delete(f"{url}/clear/v1")
+#     user_token = register_user("random@gmail.com", "123abc!@#", "John", "Smith")["token"]
+#     requests.post(f"{url}/auth/logout/v1", json={ "token": user_token })
+#     response = requests.get(f"{url}/users/all/v1", params={ "token": user_token })
+#     assert response.status_code == 403
