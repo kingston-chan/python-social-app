@@ -14,6 +14,7 @@ import json
 from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
+from src.channel import channel_messages_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -137,7 +138,41 @@ def channel_invite():
 # channel/messages/v2
 @APP.route("/channel/messages/v2", methods=['GET'])
 def channel_messages():
-    return {}
+    '''
+    store = data_store.get()
+    sessions = store["sessions"]
+    data = json.loads(request.get_json())
+    user_session = {}
+    try:
+        user_session = jwt.decode(data["token"], HASHCODE, algorithms=['HS256'])
+    except Exception as invalid_jwt:
+        raise AccessError("Invalid JWT") from invalid_jwt
+    if not user_session["session_id"] in sessions[user_session["user_id"]]:
+        raise AccessError("Invalid session")
+    new_channel = channels_create_v1(user_session["user_id"], data["name"], data["is_public"])
+    save()
+    return dumps(new_channel)
+    '''
+    store = data_store.get()
+    sessions = store["sessions"]
+    data = json.loads(request.get_json())
+    user_session = {}
+    try:
+        user_session = jwt.decode(data["token"], HASHCODE, algorithms=['HS256'])
+    except Exception as invalid_jwt:
+        raise AccessError("Invalid JWT") from invalid_jwt
+    if not user_session["session_id"] in sessions[user_session["user_id"]]:
+        raise AccessError("Invalid session")
+    channel_messages = channel_messages_v1(user_session["user_id"], data["channel_id"], data["start"])
+    save()
+    return dumps(channel_messages)
+
+    store = data_store.get()
+    sessions = store["sessions"]
+    data = request.get_json()
+    channel_messages = channel_messages_v1(data["token"], data["channel_id"], data["start"])
+    save()
+    return dumps(channel_messages)
 
 # channel/leave/v1
 @APP.route("/channel/leave/v1", methods=['POST'])
