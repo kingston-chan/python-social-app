@@ -14,6 +14,7 @@ import json
 from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
+from src.channels import channels_listall_v1
 from src.channel import channel_join_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
@@ -120,7 +121,11 @@ def channels_list():
 # channels/listall/v2
 @APP.route("/channels/listall/v2", methods=['GET'])
 def channels_listall():
-    return {}
+    response = request.args.get("token")
+    user_id = check_valid_token_and_session(response)
+    channels_info = channels_listall_v1(user_id)
+    save()
+    return dumps(channels_info)
 
 #====== channel.py =====#
 
