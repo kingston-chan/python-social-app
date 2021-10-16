@@ -1,7 +1,8 @@
 import pytest
 import requests
+from src.config import url
 
-BASE_URL = "http://127.0.0.1:8080"
+BASE_URL = url
 
 def test_details_invalid_channel_id():
     requests.delete(f"{BASE_URL}/clear/v1")
