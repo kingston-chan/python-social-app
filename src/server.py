@@ -122,9 +122,9 @@ def channels_list():
 def channels_listall():
     response = request.args.get("token")
     user_id = check_valid_token_and_session(response)
-    channels_dict = channels_listall_v1(user_id)
+    channels_info = channels_listall_v1(user_id)
     save()
-    return dumps(channels_dict)
+    return dumps(channels_info)
 
 #====== channel.py =====#
 
