@@ -15,10 +15,10 @@ def clear():
 @pytest.fixture
 def user1():
     user_dict = {
-        "email": "keefe@gmail.com",
+        "email": "user1@email.com",
         "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"
+        "name_first": "user",
+        "name_last": "name"
     }
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
     print(response.json())
@@ -27,10 +27,10 @@ def user1():
 @pytest.fixture
 def user2():
     user_dict = {
-        "email": "keefe2@gmail.com",
+        "email": "user2@email.com",
         "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"
+        "name_first": "user",
+        "name_last": "name"
     }
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
     return response.json()
