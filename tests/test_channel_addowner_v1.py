@@ -4,6 +4,71 @@ from src.config import url
 
 BASE_URL = url
 
+def test_addowner_valid():
+    requests.delete(f"{BASE_URL}/clear/v1")
+
+    owner_data = {
+        "email": "keefe@gmail.com",
+        "password": "password",
+        "name_first": "keefe",
+        "name_last": "vuong"        
+    }
+
+    response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
+    response_data = response.json()
+    owner_token = response_data["token"]
+    owner_u_id = response_data["auth_user_id"]
+
+    invited_member_data = {
+        "email": "eagle@gmail.com",
+        "password": "password",
+        "name_first": "team",
+        "name_last": "eagle"   
+    }
+
+    response = requests.post(f"{BASE_URL}/auth/register/v2", json=invited_member_data)
+    response_data = response.json()
+    invited_member_token = response_data["token"]
+    invited_member_u_id = response_data["auth_user_id"]
+
+
+    channel_1_info = {
+        "token": owner_token,
+        "name": "channel_1",
+        "is_public": True
+    }
+
+    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
+    response_data = response.json()
+    channel_1 = response_data["channel_id"]
+
+    join_info = {
+        "token": invited_member_token,
+        "channel_id": channel_1
+    }
+
+    response = requests.post(f"{BASE_URL}/channel/join/v2", json=join_info)
+
+    add_owner_info = {
+        "token": owner_token,
+        "channel_id": channel_1,
+        "u_id": invited_member_u_id
+    }
+
+    response = requests.post(f"{BASE_URL}/channel/addowner/v1", json=add_owner_info)
+    
+    channel_info = {
+        "token": invited_member_token,
+        "channel_id": channel_1
+    }
+
+    response = requests.get(f"{BASE_URL}/channel/details/v2", params=channel_info)
+    response_data = response.json()
+
+    expected_outcome = [owner_u_id, invited_member_u_id]
+
+    assert response_data == expected_outcome
+
 def test_addowner_invalid_channel_id():
     requests.delete(f"{BASE_URL}/clear/v1")
 
@@ -288,6 +353,7 @@ def test_addowner_global_owner():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
     response_data = response.json()
     owner_token = response_data["token"]
+    owner_u_id = response_data["auth_user_id"]
 
     channel_1_info = {
         "token": owner_token,
@@ -314,7 +380,17 @@ def test_addowner_global_owner():
 
     response = requests.post(f"{BASE_URL}/channel/addowner/v1", json=add_owner_info)
 
-    assert response.status_code == 200
+    channel_info = {
+        "token": invited_member_token,
+        "channel_id": channel_1
+    }
+
+    response = requests.get(f"{BASE_URL}/channel/details/v2", params=channel_info)
+    response_data = response.json()
+
+    expected_outcome = [owner_u_id, invited_member_u_id]
+
+    assert response_data["owner_members"] == expected_outcome
 
 
 def test_addowner_unauthorised_token():
