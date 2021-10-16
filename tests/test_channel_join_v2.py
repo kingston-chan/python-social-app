@@ -2,8 +2,9 @@ import pytest
 import requests
 import json
 from src import config
+from src.config import port
 
-BASE_URL = 'http://127.0.0.1:6969'
+BASE_URL = 'http://127.0.0.1:' + str(port)
 
 
 def test_invalid_channel_id():

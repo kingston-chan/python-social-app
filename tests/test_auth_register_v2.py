@@ -1,8 +1,9 @@
 import requests
 import jwt
+from src.config import port
 
 
-BASE_URL = 'http://127.0.0.1:6969'
+BASE_URL = 'http://127.0.0.1:' + str(port)
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
