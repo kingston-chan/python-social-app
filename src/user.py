@@ -29,6 +29,6 @@ def list_all_users():
     users = store["users"]
     user_list = []
     for user in users:
-        if not user["email"] is None and not user["handle"] is None:
+        if user["email"] is not None and user["handle"] is not None:
             user_list.append(assign_user_info(user))
     return { "users": user_list }
