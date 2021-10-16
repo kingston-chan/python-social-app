@@ -15,7 +15,7 @@ from src.auth import auth_register_v1
 import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
-from src.channel import channel_join_v1, channel_messages_v1
+from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1
 from src.user import list_all_users
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
@@ -167,6 +167,10 @@ def channel_messages():
 # channel/leave/v1
 @APP.route("/channel/leave/v1", methods=['POST'])
 def channel_leave():
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    channel_leave_v1(user_id, data["channel_id"])
+    save()
     return {}
 
 # channel/addowner/v1

@@ -191,7 +191,7 @@ def channel_leave(token, channel_id):
         "token": token, 
         "channel_id": channel_id, 
     }
-    return requests.post(f"{url}/channel/messages/v2", json=info)
+    return requests.post(f"{url}/channel/leave/v1", json=info)
 
 def channel_addowner(token, channel_id, u_id):
     """
