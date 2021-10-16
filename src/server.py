@@ -6,16 +6,18 @@ from flask import Flask, request
 from requests.models import DecodeError
 from requests.sessions import session
 from flask_cors import CORS
+from src import channel
 from src.error import InputError, AccessError
 from src import config
 from src.channels import channels_create_v1, channels_list_v1
 from src.data_store import data_store
 import json
-from src.auth import auth_register_v1
+from src.auth import auth_register_v1, auth_login_v1
 import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
-from src.channel import channel_join_v1, channel_details_v1
+from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1
+from src.user import list_all_users
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -86,7 +88,10 @@ if data:
 # auth/login/v2
 @APP.route("/auth/login/v2", methods=['POST'])
 def auth_login():
-    return {}
+    info = request.get_json()
+    user_info = auth_login_v1(info['email'], info['password'])
+    save()
+    return dumps(user_info)
 
 # auth/register/v2
 @APP.route("/auth/register/v2", methods=['POST'])
@@ -145,26 +150,36 @@ def channel_details():
 @APP.route("/channel/join/v2", methods=['POST'])
 def channel_join():
     data = request.get_json()
-
     user_id = check_valid_token_and_session(data["token"])
-
     channel_join_v1(user_id, data["channel_id"])  
     save()
     return dumps({})  
 
+
 # channel/invite/v2
 @APP.route("/channel/invite/v2", methods=['POST'])
 def channel_invite():
+    data = request.get_json() # { token, channel_id, u_id }
+    user_info = check_valid_token_and_session(data["token"])
+    channel_invite_v1(user_info, data["channel_id"], data["u_id"])
     return {}
 
 # channel/messages/v2
 @APP.route("/channel/messages/v2", methods=['GET'])
 def channel_messages():
-    return {}
+    token = request.args.get("token")
+    user_id = check_valid_token_and_session(token)
+    channel_messages = channel_messages_v1(user_id, int(request.args.get("channel_id")), int(request.args.get("start")))
+    save()
+    return dumps(channel_messages)
 
 # channel/leave/v1
 @APP.route("/channel/leave/v1", methods=['POST'])
 def channel_leave():
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    channel_leave_v1(user_id, data["channel_id"])
+    save()
     return {}
 
 # channel/addowner/v1
@@ -231,18 +246,19 @@ def dm_leave():
 def login():
     return {}
 
-#===== users.py =====#
+#===== user.py =====#
 
 # users/all/v1
 @APP.route("/users/all/v1", methods=['GET'])
 def users_all():
-    return {}
-
-#===== user.py =====#
+    token = request.args.get("token")
+    check_valid_token_and_session(token)
+    users = list_all_users()
+    return dumps(users)
 
 # user/profile/v1
 @APP.route("/user/profile/v1", methods=['GET'])
-def user_profile():
+def user_profile(): 
     return {}
 
 # user/profile/setname/v1

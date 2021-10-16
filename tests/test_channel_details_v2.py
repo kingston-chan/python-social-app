@@ -21,7 +21,7 @@ def test_details_invalid_channel_id():
     channel_info = {
         "token": user_token,
         "name": "channel_1",
-        "is_public": "True"
+        "is_public": True
     }
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_info)
@@ -60,7 +60,7 @@ def test_details_uninvited_member():
     channel_info = {
         "token": owner_user_token,
         "name": "channel_1",
-        "is_public": "True"
+        "is_public": True
     }
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_info)
@@ -88,7 +88,7 @@ def test_details_valid_channel_id():
     channel_info = {
         "token": user_token,
         "name": "channel_1",
-        "is_public": "True"
+        "is_public": True
     }
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_info)
@@ -97,7 +97,7 @@ def test_details_valid_channel_id():
 
     expected_output = {
         "name": "channel_1",
-        "is_public": "True",
+        "is_public": True,
         "owner_members": [
             {
                 'u_id': user_id,
@@ -139,7 +139,7 @@ def test_details_unauthorised_user():
     channel_info = {
         "token": user_token,
         "name": "channel_1",
-        "is_public": "True"
+        "is_public": True
     }
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_info)
@@ -181,7 +181,7 @@ def test_details_invited_member():
     channel_info = {
         "token": owner_user_token,
         "name": "channel_1",
-        "is_public": "True"
+        "is_public": True
     }
 
     response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_info)
@@ -198,7 +198,7 @@ def test_details_invited_member():
 
     expected_output = {
         "name": "channel_1",
-        "is_public": "True",
+        "is_public": True,
         "owner_members": [
             {
                 'u_id': owner_user_id,
