@@ -24,8 +24,7 @@ def create_channel(token, name, is_public):
         "name": name, 
         "is_public": is_public
     }
-    payload = json.dumps(channel_info)
-    return requests.post(f"{BASE_URL}/channels/create/v2", json=payload)
+    return requests.post(f"{BASE_URL}/channels/create/v2", json=channel_info)
 
 def list_channels(token):
     return requests.get(f"{BASE_URL}/channels/list/v2", params={ "token": token })
