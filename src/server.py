@@ -146,7 +146,7 @@ def channel_details():
 @APP.route("/channel/join/v2", methods=['POST'])
 def channel_join():
     data = request.get_json()
-
+    user_id = check_valid_token_and_session(data["token"])
     channel_join_v1(user_id, data["channel_id"])  
     save()
     return dumps({})  
