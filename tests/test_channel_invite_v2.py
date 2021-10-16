@@ -28,7 +28,6 @@ def test_invalid_channel():
     new_user1 = {"email" : "fakeguy1@gmail.com" , "password": "fake123456","name_first" : "faker1", "name_last" : "is_a_faker1" }
     response = requests.post(f"{url}/auth/register/v2", json=new_user1) 
     response_data = response.json()
-    new_user_token = response_data["token"]
     new_user_id = response_data["auth_user_id"]
 
     response = requests.post(f"{url}/channel/invite/v2", json={"token": auth_user_token, "channel_id": invalid_channel_id, "u_id" : new_user_id})
