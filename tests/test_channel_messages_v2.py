@@ -15,43 +15,38 @@ def clear():
 @pytest.fixture
 def user1():
     user_dict = {
-        "email": "fakeguy@fakeemail.com",
-        "password": "fakepassword",
-        "name_first": "fakefirstname",
-        "name_last": "fakelastname",
+        "email": "keefe@gmail.com",
+        "password": "password",
+        "name_first": "keefe",
+        "name_last": "vuong"
     }
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict) 
+    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
+    print(response.json())
     return response.json()
 
 @pytest.fixture
 def user2():
     user_dict = {
-        "email": "fakeguytwo@fakeemail.com",
-        "password": "fakepasswordtwo",
-        "name_first": "fakefirstnametwo",
-        "name_last": "fakelastnametwo",
+        "email": "keefe2@gmail.com",
+        "password": "password",
+        "name_first": "keefe",
+        "name_last": "vuong"
     }
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
     return response.json()
 
 # ==== Helper functions ==== #
-def create_channel1(token):
-    channel_dict = {
-        "token": token,
-        "name": "random_channel_name1",
-        "is_public": True,
+def create_channel(token, name, is_public):
+    channel_info = {
+        "token": token, 
+        "name": name, 
+        "is_public": is_public
     }
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_dict)
-    return response.json()
+    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_info)
+    response_data = response.json()
+    print(f"Channel: {response.json()}")
+    return int(response_data['channel_id'])
 
-def create_channel2(token):
-    channel_dict = {
-        "token": token,
-        "name": "random_channel_name2",
-        "is_public": False,
-    }
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_dict)
-    return response.json()
 '''
 def send_message(token, channel_id, message):
     message_dict = {
@@ -68,73 +63,66 @@ def test_ch_mess_error_invalid_channnel(clear, user1):
     # No channel created
     messages_dict = {
         "token": user1['token'], 
-        "channel_id": 2, 
-        "start": 0, 
+        "channel_id": 1, 
+        "start": 0,
     }
-    response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict)
     # Raise error
     assert response.status_code == 400
 
-def test_ch_mess_incorrect_start(clear, user1):
-    channel = create_channel1(user1['token'])
+def test_ch_mess_incorrect_start(clear, user1, capsys):
+    channel_id = create_channel(user1['token'], "chan_name", True)
+    channel_id2 = create_channel(user1['token'], "chan_name2", True)
     messages_dict = {
         "token": user1['token'], 
-        "channel_id": channel['channel_id'], 
-        "start": 100, 
+        "channel_id": channel_id, 
+        "start": 100,
     }
-    response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict)
     # Raise error
     assert response.status_code == 400
 
 def test_ch_mess_error_invalid_member(clear, user1, user2):
-    channel1 = create_channel1(user1['token'])
+    channel_id = create_channel(user1['token'], "chan_name", True)
     messages_dict = {
         "token": user2['token'],
-        "channel_id": channel1['channel_id'], 
-        "start": 0,
+        "channel_id": channel_id, 
+        "start": 0
     }
-    response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict) 
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict) 
     # Raise error
     assert response.status_code == 403
 
 def test_ch_mess_error_invalid_member2(clear, user1, user2):
-    channel1 = create_channel1(user1['token'])
-    channel2 = create_channel2(user2['token'])
+    channel_id1 = create_channel(user1['token'], "chan_name", True)
+    channel_id2 = create_channel(user2['token'], "chan_name2", True)
     messages_dict = {
         "token": user1['token'], 
-        "channel_id": channel2['channel_id'], 
-        "start": 0, 
+        "channel_id": channel_id2, 
+        "start": 0
     }        
-    response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict) 
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict) 
     # Raise error
     assert response.status_code == 403
 
     messages_dict = {
         "token": user2['token'], 
-        "channel_id": channel1['channel_id'], 
-        "start": 0, 
+        "channel_id": channel_id1, 
+        "start": 0
     }        
-    response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict)
     
     assert response.status_code == 403 
 
 # ==== Tests - Valids ==== #
 def test_ch_mess_public_channel(clear, user1):
-    channel1 = create_channel1(user1['token'])
-    # assert
-    '''
-    assert channel_messages(user1, channel1['channel_id'], 0) == {
-        'messages': [],
-        'start': 0,
-        'end': -1,
-    }
-    '''
+    channel_id = create_channel(user1['token'], "chan_name", True)
     messages_dict = {
         "token": user1['token'], 
-        "channel_id": channel1['channel_id'], 
-        "start": 0, 
+        "channel_id": channel_id, 
+        "start": 0
     }        
-    response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict)
     assert response.status_code == 200
     response_data = response.json()
     expected_result = {
@@ -145,13 +133,13 @@ def test_ch_mess_public_channel(clear, user1):
     assert response_data == expected_result
 
 def test_ch_mess_private_channel(clear, user2):
-    channel2 = create_channel2(user2['token'])
+    channel_id = create_channel(user2['token'], "chan_name", False)
     messages_dict = {
         "token": user2['token'], 
-        "channel_id": channel2['channel_id'], 
-        "start": 0, 
+        "channel_id": channel_id, 
+        "start": 0
     }        
-    response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict)
     expected_result = {
         "messages": [],
         "start": 0,
@@ -160,14 +148,14 @@ def test_ch_mess_private_channel(clear, user2):
     assert response.json() == expected_result
 
 def test_ch_mess_multiple_channels(clear, user1):
-    channel1 = create_channel1(user1['token'])
-    channel2 = create_channel2(user1['token'])
+    channel_id1 = create_channel(user1['token'], "chan_name", True)
+    channel_id2 = create_channel(user1['token'], "chan_name2", False)
     messages_dict = {
         "token": user1['token'], 
-        "channel_id": channel1['channel_id'], 
+        "channel_id": channel_id1, 
         "start": 0, 
     }        
-    response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict)
     expected_result = {
         "messages": [],
         "start": 0,
@@ -175,28 +163,21 @@ def test_ch_mess_multiple_channels(clear, user1):
     }
     assert response.json() == expected_result
 
-    '''
-    assert channel_messages_v1(user1, channel2['channel_id'], 0) == {
-        'messages': [],
-        'start': 0,
-        'end': -1,
-    }
-    '''
     messages_dict = {
         "token": user1['token'], 
-        "channel_id": channel2['channel_id'], 
+        "channel_id": channel_id2, 
         "start": 0, 
     }        
-    response = requests.get(f"{BASE_URL}/channel/messages/v2", json=messages_dict)
+    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict)
     expected_result = {
         "messages": [],
         "start": 0,
         "end": -1,
     }
     assert response.json() == expected_result
-
 
 # ==== Future Tests for Future Functions ==== #
+
 def test_ch_mess_1_message_in_channel(clear, user1):
     '''
     channel1 = create_channel1(user1['token'])
