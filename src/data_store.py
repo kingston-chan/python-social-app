@@ -28,7 +28,8 @@ Example usage:
 initial_object = {
     'users': [],
     'channels': [],
-    'dms': [],
+    'channel_messages': [],
+    'dm_messages': [],
     'sessions': {},
     'message_count': 0,
     'session_count': 0,
