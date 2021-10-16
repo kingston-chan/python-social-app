@@ -5,6 +5,7 @@ import json
 from requests.models import Response
 from src import config
 
+
 BASE_URL = 'http://127.0.0.1:6969'
 
 #400 is input error
