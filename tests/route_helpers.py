@@ -510,3 +510,15 @@ def admin_userpermission_change(token, u_id, permission_id):
         "permission_id": permission_id
     }
     return requests.post(f"{url}/admin/userpermission/change/v1", json=info)
+
+def clear():
+    """
+    Clears the data store
+    
+    Arguments
+        None
+
+    Return value
+        None
+    """
+    requests.delete(f"{url}/clear/v1")
