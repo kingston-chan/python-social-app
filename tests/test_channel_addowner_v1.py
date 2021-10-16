@@ -138,7 +138,6 @@ def test_addowner_uninvited_member():
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=invited_member_data)
     response_data = response.json()
-    uninvited_member_token = response_data["token"]
     uninvited_member_u_id = response_data["auth_user_id"]
 
     channel_1_info = {
