@@ -2,7 +2,7 @@ import requests
 import jwt
 
 
-BASE_URL = 'http://127.0.0.1:6969'
+BASE_URL = 'http://127.0.0.1:8080'
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -110,10 +110,10 @@ def test_register_valid_input():
     }
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json()
+    response_data = response.json
 
-    assert response_data["auth_user_id"] == 1
-    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
+    assert response_data["users"][0]["auth_user_id"] == 1
+    #assert response_data["users"][0]["token"] == token
 
 def test_register_valid_numbers():
     requests.delete(f"{BASE_URL}/clear/v1")
@@ -126,10 +126,10 @@ def test_register_valid_numbers():
     }
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json()
+    response_data = response.json
 
-    assert response_data["auth_user_id"] == 1
-    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
+    assert response_data["users"][0]["auth_user_id"] == 1
+    #assert response_data["users"][0]["token"] == token
 
 def test_register_valid_symbols():
     requests.delete(f"{BASE_URL}/clear/v1")
@@ -142,10 +142,10 @@ def test_register_valid_symbols():
     }
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json()
+    response_data = response.json
 
-    assert response_data["auth_user_id"] == 1
-    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
+    assert response_data["users"][0]["auth_user_id"] == 1
+    #assert response_data["users"][0]["token"] == token
 
 def test_register_valid_spaces():
     requests.delete(f"{BASE_URL}/clear/v1")
@@ -158,10 +158,10 @@ def test_register_valid_spaces():
     }
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json()
+    response_data = response.json
 
-    assert response_data["auth_user_id"] == 1
-    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
+    assert response_data["users"][0]["auth_user_id"] == 1
+    #assert response_data["users"][0]["token"] == token
 
 def test_register_valid_multiple_identical():
     requests.delete(f"{BASE_URL}/clear/v1")
@@ -174,20 +174,20 @@ def test_register_valid_multiple_identical():
     }
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json()
+    response_data = response.json
 
-    assert response_data["auth_user_id"] == 1
+    assert response_data["users"][0]["auth_user_id"] == 1
 
     user_data2 = {
-        "email": "email2@email.com",
+        "email": "email@email.com",
         "password": "password",
         "name_first": "Julian",
         "name_last": "Winzer"
     }
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data2)
-    response_data = response.json()
+    response_data = response.json
 
-    assert response_data["auth_user_id"] == 2
+    assert response_data["users"][0]["auth_user_id"] == 2
 
     assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 2, 'session_id': 2}
