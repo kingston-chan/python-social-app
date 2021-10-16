@@ -16,7 +16,7 @@ from src.auth import auth_register_v1, auth_login_v1
 import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
-from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1
+from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_removeowner_v1
 from src.user import list_all_users
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
@@ -190,6 +190,10 @@ def channel_addowner():
 # channel/removeowner/v1
 @APP.route("/channel/removeowner/v1", methods=['POST'])
 def channel_removeowner():
+    response = request.get_json()
+    print(response["token"])
+    user_id = check_valid_token_and_session(response["token"])
+    channel_removeowner_v1(user_id, response["channel_id"], response["u_id"])
     return {}
 
 #====== message.py =====#

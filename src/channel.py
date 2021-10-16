@@ -345,7 +345,14 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
     if not channel_exists:
         raise InputError("Channel does not exist")
     
-    check_valid_user(u_id, users)
+    user_exists = False
+    for user in users:
+        if u_id == user['id']:
+            user_exists = True
+            break
+    
+    if not user_exists:
+        raise InputError("User is not authorised.")
 
     if u_id not in owner_ids and u_id not in owner_perms_ids:
         raise InputError("User is not an owner/does not have owner perms")
@@ -354,7 +361,7 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
         raise InputError("User is currently the only owner of the channel")
 
     if auth_user_id not in owner_ids and auth_user_id not in owner_perms_ids:
-        raise InputError("User is not an owner/does not have owner perms")
+        raise AccessError("User is not an owner/does not have owner perms")
     
     for channel in channels:
         if channel["id"] == channel_id:
