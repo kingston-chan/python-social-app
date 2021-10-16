@@ -162,7 +162,7 @@ def test_multiple_users_sends_one_message_in_one_channel(clear, user1, user2):
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 2
-    
+
 def test_multiple_users_sends_one_message_in_multiple_channels(clear, user1, user2):
     channel_id1 = create_channel(user1['token'], "chan_name", True)
     join_channel(user2['token'], channel_id1)
