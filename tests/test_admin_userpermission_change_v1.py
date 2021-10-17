@@ -88,11 +88,14 @@ def test_global_to_member(clear_and_register):
 #     assert response.status_code == 403
 
     # Cannot change others permission
-    user3_id = rh.auth_register("random3@gmail.com", "123abc!@#", "Bob", "Smith").json()["auth_user_id"]
+    user3 = rh.auth_register("random3@gmail.com", "123abc!@#", "Bob", "Smith").json()
+    user3_id = user3["auth_user_id"]
+    user3_token = user3["token"]
     response = rh.admin_userpermission_change(clear_and_register, user3_id, 1)
     assert response.status_code == 403
 
     # Owner permission in joined channels is revoked
+    rh.channel_join(user3_token, channel1_id)
     response = rh.channel_addowner(clear_and_register, channel1_id, user3_id)
     assert response.status_code == 403
 
