@@ -182,6 +182,7 @@ def test_multiple_users_edits_one_message_in_multiple_channels(clear, user1, use
     channel_id1 = create_channel(user1['token'], "chan_name", True)
     channel_id2 = create_channel(user1['token'], "chan_name2", True)
     join_channel(user2['token'], channel_id1)
+    join_channel(user2['token'], channel_id2)
 
     message_response = send_message(user1['token'], channel_id1, "One")
     response_data = message_response.json()
@@ -192,6 +193,16 @@ def test_multiple_users_edits_one_message_in_multiple_channels(clear, user1, use
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 2
+
+    message_response = send_message(user1['token'], channel_id2, "Three")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 3
+
+    message_response = send_message(user2['token'], channel_id2, "Four")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 4
 
 def test_multiple_users_edits_multiple_messages_in_one_channel(clear, user1, user2):
     channel_id1 = create_channel(user1['token'], "chan_name", True)
@@ -228,7 +239,7 @@ def test_multiple_users_edits_multiple_messages_in_multiple_channels(clear, user
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
-    message_response = send_message(user1['token'], channel_id2, "Two")
+    message_response = send_message(user1['token'], channel_id1, "Two")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 2
@@ -238,11 +249,30 @@ def test_multiple_users_edits_multiple_messages_in_multiple_channels(clear, user
     assert message_response.status_code == 200
     assert response_data['message_id'] == 3
 
-
-    message_response = send_message(user2['token'], channel_id2, "Four")
+    message_response = send_message(user2['token'], channel_id1, "Four")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 4
+
+    message_response = send_message(user1['token'], channel_id1, "Five")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 5
+
+    message_response = send_message(user1['token'], channel_id1, "Six")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 6
+
+    message_response = send_message(user2['token'], channel_id1, "Seven")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 7
+
+    message_response = send_message(user2['token'], channel_id1, "Eight")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 8
 
 def test_one_user_sends_one_message_in_private_channel(clear, user1):
     channel_id = create_channel(user1['token'], "chan_name", False)
