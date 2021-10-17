@@ -24,13 +24,13 @@ def test_logout():
 
     
 
-    requests.post(f"{BASE_URL}/auth/logout/v1", json=response_data["token"])
+    requests.post(f"{BASE_URL}/auth/logout/v1", json={"token": response_data["token"]})
 
     assert response.status_code == 200
 
 def test_invalid_token():
     requests.delete(f"{BASE_URL}/clear/v1")
-    response = requests.post(f"{BASE_URL}/auth/logout/v1", json="invalidToken")
+    response = requests.post(f"{BASE_URL}/auth/logout/v1", json={"token": "invalid token"})
     assert response.status_code == 403
     
 
