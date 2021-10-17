@@ -108,6 +108,7 @@ def auth_register():
 @APP.route("/auth/logout/v1", methods=['POST'])
 def auth_logout():
     info = request.get_json()
+    check_valid_token_and_session(info)
     auth_logout_v1(info)
     save()
     return dumps({})
