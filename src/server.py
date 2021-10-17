@@ -292,13 +292,13 @@ def user_profile_sethandle():
     user_id = check_valid_token_and_session(data["token"])
     store = data_store.get()
     for user in store["users"]:
-        if user["handle_str"] == new_handle:
+        if user["handle"] == new_handle:
             raise InputError("Handle already bieng used")
         if len(new_handle) > 20 or len(new_handle) < 3:
             raise InputError("Handle is not valid")
-    if new_handle.isnum():
+    if new_handle.isalnum():
         for user in store["users"]:
-            if user_id == user["u_id"]:
+            if user_id == user["id"]:
                 user["handle"] = new_handle
     
     else:

@@ -15,11 +15,11 @@ def test_input_string_too_long():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
 
     response_data = response.json()
-    auth_user_token = response_data["token"]
+    user_token = response_data["token"]
     
     new_handle = "thispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfake"
 
-    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": auth_user_token, "handle_str": new_handle})
+    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": user_token, "handle_str": new_handle})
 
     assert response.status_code == 400
 
@@ -31,11 +31,11 @@ def test_non_alphanumeric_inputs():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
 
     response_data = response.json()
-    auth_user_token = response_data["token"]
+    user_token = response_data["token"]
     
     new_handle = "***********"
 
-    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": auth_user_token, "handle_str": new_handle})
+    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": user_token, "handle_str": new_handle})
 
     assert response.status_code == 400
 def test_handle_string_is_used():
@@ -45,16 +45,12 @@ def test_handle_string_is_used():
 
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
     
+    response_data = response.json()
+    user_token = response_data["token"]
+
     new_handle = "thispersonisfake"
 
-    new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
-
-    response_data = response.json()
-    auth_user_token = response_data["token"]
-
-    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": auth_user_token, "handle_str": new_handle})
+    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": user_token, "handle_str": new_handle})
 
     new_user = {"email" : "fakeguy1@gmail.com" , "password": "fake123451","name_first" : "faker1", "name_last" : "is_a_faker1" }
 
@@ -63,7 +59,7 @@ def test_handle_string_is_used():
     response_data = response.json()
     auth_user_token = response_data["token"]
 
-    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": auth_user_token, "handle_str": new_handle})
+    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": user_token, "handle_str": new_handle})
     assert response.status_code == 400
 
 def test_invalid_token():
@@ -89,9 +85,9 @@ def test_succesful_case():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
 
     response_data = response.json()
-    auth_user_token = response_data["token"]
+    user_token = response_data["token"]
     
     new_handle = "thispersonisfake"
 
-    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": auth_user_token, "handle_str": new_handle})
+    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": user_token, "handle_str": new_handle})
     assert response.status_code == 200
