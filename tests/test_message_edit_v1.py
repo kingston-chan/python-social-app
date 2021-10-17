@@ -34,6 +34,17 @@ def user2():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
     return response.json()
 
+@pytest.fixture
+def user3():
+    user_dict = {
+        "email": "user3@email.com",
+        "password": "password",
+        "name_first": "user",
+        "name_last": "name"
+    }
+    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
+    return response.json()
+
 # ==== Helper functions ==== #
 def create_channel(token, name, is_public):
     channel_info = {
@@ -69,7 +80,12 @@ def send_message(token, channel_id, message):
     return requests.post(f"{BASE_URL}/message/send/v1", json=message_dict)
 
 def edit_message(token, message_id, message):
-    pass
+    message_dict = {
+        "token": token,
+        "message_id": message_id,
+        "message": message
+    }
+    return requests.put(f"{BASE_URL}/message/edit/v1", json=message_dict)
 
 def print_channel_messages(token, channel_id, start):
     messages_info = {
@@ -91,31 +107,65 @@ def test_message_too_long(clear, user1):
     message_response = edit_message(user1['token'], response_data['message_id'], "A"*1500)
     assert message_response.status_code == 400
 
-def test_invalid_message(clear, user1, user2):
-    channel_id1 = create_channel(user1['token'], "chan_name", True)
-    channel_id2 = create_channel(user2['token'], "chan_name2", True)
-    message_response = send_message(user1['token'], channel_id1, "Hello")
+def test_invalid_fake_message_id(clear, user1, user2, user3):
+    channel_id = create_channel(user2['token'], "chan_name", True)
+
+    message_response = send_message(user2['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
-    message_response = send_message(user1['token'], channel_id1, "Hello")
+    message_response = edit_message(user3['token'], response_data['message_id'] + 1, "Hey there")
+    assert message_response.status_code == 400
+
+def test_invalid_real_message_id(clear, user1, user2, user3):
+    channel_id1 = create_channel(user2['token'], "chan_name", True)
+    channel_id2 = create_channel(user3['token'], "chan_name2", True)
+
+    message_response = send_message(user2['token'], channel_id1, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+    message_id1 = response_data['message_id']
+
+    message_response = send_message(user3['token'], channel_id2, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 2
+    message_id2 = response_data['message_id']
 
-    message_response = edit_message(user1['token'], response_data['message_id'], "Hey there")
+    message_response = edit_message(user3['token'], message_id2, "Hey there")
+    assert message_response.status_code == 400
+
+    message_response = edit_message(user2['token'], message_id1, "Hey there")
     assert message_response.status_code == 400
 
 ## Access Error - 403 ##
-def test_real_unauthorised_user(clear, user1, user2):
+def test_unauthorised_user(clear, user1, user2, user3):
     channel_id = create_channel(user1['token'], "chan_name", True)
+    join_channel(user2['token'], channel_id)
+    join_channel(user3['token'], channel_id)
+
     message_response = send_message(user2['token'], channel_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+    message_id = response_data['message_id']
+
+    message_response = edit_message(user3['token'], message_id, "Hello again.")
     assert message_response.status_code == 403
 
-def test_dummy_unauthorised_user(clear, user1):
+def test_user_not_owner(clear, user1, user2):
     channel_id = create_channel(user1['token'], "chan_name", True)
-    message_response = send_message(9999, channel_id, "Hello")
+    join_channel(user2['token'], channel_id)
+
+    message_response = send_message(user1['token'], channel_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+    message_id = response_data['message_id']
+
+    message_response = edit_message(user2['token'], message_id, "Hello again.")
     assert message_response.status_code == 403
 
 # ==== Tests - Valids ==== #
@@ -356,7 +406,19 @@ def test_delete_message(clear, user1):
     }
     assert response_data == expected_result
 
-# ==== Future Tests for Future Functions ==== #
+def test_owner_edits_another_users_message(clear, user1, user2):
+    channel_id = create_channel(user1['token'], "chan_name", True)
+    join_channel(user2['token'], channel_id)
+
+    message_response = send_message(user2['token'], channel_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+    message_id = response_data['message_id']
+
+    message_response = edit_message(user1['token'], message_id, "Hello again.")
+    assert message_response.status_code == 200
+
 def test_one_user_edits_one_message_in_private_channel(clear, user1):
     channel_id = create_channel(user1['token'], "chan_name", False)
     message_response = send_message(user1['token'], channel_id, "Hello")
