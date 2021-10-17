@@ -78,8 +78,8 @@ def print_channel_messages(token, channel_id, start):
 
 def send_mass_messages(user, messages_total, channel_id):
     message_list = []
-
-    for x in range(messages_total):
+    loop = 0
+    while loop < messages_total:
         current_time = int(time.time())
         response_data = send_message(user['token'], channel_id, "hello").json()
         message_id = response_data['message_id']
@@ -90,7 +90,7 @@ def send_mass_messages(user, messages_total, channel_id):
             "time_created": current_time
         }
         message_list.insert(0, message_dict)
-    
+        loop += 1
     return message_list
 
 def make_mass_expected_results(start, end, messages_total, message_list):
