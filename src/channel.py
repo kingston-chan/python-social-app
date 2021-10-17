@@ -210,18 +210,34 @@ def channel_messages_v1(auth_user_id, channel_id, start):
         raise AccessError('User is not authorised.')
 
     # The channel is scanned for its messages.
+
+    selected_channel_messages = []
+
+    if channel_messages == []:
+        length = 0
+    else:
+        selected_channel_messages = list(filter(lambda x: (x['channel_id'] == channel_id), channel_messages))
+        selected_channel_messages.reverse()
+        length = len(selected_channel_messages)
+
     index = start
     counter = 0
-    channel_messages = list(filter(lambda x: (x['channel_id'] == channel_id), channel_messages))
     selected_messages = []
-    while index < len(channel_messages) and counter < 50:
-        selected_messages.append(channel_messages[index])
+    while index < length and counter < 50:
+        selected_message = selected_channel_messages[index]
+        message_dict = {
+            "message_id": selected_message['message_id'],
+            "u_id": selected_message['u_id'],
+            "message": selected_message['message'],
+            "time_created": selected_message['time_created']
+        }
+        selected_messages.append(message_dict)
         index += 1
         counter += 1
 
     # If the scanner hits the end of the messages, the end is -1
     # else, the end is the final message index.
-    if counter != 50 or index == len(channel_messages):
+    if index == length:
         end = -1
     else:
         end = index
