@@ -130,4 +130,4 @@ dmypy.json
 datastore.json
 
 # tests
-test_channel_messages_v2.py
+tests/test_channel_messages_v2.py
