@@ -146,7 +146,7 @@ def channel_invite(token, channel_id, u_id):
     """
     invite = {
         "token": token,
-        "channel": channel_id,
+        "channel_id": channel_id,
         "u_id": u_id
     }
     return requests.post(f"{url}/channel/invite/v2", json=invite)
