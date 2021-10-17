@@ -5,7 +5,7 @@ import time
 import json
 
 BASE_URL = url
-## =====[ test_channel_messages_v2.py ]===== ##
+## =====[ test_message_edit_v2.py ]===== ##
 
 # ==== Fixtures ==== #
 @pytest.fixture
@@ -116,28 +116,6 @@ def test_invalid_fake_message_id(clear, user1, user2, user3):
     assert response_data['message_id'] == 1
 
     message_response = edit_message(user3['token'], response_data['message_id'] + 1, "Hey there")
-    assert message_response.status_code == 400
-
-def test_invalid_real_message_id(clear, user1, user2, user3):
-    channel_id1 = create_channel(user2['token'], "chan_name", True)
-    channel_id2 = create_channel(user3['token'], "chan_name2", True)
-
-    message_response = send_message(user2['token'], channel_id1, "Hello")
-    response_data = message_response.json()
-    assert message_response.status_code == 200
-    assert response_data['message_id'] == 1
-    message_id1 = response_data['message_id']
-
-    message_response = send_message(user3['token'], channel_id2, "Hello")
-    response_data = message_response.json()
-    assert message_response.status_code == 200
-    assert response_data['message_id'] == 2
-    message_id2 = response_data['message_id']
-
-    message_response = edit_message(user3['token'], message_id2, "Hey there")
-    assert message_response.status_code == 400
-
-    message_response = edit_message(user2['token'], message_id1, "Hey there")
     assert message_response.status_code == 400
 
 ## Access Error - 403 ##
@@ -488,7 +466,7 @@ def test_channel_messages_interaction(clear, user1):
     }
     assert response_data == expected_result
 
-    message_response = edit_message(user2['token'], message_id, "Hello again.")
+    message_response = edit_message(user1['token'], message_id, "Hello again.")
     assert message_response.status_code == 200
 
     messages_response = print_channel_messages(user1['token'], channel_id, 0)
@@ -531,7 +509,7 @@ def test_channel_messages_interaction2(clear, user1):
     }
     assert response_data == expected_result
 
-    message_response = edit_message(user2['token'], message_id, "")
+    message_response = edit_message(user1['token'], message_id, "")
     assert message_response.status_code == 200
 
     messages_response = print_channel_messages(user1['token'], channel_id, 0)
