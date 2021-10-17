@@ -44,6 +44,7 @@ def auth_login_v1(email, password):
 
 def auth_logout_v1(token):
 
+    
     store = data_store.get()
     
     token_dict = jwt.decode(token, HASHCODE, algorithms=['HS256'])
