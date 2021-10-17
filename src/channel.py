@@ -181,6 +181,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     selected_channel = {}
     store = data_store.get()
     channels = store['channels']
+    channel_messages = store['channel_messages']
 
     # Scans if the channel exists.
     for channel in channels:
@@ -188,7 +189,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
             channel_valid = True
             # Checks if the start value is valid within the length of 
             # messages in the channel.
-            if start <= len(channel['messages']):
+            if start <= len(list(filter(lambda x: (x['channel_id'] == channel_id), channel_messages))):
                 start_valid = True
                 selected_channel = channel  # Channel is also selected
 
@@ -211,7 +212,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     # The channel is scanned for its messages.
     index = start
     counter = 0
-    channel_messages = selected_channel['messages']
+    channel_messages = list(filter(lambda x: (x['channel_id'] == channel_id), channel_messages))
     selected_messages = []
     while index < len(channel_messages) and counter < 50:
         selected_messages.append(channel_messages[index])
