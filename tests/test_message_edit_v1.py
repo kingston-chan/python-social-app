@@ -107,15 +107,15 @@ def test_message_too_long(clear, user1):
     message_response = edit_message(user1['token'], response_data['message_id'], "A"*1500)
     assert message_response.status_code == 400
 
-def test_invalid_fake_message_id(clear, user1, user2, user3):
-    channel_id = create_channel(user2['token'], "chan_name", True)
+def test_invalid_fake_message_id(clear, user1):
+    channel_id = create_channel(user1['token'], "chan_name", True)
 
-    message_response = send_message(user2['token'], channel_id, "Hello")
+    message_response = send_message(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
-    message_response = edit_message(user3['token'], response_data['message_id'] + 1, "Hey there")
+    message_response = edit_message(user1['token'], response_data['message_id'] + 1, "Hey there")
     assert message_response.status_code == 400
 
 ## Access Error - 403 ##
