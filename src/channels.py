@@ -134,8 +134,7 @@ def channels_create_v1(auth_user_id, name, is_public):
         'owner_members': [],
         'owner_permissions': [],
         'all_members': [],
-        'is_public': is_public,
-        'messages': [],
+        'is_public': is_public
     }
 
     # Add the creator of the channel to the list
