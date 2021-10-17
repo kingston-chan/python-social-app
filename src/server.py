@@ -12,7 +12,7 @@ from src import config
 from src.channels import channels_create_v1, channels_list_v1
 from src.data_store import data_store
 import json
-from src.auth import auth_register_v1, auth_login_v1
+from src.auth import auth_register_v1, auth_login_v1, auth_logout_v1
 import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
@@ -106,7 +106,10 @@ def auth_register():
 # auth/logout/v1
 @APP.route("/auth/logout/v1", methods=['POST'])
 def auth_logout():
-    return {}
+    info = request.get_json()
+    auth_logout_v1(info)
+    save()
+    return dumps({})
 
 #====== channels.py =====#
 
