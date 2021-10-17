@@ -34,9 +34,9 @@ def admin_userpermission_change_v1(auth_user_id, u_id, permission_id):
     # Exceptions
     global_owners = list(filter(lambda user: (user["permission"] == 1), users))
     # Not a global owner
-    if len(list(filter(lambda owner: (owner["u_id"] == auth_user_id), global_owners))) != 1:
+    if len(list(filter(lambda owner: (owner["id"] == auth_user_id), global_owners))) != 1:
         raise AccessError("Not global owner")
-    user_being_changed = list(filter(lambda user: (user["u_id"] == u_id), users))
+    user_being_changed = list(filter(lambda user: (user["id"] == u_id), users))
     # u_id does not belong to anyone on streams
     if len(user_being_changed) != 1:
         raise InputError("Invalid User")
@@ -47,7 +47,7 @@ def admin_userpermission_change_v1(auth_user_id, u_id, permission_id):
     if len(global_owners) == 1 and user_being_changed[0]["permission"] == 1:
         raise InputError("Only global owner left, cannot remove")
     # Invalid permission id
-    if 1 > permission_id > 2:
+    if not permission_id in [1,2]:
         raise InputError("Invalid permission id")
 
     channels = store["channels"]
