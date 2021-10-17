@@ -70,7 +70,6 @@ def test_invalid_token():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
 
     response_data = response.json()
-    auth_user_token = response_data["token"]
     
     new_handle = "thispersonisfake"
 
