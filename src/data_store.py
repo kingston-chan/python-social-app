@@ -31,7 +31,7 @@ initial_object = {
     'channel_messages': [],
     'dm_messages': [],
     'sessions': {},
-    'message_count': 0,
+    'message_id_gen': 0,
     'session_count': 0,
 }
 ## YOU SHOULD MODIFY THIS OBJECT ABOVE
