@@ -53,20 +53,14 @@ def admin_userpermission_change_v1(auth_user_id, u_id, permission_id):
     channels = store["channels"]
     if permission_id == 1:
         user_being_changed[0]["permission"] = 1
-        new_channels = list(filter(lambda channel: (u_id in channel["all_members"]),
-            filter(lambda channel: (not u_id in channel["owner_permissions"]), 
-                map(lambda channel: channel["owner_permissions"].append(u_id), channels)
-            ))
-        )
+        for channel in channels:
+            if u_id in channel["all_members"] and not u_id in channel["owner_permissions"]:
+                channel["owner_permissions"].append(u_id) 
     else:
         user_being_changed[0]["permission"] = 2
-        new_channels = list(filter(lambda channel: (u_id in channel["all_members"]),
-            filter(lambda channel: (u_id in channel["owner_permissions"] and not u_id in ["owner_members"]), 
-                map(lambda channel: channel["owner_permissions"].remove(u_id), channels)
-            ))
-        )
-    
-    store["channels"] = new_channels
+        for channel in channels:
+            if u_id in channel["all_members"] and u_id in channel["owner_permissions"] and not u_id in ["owner_members"]:
+                channel["owner_permissions"].remove(u_id)
     data_store.set(store)
     return {}
 
