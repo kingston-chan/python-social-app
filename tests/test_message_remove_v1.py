@@ -1,11 +1,12 @@
 import pytest
 import requests
+from requests.api import delete
 from src.config import url
 import time
 import json
 
 BASE_URL = url
-## =====[ test_message_edit_v1.py ]===== ##
+## =====[ test_message_delete_v1.py ]===== ##
 
 # ==== Fixtures ==== #
 @pytest.fixture
@@ -87,6 +88,13 @@ def edit_message(token, message_id, message):
     }
     return requests.put(f"{BASE_URL}/message/edit/v1", json=message_dict)
 
+def delete_message(token, message_id):
+    delete_dict = {
+        'token': token,
+        'message_id': message_id
+    }
+    return requests.delete(f"{BASE_URL}/message/remove/v1", json=delete_dict)
+
 def print_channel_messages(token, channel_id, start):
     messages_info = {
         "token": token,
@@ -97,16 +105,6 @@ def print_channel_messages(token, channel_id, start):
 
 # ==== Tests - Errors ==== #
 ## Input Error - 400 ##
-def test_message_too_long(clear, user1):
-    channel_id = create_channel(user1['token'], "chan_name", True)
-    message_response = send_message(user1['token'], channel_id, "Hello")
-    response_data = message_response.json()
-    assert message_response.status_code == 200
-    assert response_data['message_id'] == 1
-
-    message_response = edit_message(user1['token'], response_data['message_id'], "A"*1500)
-    assert message_response.status_code == 400
-
 def test_invalid_fake_message_id(clear, user1):
     channel_id = create_channel(user1['token'], "chan_name", True)
 
@@ -115,7 +113,7 @@ def test_invalid_fake_message_id(clear, user1):
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
-    message_response = edit_message(user1['token'], response_data['message_id'] + 1, "Hey there")
+    message_response = delete_message(user1['token'], response_data['message_id'] + 1)
     assert message_response.status_code == 400
 
 ## Access Error - 403 ##
@@ -128,9 +126,8 @@ def test_unauthorised_user(clear, user1, user2, user3):
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
-    message_id = response_data['message_id']
 
-    message_response = edit_message(user3['token'], message_id, "Hello again.")
+    message_response = delete_message(user3['token'], response_data['message_id'])
     assert message_response.status_code == 403
 
 def test_user_not_owner(clear, user1, user2):
@@ -141,13 +138,12 @@ def test_user_not_owner(clear, user1, user2):
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
-    message_id = response_data['message_id']
 
-    message_response = edit_message(user2['token'], message_id, "Hello again.")
+    message_response = delete_message(user2['token'], response_data['message_id'])
     assert message_response.status_code == 403
 
 # ==== Tests - Valids ==== #
-def test_one_user_edits_one_message_in_one_channel(clear, user1):
+def test_one_user_deletes_one_message_in_one_channel(clear, user1):
     channel_id = create_channel(user1['token'], "chan_name", True)
     message_response = send_message(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
@@ -155,10 +151,10 @@ def test_one_user_edits_one_message_in_one_channel(clear, user1):
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    message_response = edit_message(user1['token'], message_id, "Hello again.")
+    message_response = delete_message(user1['token'], message_id)
     assert message_response.status_code == 200
 
-def test_one_user_edits_one_message_in_multiple_channels(clear, user1):
+def test_one_user_deletes_one_message_in_multiple_channels(clear, user1):
     channel_id1 = create_channel(user1['token'], "chan_name", True)
     channel_id2 = create_channel(user1['token'], "chan_name2", True)
 
@@ -174,13 +170,12 @@ def test_one_user_edits_one_message_in_multiple_channels(clear, user1):
     assert response_data['message_id'] == 2
     message_id2 = response_data['message_id']
 
-    message_response = edit_message(user1['token'], message_id1, "Hello again.")
+    message_response = delete_message(user1['token'], message_id1)
+    assert message_response.status_code == 200
+    message_response = delete_message(user1['token'], message_id2)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user1['token'], message_id2, "Hello again.")
-    assert message_response.status_code == 200
-
-def test_one_user_edits_multiple_messages_in_one_channel(clear, user1):
+def test_one_user_deletes_multiple_messages_in_one_channel(clear, user1):
     channel_id = create_channel(user1['token'], "chan_name", True)
     
     message_response = send_message(user1['token'], channel_id, "Hello")
@@ -201,7 +196,12 @@ def test_one_user_edits_multiple_messages_in_one_channel(clear, user1):
     message_response = edit_message(user1['token'], message_id2, "Hello again.")
     assert message_response.status_code == 200
 
-def test_one_user_edits_multiple_messages_in_multiple_channels(clear, user1):
+    message_response = delete_message(user1['token'], message_id1)
+    assert message_response.status_code == 200
+    message_response = delete_message(user1['token'], message_id2)
+    assert message_response.status_code == 200
+
+def test_one_user_deletes_multiple_messages_in_multiple_channels(clear, user1):
     channel_id1 = create_channel(user1['token'], "chan_name", True)
     channel_id2 = create_channel(user1['token'], "chan_name2", True)
 
@@ -238,7 +238,16 @@ def test_one_user_edits_multiple_messages_in_multiple_channels(clear, user1):
     message_response = edit_message(user1['token'], message_id4, "Four")
     assert message_response.status_code == 200
 
-def test_multiple_users_edits_one_message_in_one_channel(clear, user1, user2):
+    message_response = delete_message(user1['token'], message_id1)
+    assert message_response.status_code == 200
+    message_response = delete_message(user1['token'], message_id2)
+    assert message_response.status_code == 200
+    message_response = delete_message(user1['token'], message_id3)
+    assert message_response.status_code == 200
+    message_response = delete_message(user1['token'], message_id4)
+    assert message_response.status_code == 200
+
+def test_multiple_users_deletes_one_message_in_one_channel(clear, user1, user2):
     channel_id1 = create_channel(user1['token'], "chan_name", True)
     join_channel(user2['token'], channel_id1)
 
@@ -260,7 +269,12 @@ def test_multiple_users_edits_one_message_in_one_channel(clear, user1, user2):
     message_response = edit_message(user2['token'], message_id2, "Hello again.")
     assert message_response.status_code == 200
 
-def test_multiple_users_edits_one_message_in_multiple_channels(clear, user1, user2):
+    message_response = delete_message(user1['token'], message_id1)
+    assert message_response.status_code == 200
+    message_response = delete_message(user1['token'], message_id2)
+    assert message_response.status_code == 200
+
+def test_multiple_users_deletes_one_message_in_multiple_channels(clear, user1, user2):
     channel_id1 = create_channel(user1['token'], "chan_name", True)
     channel_id2 = create_channel(user1['token'], "chan_name2", True)
     join_channel(user2['token'], channel_id1)
@@ -290,19 +304,19 @@ def test_multiple_users_edits_one_message_in_multiple_channels(clear, user1, use
     assert response_data['message_id'] == 4
     message_id4 = response_data['message_id']
 
-    message_response = edit_message(user1['token'], message_id1, "Hello again.")
+    message_response = delete_message(user1['token'], message_id1)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user2['token'], message_id2, "Hello again.")
+    message_response = delete_message(user2['token'], message_id2)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user1['token'], message_id3, "Hello again.")
+    message_response = delete_message(user1['token'], message_id3)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user2['token'], message_id4, "Hello again.")
+    message_response = delete_message(user2['token'], message_id4)
     assert message_response.status_code == 200
 
-def test_multiple_users_edits_multiple_messages_in_one_channel(clear, user1, user2):
+def test_multiple_users_deletes_multiple_messages_in_one_channel(clear, user1, user2):
     channel_id1 = create_channel(user1['token'], "chan_name", True)
     join_channel(user2['token'], channel_id1)
 
@@ -330,19 +344,19 @@ def test_multiple_users_edits_multiple_messages_in_one_channel(clear, user1, use
     assert response_data['message_id'] == 4
     message_id4 = response_data['message_id']
 
-    message_response = edit_message(user1['token'], message_id1, "Hello again.")
+    message_response = delete_message(user1['token'], message_id1)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user1['token'], message_id2, "Hello again.")
+    message_response = delete_message(user1['token'], message_id2)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user2['token'], message_id3, "Hello again.")
+    message_response = delete_message(user2['token'], message_id3)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user2['token'], message_id4, "Hello again.")
+    message_response = delete_message(user2['token'], message_id4)
     assert message_response.status_code == 200
 
-def test_multiple_users_edits_multiple_messages_in_multiple_channels(clear, user1, user2):
+def test_multiple_users_deletes_multiple_messages_in_multiple_channels(clear, user1, user2):
     channel_id1 = create_channel(user1['token'], "chan_name", True)
     channel_id2 = create_channel(user1['token'], "chan_name2", True)
     join_channel(user2['token'], channel_id1)
@@ -396,50 +410,45 @@ def test_multiple_users_edits_multiple_messages_in_multiple_channels(clear, user
     assert response_data['message_id'] == 8
     message_id8 = response_data['message_id']
 
-    message_response = edit_message(user1['token'], message_id1, "Hello again.")
+    message_response = delete_message(user1['token'], message_id1)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user1['token'], message_id2, "Hello again.")
+    message_response = delete_message(user1['token'], message_id2)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user2['token'], message_id3, "Hello again.")
+    message_response = delete_message(user2['token'], message_id3)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user2['token'], message_id4, "Hello again.")
+    message_response = delete_message(user2['token'], message_id4)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user1['token'], message_id5, "Hello again.")
+    message_response = delete_message(user1['token'], message_id5)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user1['token'], message_id6, "Hello again.")
+    message_response = delete_message(user1['token'], message_id6)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user2['token'], message_id7, "Hello again.")
+    message_response = delete_message(user2['token'], message_id7)
     assert message_response.status_code == 200
 
-    message_response = edit_message(user2['token'], message_id8, "Hello again.")
+    message_response = delete_message(user2['token'], message_id8)
     assert message_response.status_code == 200
 
-def test_delete_message(clear, user1):
+def test_send_edit_delete_message(clear, user1):
     channel_id = create_channel(user1['token'], "chan_name", True)
     message_response = send_message(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
+    message_id = response_data['message_id']
 
-    message_response = edit_message(user1['token'], channel_id, "")
+    message_response = edit_message(user1['token'], message_id, "Hey there")
     assert message_response.status_code == 200
 
-    messages_response = print_channel_messages(user1['token'], channel_id, 0)
-    response_data = messages_response.json()
-    expected_result = {
-        "messages": [],
-        "start": 0,
-        "end": -1,
-    }
-    assert response_data == expected_result
+    message_response = delete_message(user1['token'], message_id)
+    assert message_response.status_code == 200
 
-def test_owner_edits_another_users_message(clear, user1, user2):
+def test_owner_deletes_another_users_message(clear, user1, user2):
     channel_id = create_channel(user1['token'], "chan_name", True)
     join_channel(user2['token'], channel_id)
 
@@ -449,10 +458,10 @@ def test_owner_edits_another_users_message(clear, user1, user2):
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    message_response = edit_message(user1['token'], message_id, "Hello again.")
+    message_response = delete_message(user1['token'], message_id)
     assert message_response.status_code == 200
 
-def test_one_user_edits_one_message_in_private_channel(clear, user1):
+def test_one_user_deletes_one_message_in_private_channel(clear, user1):
     channel_id = create_channel(user1['token'], "chan_name", False)
     message_response = send_message(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
@@ -460,10 +469,10 @@ def test_one_user_edits_one_message_in_private_channel(clear, user1):
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    message_response = edit_message(user1['token'], message_id, "Hello again.")
+    message_response = delete_message(user1['token'], message_id)
     assert message_response.status_code == 200
 
-def test_one_user_edits_one_message_in_private_and_public_channel(clear, user1):
+def test_one_user_deletes_one_message_in_private_and_public_channel(clear, user1):
     channel_id1 = create_channel(user1['token'], "chan_name", True)
     channel_id2 = create_channel(user1['token'], "chan_name2", False)
 
@@ -479,12 +488,12 @@ def test_one_user_edits_one_message_in_private_and_public_channel(clear, user1):
     assert response_data['message_id'] == 2
     message_id2 = response_data['message_id']
 
-    message_response = edit_message(user1['token'], message_id1, "Hello again.")
+    message_response = delete_message(user1['token'], message_id1)
     assert message_response.status_code == 200
-    message_response = edit_message(user1['token'], message_id2, "Hello again.")
+    message_response = delete_message(user1['token'], message_id2)
     assert message_response.status_code == 200
 
-def test_one_user_invited_edits_one_messages_in_private_channel(clear, user1, user2):
+def test_one_user_invited_deletes_one_messages_in_private_channel(clear, user1, user2):
     channel_id = create_channel(user1['token'], "chan_name2", False)
     invite_member_to_channel(user1['token'], channel_id, user2['auth_user_id'])
 
@@ -494,7 +503,7 @@ def test_one_user_invited_edits_one_messages_in_private_channel(clear, user1, us
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    message_response = edit_message(user2['token'], message_id, "Hello again.")
+    message_response = delete_message(user1['token'], message_id)
     assert message_response.status_code == 200
 
 def test_channel_messages_interaction(clear, user1):
@@ -521,20 +530,13 @@ def test_channel_messages_interaction(clear, user1):
     }
     assert response_data == expected_result
 
-    message_response = edit_message(user1['token'], message_id, "Hello again.")
+    message_response = delete_message(user1['token'], message_id)
     assert message_response.status_code == 200
 
     messages_response = print_channel_messages(user1['token'], channel_id, 0)
     response_data = messages_response.json()
     expected_result = {
-        "messages": [
-            {
-                "message_id": 1,
-                "u_id": user1['auth_user_id'],
-                "message": "Hello again.",
-                "time_created": int(time.time()) 
-            }
-        ],
+        "messages": [],
         "start": 0,
         "end": -1,
     }
@@ -546,7 +548,46 @@ def test_channel_messages_interaction2(clear, user1):
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
-    message_id = response_data['message_id']
+    message_id1 = response_data['message_id']
+    time_created1 = int(time.time())
+
+    message_response = send_message(user1['token'], channel_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 2
+    message_id2 = response_data['message_id']
+    time_created2 = int(time.time())
+
+    messages_response = print_channel_messages(user1['token'], channel_id, 0)
+    response_data = messages_response.json()
+    expected_result = {
+        "messages": [
+            {
+                "message_id": 2,
+                "u_id": user1['auth_user_id'],
+                "message": "Hello",
+                "time_created": time_created2
+            }, 
+            {
+                "message_id": 1,
+                "u_id": user1['auth_user_id'],
+                "message": "Hello",
+                "time_created": time_created1    
+            }
+        ],
+        "start": 0,
+        "end": -1,
+    }
+    assert response_data['start'] == expected_result['start']
+    assert response_data['end'] == expected_result['end']
+    for x in range(len(response_data['messages'])):
+        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
+        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
+        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
+        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+
+    message_response = delete_message(user1['token'], message_id2)
+    assert message_response.status_code == 200
 
     messages_response = print_channel_messages(user1['token'], channel_id, 0)
     response_data = messages_response.json()
@@ -556,15 +597,22 @@ def test_channel_messages_interaction2(clear, user1):
                 "message_id": 1,
                 "u_id": user1['auth_user_id'],
                 "message": "Hello",
-                "time_created": int(time.time()) 
+                "time_created": time_created1    
             }
         ],
         "start": 0,
         "end": -1,
     }
-    assert response_data == expected_result
 
-    message_response = edit_message(user1['token'], message_id, "")
+    assert response_data['start'] == expected_result['start']
+    assert response_data['end'] == expected_result['end']
+    for x in range(len(response_data['messages'])):
+        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
+        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
+        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
+        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+
+    message_response = delete_message(user1['token'], message_id1)
     assert message_response.status_code == 200
 
     messages_response = print_channel_messages(user1['token'], channel_id, 0)
@@ -574,4 +622,3 @@ def test_channel_messages_interaction2(clear, user1):
         "start": 0,
         "end": -1,
     }
-    assert response_data == expected_result
