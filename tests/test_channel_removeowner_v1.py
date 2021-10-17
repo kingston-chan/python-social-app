@@ -158,7 +158,6 @@ def test_removeowner_invalid_user_id():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
     response_data = response.json()
     owner_token = response_data["token"]
-    owner_u_id = response_data["auth_user_id"]
 
     channel_1_info = {
         "token": owner_token,
@@ -272,7 +271,6 @@ def tests_removeowner_thats_not_an_owner():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
     response_data = response.json()
     owner_token = response_data["token"]
-    owner_u_id = response_data["auth_user_id"]
 
     invited_member_data = {
         "email": "eagle@gmail.com",
@@ -363,7 +361,6 @@ def test_removeowner_global_owner():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=invited_member_data)
     response_data = response.json()
     invited_member_token = response_data["token"]
-    invited_member_u_id = response_data["auth_user_id"]
 
     owner_data = {
         "email": "keefe@gmail.com",
