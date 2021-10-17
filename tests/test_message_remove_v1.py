@@ -93,7 +93,7 @@ def delete_message(token, message_id):
         'token': token,
         'message_id': message_id
     }
-    return requests.delete(f"{BASE_URL}/message/delete/v1", json=delete_dict)
+    return requests.delete(f"{BASE_URL}/message/remove/v1", json=delete_dict)
 
 def print_channel_messages(token, channel_id, start):
     messages_info = {

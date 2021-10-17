@@ -18,7 +18,7 @@ from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
 from src.user import list_all_users
-from src.message import message_send_v1, message_edit_v1
+from src.message import message_send_v1, message_edit_v1, message_remove_v1
 from src.admin import admin_userpermission_change_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
@@ -229,7 +229,11 @@ def message_edit():
 # message/remove/v1
 @APP.route("/message/remove/v1", methods=['DELETE'])
 def message_remove():
-    return {}
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    message_remove_v1(user_id, data["message_id"])
+    save()
+    return dumps({})
 
 # message/senddm/v1
 @APP.route("/message/senddm/v1", methods=['POST'])
