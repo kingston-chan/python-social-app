@@ -1,7 +1,7 @@
 import pytest
 import requests
 from src.config import url
-import datetime
+import time
 import json
 
 BASE_URL = url
@@ -51,7 +51,15 @@ def join_channel(token, channel_id):
         "token": token, 
         "channel_id": channel_id,
     }
-    return requests.post(f"{BASE_URL}/channels/join/v2", json=channel_info)
+    return requests.post(f"{BASE_URL}/channel/join/v2", json=channel_info)
+
+def invite_member_to_channel(token, channel_id, u_id):
+    invite_info = {
+        'token': token,
+        'channel_id': channel_id,
+        'u_id': u_id,
+    }
+    return requests.post(f"{BASE_URL}/channel/invite/v2", json=invite_info)
 
 def send_message(token, channel_id, message):
     message_dict = {
@@ -59,8 +67,15 @@ def send_message(token, channel_id, message):
         "channel_id": channel_id,
         "message": message
     }
-    response = requests.post(f"{BASE_URL}/message/send/v1", json=message_dict)
-    return response
+    return requests.post(f"{BASE_URL}/message/send/v1", json=message_dict)
+
+def channel_messages(token, channel_id, start):
+    messages_info = {
+        "token": token,
+        "channel_id": channel_id,
+        "start": start 
+    }
+    return requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_info)
 
 # ==== Tests - Errors ==== #
 ## Input Error - 400 ##
@@ -230,8 +245,54 @@ def test_multiple_users_sends_multiple_messages_in_multiple_channels(clear, user
 # ==== Future Tests for Future Functions ==== #
 
 def test_one_user_sends_one_message_in_private_channel(clear, user1):
-    pass
+    channel_id = create_channel(user1['token'], "chan_name", False)
+    message_response = send_message(user1['token'], channel_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
 
 def test_one_user_sends_one_message_in_private_and_public_channel(clear, user1):
-    pass
+    channel_id1 = create_channel(user1['token'], "chan_name", True)
+    channel_id2 = create_channel(user1['token'], "chan_name2", False)
 
+    message_response = send_message(user1['token'], channel_id1, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+
+    message_response = send_message(user1['token'], channel_id2, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 2
+
+def test_one_user_invited_sends_one_messages_in_private_channel(clear, user1, user2):
+    channel_id = create_channel(user1['token'], "chan_name2", False)
+    invite_member_to_channel(user1['token'], channel_id, user2['auth_user_id'])
+
+    message_response = send_message(user2['token'], channel_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+
+def test_channel_messages_interaction(clear, user1):
+    channel_id = create_channel(user1['token'], "chan_name", True)
+    message_response = send_message(user1['token'], channel_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+
+    messages_response = channel_messages(user1['token'], channel_id, 0)
+    response_data = messages_response.json()
+    expected_result = {
+        "messages": [
+            {
+                "message_id": 1,
+                "u_id": user1['auth_user_id'],
+                "message": "Hello",
+                "time_created": int(time.time()) 
+            }
+        ],
+        "start": 0,
+        "end": -1,
+    }
+    assert response_data == expected_result
