@@ -18,6 +18,7 @@ from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
 from src.user import list_all_users
+from src.admin import admin_userpermission_change_v1
 from src.message import message_send_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
@@ -302,7 +303,11 @@ def admin_user_remove():
 # admin/userpermission/change/v1
 @APP.route("/admin/userpermission/change/v1", methods=['POST'])
 def admin_userpermission_change():
-    return {}
+    data = request.get_json()
+    auth_user_id = check_valid_token_and_session(data["token"])
+    admin_userpermission_change_v1(auth_user_id, data["u_id"], data["permission_id"])
+    save()
+    return dumps({})
 
 # clear/v1
 @APP.route("/clear/v1", methods=['DELETE'])
