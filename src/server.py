@@ -19,6 +19,7 @@ from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
 from src.user import list_all_users
 from src.message import message_send_v1
+from src.dm import dm_details_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -247,7 +248,11 @@ def dm_remove():
 # dm/details/v1
 @APP.route("/dm/details/v1", methods=['GET'])
 def dm_details():
-    return {}
+    response = request.args.to_dict()
+    user_id = check_valid_token_and_session(response["token"])
+    dm_info = dm_details_v1(user_id, int(response["dm_id"]))
+    save()
+    return dumps(dm_info)
 
 # dm/leave/v1
 @APP.route("/dm/leave/v1", methods=['POST'])

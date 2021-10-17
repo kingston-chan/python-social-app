@@ -44,7 +44,7 @@ def test_dm_details_invalid_dm_id():
         "dm_id": fake_dm_id
     }
 
-    response = requests.post(f"{BASE_URL}/dm/details/v1", json=dm_details_info)
+    response = requests.get(f"{BASE_URL}/dm/details/v1", params=dm_details_info)
 
     assert response.status_code == 400
 
@@ -99,7 +99,7 @@ def test_dm_details_not_a_member():
         "dm_id": dm_id
     }
 
-    response = requests.post(f"{BASE_URL}/dm/details/v1", json=dm_details_info)
+    response = requests.get(f"{BASE_URL}/dm/details/v1", params=dm_details_info)
 
     assert response.status_code == 403
 
@@ -143,7 +143,7 @@ def test_dm_details_valid():
         "dm_id": dm_id
     }
 
-    response = requests.post(f"{BASE_URL}/dm/details/v1", json=dm_details_info)
+    response = requests.get(f"{BASE_URL}/dm/details/v1", params=dm_details_info)
     response_data = response.json()
 
     expected_output = {
@@ -210,7 +210,7 @@ def test_dm_details_unauthorised_token():
         "dm_id": dm_id
     }
 
-    response = requests.post(f"{BASE_URL}/dm/details/v1", json=dm_details_info)
+    response = requests.get(f"{BASE_URL}/dm/details/v1", params=dm_details_info)
 
     assert response.status_code == 403
 
