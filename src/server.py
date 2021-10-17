@@ -6,6 +6,7 @@ from flask import Flask, request
 from requests.models import DecodeError
 from requests.sessions import session
 from flask_cors import CORS
+from src import channel
 from src.error import InputError, AccessError
 from src import config
 from src.channels import channels_create_v1, channels_list_v1
@@ -15,8 +16,9 @@ from src.auth import auth_register_v1, auth_login_v1
 import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
-from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1
+from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
 from src.user import list_all_users
+from src.message import message_send_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -139,15 +141,17 @@ def channels_listall():
 # channel/details/v2
 @APP.route("/channel/details/v2", methods=['GET'])
 def channel_details():
-    return {}
+    response = request.args.to_dict()
+    user_id = check_valid_token_and_session(response["token"])
+    channel_info = channel_details_v1(user_id, int(response["channel_id"]))
+    save()
+    return dumps(channel_info)
 
 # channel/join/v2
 @APP.route("/channel/join/v2", methods=['POST'])
 def channel_join():
     data = request.get_json()
-
     user_id = check_valid_token_and_session(data["token"])
-
     channel_join_v1(user_id, data["channel_id"])  
     save()
     return dumps({})  
@@ -156,6 +160,9 @@ def channel_join():
 # channel/invite/v2
 @APP.route("/channel/invite/v2", methods=['POST'])
 def channel_invite():
+    data = request.get_json() # { token, channel_id, u_id }
+    user_info = check_valid_token_and_session(data["token"])
+    channel_invite_v1(user_info, data["channel_id"], data["u_id"])
     return {}
 
 # channel/messages/v2
@@ -179,11 +186,19 @@ def channel_leave():
 # channel/addowner/v1
 @APP.route("/channel/addowner/v1", methods=['POST'])
 def channel_addowner():
+    response = request.get_json()
+    user_id = check_valid_token_and_session(response["token"])
+    channel_addowner_v1(user_id, response["channel_id"], response["u_id"])
+    save()
     return {}
 
 # channel/removeowner/v1
 @APP.route("/channel/removeowner/v1", methods=['POST'])
 def channel_removeowner():
+    response = request.get_json()
+    user_id = check_valid_token_and_session(response["token"])
+    channel_removeowner_v1(user_id, response["channel_id"], response["u_id"])
+    save()
     return {}
 
 #====== message.py =====#
@@ -191,7 +206,11 @@ def channel_removeowner():
 # message/send/v1
 @APP.route("/message/send/v1", methods=['POST'])
 def message_send():
-    return {}
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    new_message = message_send_v1(user_id, data["channel_id"], data["message"])
+    save()
+    return dumps(new_message)
 
 # message/edit/v1
 @APP.route("/message/edit/v1", methods=['PUT'])
