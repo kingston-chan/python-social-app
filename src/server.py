@@ -300,7 +300,7 @@ def user_profile_sethandle():
     
     for user in store["users"]:
         if user["handle"] == new_handle:
-            raise InputError("Handle already bieng used")
+            raise InputError("Handle already being used")
         if len(new_handle) > 20 or len(new_handle) < 3:
             raise InputError("Handle is not valid")
     if new_handle.isalnum():
