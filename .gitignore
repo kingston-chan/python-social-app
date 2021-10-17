@@ -128,3 +128,6 @@ dmypy.json
 
 # datastore
 datastore.json
+
+# tests
+test_channel_messages_v2.py
