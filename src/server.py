@@ -12,7 +12,7 @@ from src import config
 from src.channels import channels_create_v1, channels_list_v1
 from src.data_store import data_store
 import json
-from src.auth import auth_register_v1, auth_login_v1
+from src.auth import auth_register_v1, auth_login_v1, auth_logout_v1
 import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
@@ -107,7 +107,11 @@ def auth_register():
 # auth/logout/v1
 @APP.route("/auth/logout/v1", methods=['POST'])
 def auth_logout():
-    return {}
+    info = request.get_json()
+    check_valid_token_and_session(info["token"])
+    auth_logout_v1(info["token"])
+    save()
+    return dumps({})
 
 #====== channels.py =====#
 
@@ -288,6 +292,26 @@ def user_profile_setemail():
 # user/profile/sethandle/v1
 @APP.route("/user/profile/sethandle/v1", methods=['PUT'])
 def user_profile_sethandle():
+
+    data = request.get_json()
+    new_handle = data["handle_str"]
+    user_id = check_valid_token_and_session(data["token"])
+    store = data_store.get()
+    
+    for user in store["users"]:
+        if user["handle"] == new_handle:
+            raise InputError("Handle already being used")
+        if len(new_handle) > 20 or len(new_handle) < 3:
+            raise InputError("Handle is not valid")
+    if new_handle.isalnum():
+        for user in store["users"]:
+            if user_id == user["id"]:
+                user["handle"] = new_handle
+    
+    else:
+        raise InputError("invalid string")
+    
+    save()
     return {}
 
 #===== admin.py =====#
