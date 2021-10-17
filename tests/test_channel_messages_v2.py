@@ -96,17 +96,6 @@ def test_ch_mess_incorrect_start(clear, user1):
     # Raise error
     assert response.status_code == 400
 
-def test_ch_mess_incorrect_start2(clear, user1):
-    channel_id = create_channel(user1['token'], "chan_name", True)
-    messages_dict = {
-        "token": user1['token'], 
-        "channel_id": channel_id, 
-        "start": -1,
-    }
-    response = requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_dict)
-    # Raise error
-    assert response.status_code == 400
-
 def test_ch_mess_error_invalid_member(clear, user1, user2):
     channel_id = create_channel(user1['token'], "chan_name", True)
     messages_dict = {
