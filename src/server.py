@@ -188,6 +188,7 @@ def channel_addowner():
     response = request.get_json()
     user_id = check_valid_token_and_session(response["token"])
     channel_addowner_v1(user_id, response["channel_id"], response["u_id"])
+    save()
     return {}
 
 # channel/removeowner/v1
