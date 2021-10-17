@@ -108,6 +108,11 @@ def test_not_authorised_user():
     response = rh.admin_user_remove(user1_token, user2_id)
     assert response.status_code == 403
 
-
+# Invalid session
+# def test_invalid_session(clear_and_register):
+#     user2_id = rh.auth_register("random2@gmail.com", "123abc!@#", "Bob", "Smith").json()["auth_user_id"]
+#     rh.auth_logout(clear_and_register)
+#     response = rh.admin_user_remove(clear_and_register, user2_id)
+#     assert response.status_code == 403
 
  
