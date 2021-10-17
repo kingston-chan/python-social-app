@@ -196,6 +196,7 @@ def channel_removeowner():
     response = request.get_json()
     user_id = check_valid_token_and_session(response["token"])
     channel_removeowner_v1(user_id, response["channel_id"], response["u_id"])
+    save()
     return {}
 
 #====== message.py =====#
