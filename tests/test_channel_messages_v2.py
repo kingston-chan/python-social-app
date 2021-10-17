@@ -312,7 +312,6 @@ def test_ch_mess_start_0_total_1(clear, user1):
     assert response_data['start'] == expected_result['start']
     assert response_data['end'] == expected_result['end']
     for x in range(len(response_data['messages'])):
-        print(f"message:={x}")
         assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
