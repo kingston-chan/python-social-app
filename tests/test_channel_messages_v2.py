@@ -76,6 +76,48 @@ def print_channel_messages(token, channel_id, start):
     }
     return requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_info)
 
+def send_mass_messages(user, messages_total, channel_id):
+    message_list = []
+
+    for x in range(messages_total):
+        current_time = int(time.time())
+        response_data = send_message(user['token'], channel_id, "hello").json()
+        message_id = response_data['message_id']
+        message_dict = {
+            "message_id":  message_id,
+            "u_id": user['auth_user_id'],
+            "message": "hello",
+            "time_created": current_time
+        }
+        message_list.insert(0, message_dict)
+    
+    return message_list
+
+def make_mass_expected_results(start, end, messages_total, message_list):
+    index = start
+    counter = 0
+    selected_messages = []
+    while counter < 50 and index < messages_total:
+        selected_message = message_list[index]
+        message_dict = {
+            "message_id": selected_message['message_id'],
+            "u_id": selected_message['u_id'],
+            "message": selected_message['message'],
+            "time_created": selected_message['time_created']
+        }
+        selected_messages.append(message_dict)
+        index += 1
+        counter += 1
+
+    if end == messages_total:
+        end = -1
+
+    return {
+        "messages": selected_messages,
+        "start": start,
+        "end": end,
+    }
+
 # ==== Tests - Errors ==== #
 def test_ch_mess_error_invalid_channel(clear, user1):
     # No channel created
@@ -225,8 +267,6 @@ def test_ch_mess_multiple_users_in_public_channel(clear, user1, user2):
     assert response.status_code == 200
     assert response.json() == expected_result
 
-# ==== Future Tests for Future Functions ==== #
-
 def test_ch_mess_multiple_users_in_private_channel(clear, user1, user2):
     channel_id = create_channel(user1['token'], "chan_name", False)
     messages_dict = {
@@ -259,120 +299,116 @@ def test_ch_mess_multiple_users_in_private_channel(clear, user1, user2):
     assert response.status_code == 200
     assert response.json() == expected_result
 
-
-def test_ch_mess_1_message_in_channel(clear, user1):
+def test_ch_mess_start_0_total_1(clear, user1):
     channel_id = create_channel(user1['token'], "channel_name", True)
-    send_message(user1['token'], channel_id, "hello")
-    current_time = int(time.time())
-    channel_messages = print_channel_messages(user1['token'], channel_id, 0)
-    response_data = channel_messages.json()
-    expected_result = {
-        "messages": [
-            {
-                "message_id": 1,
-                "u_id": user1['auth_user_id'],
-                "message": "hello",
-                "time_created": current_time
-            }
-        ],
-        "start": 0,
-        "end": -1,
-    }
-    assert response_data == expected_result
-
-def test_ch_mess_50_message_in_channel(clear, user1):
-    channel_id = create_channel(user1['token'], "channel_name", True)
-    message_list = []
-    for x in range(50):
-        current_time = int(time.time())
-        response = send_message(user1['token'], channel_id, "hello")
-        response_data = response.json()
-        message_id = response_data['message_id']
-
-        channel_messages = print_channel_messages(user1['token'], channel_id, 0)
-        response_data = channel_messages.json()
-        message_dict = {
-            "message_id":  message_id,
-            "u_id": user1['auth_user_id'],
-            "message": "hello",
-            "time_created": current_time
-        }
-        message_list.append(message_dict)
-
-    counter = 0
-    selected_messages = []
-    message_list.reverse()
-    while counter < 50:
-        selected_message = message_list[counter]
-        message_dict = {
-            "message_id": selected_message['message_id'],
-            "u_id": selected_message['u_id'],
-            "message": selected_message['message'],
-            "time_created": selected_message['time_created']
-        }
-        selected_messages.append(message_dict)
-        counter += 1
+    start = 0
+    end = 1
+    messages_total = 1
     
-    expected_result = {
-        "messages": selected_messages,
-        "start": 0,
-        "end": -1,
-    }
+    message_list = send_mass_messages(user1, messages_total, channel_id)
+    expected_result = make_mass_expected_results(start, end, messages_total, message_list)
+    response_data = print_channel_messages(user1['token'], channel_id, start).json()
+
     assert response_data['start'] == expected_result['start']
     assert response_data['end'] == expected_result['end']
-    for x in range(50):
+    for x in range(len(response_data['messages'])):
+        print(f"message:={x}")
         assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-def test_ch_mess_55_message_in_channel(clear, user1):
+def test_ch_mess_start_0_total_50(clear, user1):
     channel_id = create_channel(user1['token'], "channel_name", True)
-    message_list = []
-    for x in range(55):
-        current_time = int(time.time())
-        response = send_message(user1['token'], channel_id, "hello")
-        response_data = response.json()
-        message_id = response_data['message_id']
-
-        channel_messages = print_channel_messages(user1['token'], channel_id, 0)
-        response_data = channel_messages.json()
-        message_dict = {
-            "message_id":  message_id,
-            "u_id": user1['auth_user_id'],
-            "message": "hello",
-            "time_created": current_time
-        }
-        message_list.append(message_dict)
-
-    counter = 0
-    selected_messages = []
-    message_list.reverse()
-    while counter < 50:
-        selected_message = message_list[counter]
-        message_dict = {
-            "message_id": selected_message['message_id'],
-            "u_id": selected_message['u_id'],
-            "message": selected_message['message'],
-            "time_created": selected_message['time_created']
-        }
-        selected_messages.append(message_dict)
-        counter += 1
+    start = 0
+    end = 50
+    messages_total = 50
     
-    expected_result = {
-        "messages": selected_messages,
-        "start": 0,
-        "end": 50,
-    }
+    message_list = send_mass_messages(user1, messages_total, channel_id)
+    expected_result = make_mass_expected_results(start, end, messages_total, message_list)
+    response_data = print_channel_messages(user1['token'], channel_id, start).json()
+
     assert response_data['start'] == expected_result['start']
     assert response_data['end'] == expected_result['end']
-    for x in range(50):
+    for x in range(len(response_data['messages'])):
+        print(f"message:={x}")
         assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-'''
-def test_ch_mess_start_greater_than_1(clear, user1):
-    pass
-'''
+def test_ch_mess_start_0_total_55(clear, user1):
+    channel_id = create_channel(user1['token'], "channel_name", True)
+    start = 0
+    end = 50
+    messages_total = 55
+    
+    message_list = send_mass_messages(user1, messages_total, channel_id)
+    expected_result = make_mass_expected_results(start, end, messages_total, message_list)
+    response_data = print_channel_messages(user1['token'], channel_id, start).json()
+
+    assert response_data['start'] == expected_result['start']
+    assert response_data['end'] == expected_result['end']
+    for x in range(len(response_data['messages'])):
+        print(f"message:={x}")
+        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
+        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
+        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
+        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+
+def test_ch_mess_start_2_total_3(clear, user1):
+    channel_id = create_channel(user1['token'], "channel_name", True)
+    start = 2
+    end = 3
+    messages_total = 3
+    
+    message_list = send_mass_messages(user1, messages_total, channel_id)
+    expected_result = make_mass_expected_results(start, end, messages_total, message_list)
+    response_data = print_channel_messages(user1['token'], channel_id, start).json()
+
+    assert response_data['start'] == expected_result['start']
+    assert response_data['end'] == expected_result['end']
+    for x in range(len(response_data['messages'])):
+        print(f"message:={x}")
+        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
+        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
+        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
+        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+
+def test_ch_mess_start_100_total_150(clear, user1):
+    channel_id = create_channel(user1['token'], "channel_name", True)
+    start = 100
+    end = 150
+    messages_total = 150
+    
+    message_list = send_mass_messages(user1, messages_total, channel_id)
+    expected_result = make_mass_expected_results(start, end, messages_total, message_list)
+    response_data = print_channel_messages(user1['token'], channel_id, start).json()
+
+    assert response_data['start'] == expected_result['start']
+    assert response_data['end'] == expected_result['end']
+    for x in range(len(response_data['messages'])):
+        print(f"message:={x}")
+        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
+        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
+        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
+        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+
+def test_ch_mess_start_60_total_110(clear, user1):
+    channel_id = create_channel(user1['token'], "channel_name", True)
+    start = 60
+    end = 110
+    messages_total = 110
+    
+    message_list = send_mass_messages(user1, messages_total, channel_id)
+    expected_result = make_mass_expected_results(start, end, messages_total, message_list)
+    response_data = print_channel_messages(user1['token'], channel_id, start).json()
+
+    assert response_data['start'] == expected_result['start']
+    assert response_data['end'] == expected_result['end']
+    for x in range(len(response_data['messages'])):
+        print(f"message:={x}")
+        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
+        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
+        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
+        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
