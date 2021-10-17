@@ -42,6 +42,22 @@ def auth_login_v1(email, password):
                 'token': create_jwt(u['id'])
             }
 
+def auth_logout_v1(token):
+
+    
+    store = data_store.get()
+    
+    token_dict = jwt.decode(token, HASHCODE, algorithms=['HS256'])
+
+    user_id = token_dict["user_id"]
+    user_session = token_dict["session_id"]
+
+    
+    store['sessions'][user_id].remove(user_session)
+    data_store.set(store)
+    
+    return {}
+    
 
 def auth_register_v1(email, password, name_first, name_last):
     """
