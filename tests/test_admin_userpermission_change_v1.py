@@ -136,7 +136,7 @@ def test_removed_user(clear_and_register):
     assert response.status_code == 400
 
 # - u_id refers to a user who is the only global owner and they are being demoted to a user
-def test_only_global_onwer_demoted(clear_and_register):
+def test_only_global_owner_demoted(clear_and_register):
     global_owner_id = rh.auth_login("random@gmail.com", "123abc!@#").json()["auth_user_id"]
     response = rh.admin_userpermission_change(clear_and_register, global_owner_id, 2)
     assert response.status_code == 400
