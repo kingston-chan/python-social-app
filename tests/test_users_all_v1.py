@@ -38,7 +38,7 @@ def test_list_all_users(clear_and_register):
 def test_list_valid_users(clear_and_register):
     user1_id = rh.auth_login("random@gmail.com", "123abc!@#").json()["auth_user_id"]
     user2_id = rh.auth_register("random1@gmail.com", "123abc!@#", "Bob", "Smith").json()["auth_user_id"]
-    user3_id = rh.auth_register("random2@gmail.com", "123abc!@#", "Dan", "Smith").json()["auth_user_id"]
+    user3_id = rh.auth_register("random2@gmail.com", "123abc!@#", "Danny", "Smith").json()["auth_user_id"]
 
     rh.admin_user_remove(clear_and_register, user2_id)
 
@@ -53,7 +53,7 @@ def test_list_valid_users(clear_and_register):
     assert all_users[1]["email"] == "random2@gmail.com"
 
     assert all_users[0]["name_first"] == "John"
-    assert all_users[1]["name_first"] == "Dan"
+    assert all_users[1]["name_first"] == "Danny"
 
 
 # ==== Tests with incorrect/invalid input ==== #
