@@ -18,7 +18,7 @@ import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
-from src.user import list_all_users
+from src.user import list_all_users, user_profile_v1
 from src.message import message_send_v1, message_edit_v1, message_remove_v1
 from src.admin import admin_userpermission_change_v1
 
@@ -328,7 +328,11 @@ def users_all():
 # user/profile/v1
 @APP.route("/user/profile/v1", methods=['GET'])
 def user_profile(): 
-    return {}
+    token = request.args.get("token")
+    u_id = request.args.get("u_id")
+    check_valid_token_and_session(token)
+    profile = user_profile_v1(u_id)
+    return dumps(profile)
 
 # user/profile/setname/v1
 @APP.route("/user/profile/setname/v1", methods=['PUT'])
