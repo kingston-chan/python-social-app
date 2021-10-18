@@ -68,6 +68,10 @@ def dm_leave_v1(auth_user_id, dm_id):
     for dm in dms:
         if dm["dm_id"] == dm_id:
             dm["members"].remove(auth_user_id)
+    
+    data_store.set(store)
+    
+    return {}
 
 def dm_details_v1(auth_user_id, dm_id):
     store = data_store.get()

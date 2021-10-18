@@ -4,6 +4,77 @@ from src.config import url
 
 BASE_URL = url
 
+def test_dm_leave_multiple_dms_valid():
+    requests.delete(f"{BASE_URL}/clear/v1")
+
+    owner_data = {
+        "email": "keefe@gmail.com",
+        "password": "password",
+        "name_first": "keefe",
+        "name_last": "vuong"        
+    }
+
+    response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
+    response_data = response.json()
+    owner_token = response_data["token"]
+    owner_u_id = response_data["auth_user_id"]
+
+    invited_member_data = {
+        "email": "eagle@gmail.com",
+        "password": "password",
+        "name_first": "team",
+        "name_last": "eagle"   
+    }
+
+    response = requests.post(f"{BASE_URL}/auth/register/v2", json=invited_member_data)
+    response_data = response.json()
+    invited_member_token = response_data["token"]
+    invited_member_u_id = response_data["auth_user_id"]
+
+    dm_info = {
+        "token": owner_token,
+        "u_ids": [invited_member_u_id]
+    }
+
+    response = requests.post(f"{BASE_URL}/dm/create/v1", json=dm_info)
+    response_data = response.json()
+    dm_id = response_data["dm_id"]
+
+    dm_info["token"] = invited_member_token
+    dm_info["u_ids"] = [owner_u_id]
+
+    response = requests.post(f"{BASE_URL}/dm/create/v1", json=dm_info)
+
+    dm_leave_info = {
+        "token": invited_member_token,
+        "dm_id": dm_id
+    }
+
+    response = requests.post(f"{BASE_URL}/dm/leave/v1", json=dm_leave_info) 
+
+    dm_details_info = {
+        "token": owner_token,
+        "dm_id": dm_id
+    }
+
+    response = requests.get(f"{BASE_URL}/dm/details/v1", params=dm_details_info)
+    response_data = response.json()
+
+    expected_output = {
+        "name": "keefevuong, teameagle",
+        "members": [
+            {
+                'u_id': owner_u_id,
+                'email': 'keefe@gmail.com',
+                'name_first': 'keefe',
+                'name_last': 'vuong',
+                'handle_str': 'keefevuong',     
+            }
+        ]
+    }
+
+    assert response_data == expected_output
+
 def test_dm_leave_invalid_dm_id():
     requests.delete(f"{BASE_URL}/clear/v1")
 
@@ -99,7 +170,7 @@ def test_dm_leave_not_a_member_of_dm():
         "dm_id": dm_id
     }
 
-    response = requests.post(f"{BASE_URL}/dm/leave/v1", json=-dm_leave_info)
+    response = requests.post(f"{BASE_URL}/dm/leave/v1", json=dm_leave_info)
 
     assert response.status_code == 403
 
@@ -189,7 +260,7 @@ def test_dm_leave_valid():
         "dm_id": dm_id
     }
 
-    response = requests.post(f"{BASE_URL}/dm/leave/v1", json=-dm_leave_info) 
+    response = requests.post(f"{BASE_URL}/dm/leave/v1", json=dm_leave_info) 
 
     dm_details_info = {
         "token": owner_token,
@@ -227,7 +298,6 @@ def test_dm_leave_owner_leaves_dm():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
     response_data = response.json()
     owner_token = response_data["token"]
-    owner_u_id = response_data["auth_user_id"]
 
     invited_member_data = {
         "email": "eagle@gmail.com",
@@ -255,7 +325,7 @@ def test_dm_leave_owner_leaves_dm():
         "dm_id": dm_id
     }
 
-    response = requests.post(f"{BASE_URL}/dm/leave/v1", json=-dm_leave_info) 
+    response = requests.post(f"{BASE_URL}/dm/leave/v1", json=dm_leave_info) 
 
     dm_details_info = {
         "token": invited_member_token,
