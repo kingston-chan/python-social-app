@@ -265,7 +265,7 @@ def dm_list():
     return_list = []
 
     for dicts in data["dms"]:
-        if input_user_id in dicts["members"]
+        if input_user_id in dicts["members"]:
             new_item = {"dm_id" : dicts["dm_id"], "name" : dicts["name"]}
             return_list.append(new_item)
     return return_list
