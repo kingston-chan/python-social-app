@@ -112,11 +112,7 @@ def channels_create_v1(auth_user_id, name, is_public):
                         
     """
     store = data_store.get()
-    users = store['users']
     channels = store['channels']
-
-    # Check if user exists
-    user_exists(auth_user_id, users)
 
     # Trim any leading/trailing whitespace characters in name
     name = name.strip()
