@@ -47,5 +47,16 @@ def user_profile_v1(user_id):
         
     raise InputError("u_id does not refer to a valid user")
 
-def user_profile_setname_v1():
-    pass
+def user_profile_setname_v1(user_id, first_name, last_name):
+    store = data_store.get()
+    users = store["users"]
+
+    if not 1 <= len(first_name) <= 50 or not 1 <= len(last_name) <= 50:
+        raise InputError("Name length is too long or short")
+    
+    for u in users:
+        if user_id == u["id"]:
+            u["name_first"] = first_name
+            u["name_last"] = last_name
+    
+
