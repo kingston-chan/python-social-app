@@ -332,6 +332,7 @@ def user_profile():
     u_id = request.args.get("u_id")
     check_valid_token_and_session(token)
     profile = user_profile_v1(u_id)
+    save()
     return dumps(profile)
 
 # user/profile/setname/v1
