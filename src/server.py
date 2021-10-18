@@ -258,7 +258,17 @@ def dm_create():
 # dm/list/v1
 @APP.route("/dm/list/v1", methods=['GET'])
 def dm_list():
-    return {}
+    data = request.get_json()
+    input_token = data["token"]
+    input_user_id = check_valid_token_and_session(input_token)
+
+    return_list = []
+
+    for dicts in data["dms"]:
+        if input_user_id in dicts["members"]
+            new_item = {"dm_id" : dicts["dm_id"], "name" : dicts["name"]}
+            return_list.append(new_item)
+    return return_list
 
 # dm/remove/v1
 @APP.route("/dm/remove/v1", methods=['DELETE'])
