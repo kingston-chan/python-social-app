@@ -20,6 +20,5 @@ def invlaid_user_ids():
     assert response.status_code == 400   
 def invlaid_token():
     requests.delete(f"{url}/clear/v1")
-
     response = requests.post(f"{url}/dm/create/v1", json={"token" : new_user_token "u_ids" : [1]})
     assert response.status_code == 403 
