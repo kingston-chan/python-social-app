@@ -75,7 +75,7 @@ def print_dm_messages(token, dm_id, start):
     return requests.get(f"{BASE_URL}/dm/messages/v1", params=messages_info)
 
 # ==== Future Helper Functions ==== #
-'''
+
 def invite_member_to_channel(token, dm_id, u_id):
     invite_info = {
         'token': token,
@@ -141,10 +141,10 @@ def make_mass_expected_results(start, end, messages_total, message_list):
         "start": start,
         "end": end,
     }
-'''
+
 
 # ==== Tests - Errors ==== #
-def test_invalid_channel(clear, user1):
+def test_invalid_dm(clear, user1):
     # No channel created
     dm_messages_dict = {
         "token": user1['token'], 
