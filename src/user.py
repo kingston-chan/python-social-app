@@ -10,6 +10,7 @@ Functions to:
 from src.data_store import data_store
 from src.channel import assign_user_info
 from src.error import InputError
+import re
 
 def list_all_users():
     """
@@ -61,3 +62,28 @@ def user_profile_setname_v1(user_id, first_name, last_name):
     
     store["users"] = users
     data_store.set(store)
+
+def user_profile_setemail_v1(user_id, user_email):
+    store = data_store.get()
+    users = store["users"]
+
+    if not re.match(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$', user_email):
+        raise InputError("Email is an invalid format")
+    
+    if dict_search(user_email, users, 'email'):
+        raise InputError('Email is already being used by another user')
+
+
+    for u in users:
+        if user_id == u["id"]:
+            u["email"] = user_email
+            
+    
+    store["users"] = users
+    data_store.set(store)
+
+
+def dict_search(item, users, item_name):
+    for u in users:
+        if u[item_name] == item:
+            return 1

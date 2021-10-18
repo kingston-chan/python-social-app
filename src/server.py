@@ -18,7 +18,7 @@ import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
-from src.user import list_all_users, user_profile_v1, user_profile_setname_v1
+from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1
 from src.message import message_send_v1, message_edit_v1, message_remove_v1
 from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
 
@@ -350,7 +350,12 @@ def user_profile_setname():
 # user/profile/setemail/v1
 @APP.route("/user/profile/setemail/v1", methods=['PUT'])
 def user_profile_setemail():
-    return {}
+    data = request.get_json()
+    user_email = data["email"]
+    user_id = check_valid_token_and_session(data["token"])
+    user_profile_setemail_v1(user_id, user_email)
+    save()
+    return dumps({})
 
 # user/profile/sethandle/v1
 @APP.route("/user/profile/sethandle/v1", methods=['PUT'])
