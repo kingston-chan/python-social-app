@@ -165,6 +165,9 @@ def test_dm_details_valid():
             }
         ]
     }
+    print(response_data)
+    print()
+    print(expected_output)
 
     assert response_data == expected_output
 
