@@ -376,8 +376,7 @@ def channel_leave_v1(auth_user_id, channel_id):
         Returns an empty dictionary when user successfully leaves the channel
     """
     store = data_store.get()
-    channels = store["channels"]
-    for channel in channels:
+    for channel in store["channels"]:
         # Find channel corresponding to channel_id
         if channel["id"] == channel_id:
             # Check if auth user id is in the members list
