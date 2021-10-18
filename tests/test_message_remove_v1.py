@@ -622,3 +622,5 @@ def test_channel_messages_interaction2(clear, user1):
         "start": 0,
         "end": -1,
     }
+
+    assert response_data == expected_result
