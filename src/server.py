@@ -1,4 +1,4 @@
-from os import error
+from os import error, name
 import sys
 import signal
 from json import dumps
@@ -7,6 +7,7 @@ from requests.models import DecodeError
 from requests.sessions import session
 from flask_cors import CORS
 from src import channel
+from src import user
 from src.error import InputError, AccessError
 from src import config
 from src.channels import channels_create_v1, channels_list_v1
@@ -18,8 +19,8 @@ from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
 from src.user import list_all_users
+from src.message import message_send_v1, message_edit_v1, message_remove_v1
 from src.admin import admin_userpermission_change_v1
-from src.message import message_send_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -220,12 +221,20 @@ def message_send():
 # message/edit/v1
 @APP.route("/message/edit/v1", methods=['PUT'])
 def message_edit():
-    return {}
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    message_edit_v1(user_id, data["message_id"], data["message"])
+    save()
+    return dumps({})
 
 # message/remove/v1
 @APP.route("/message/remove/v1", methods=['DELETE'])
 def message_remove():
-    return {}
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    message_remove_v1(user_id, data["message_id"])
+    save()
+    return dumps({})
 
 # message/senddm/v1
 @APP.route("/message/senddm/v1", methods=['POST'])
@@ -237,7 +246,49 @@ def message_senddm():
 # dm/create/v1
 @APP.route("/dm/create/v1", methods=['POST'])
 def dm_create():
-    return {}
+    data = request.get_json()
+    user_token = data["token"]
+    user_lists = data["u_ids"]
+
+    user_id = check_valid_token_and_session(user_token)
+    store = data_store.get()
+    name_list= []
+
+    new_dm_id = len(store["dms"]) + 1
+
+    for users in user_lists:
+        i = False
+        for user in store["users"]:
+            if users == user["id"]:
+                i = True
+                if user["handle"] == None and user["email"] == None:
+                    raise InputError("Invalid users") 
+                else:
+                    name_list.append(user["handle"])
+        if i == False:
+            raise InputError("Invalid users") 
+   
+   
+    name_list = sorted(name_list)
+
+    i = 1
+    name = name_list[0]
+    while i  < len(name_list):
+        name = name + ', ' + name_list[i]
+    
+    user_lists.append(user_id)
+
+    new_dm = {
+        'name': name,
+        'dm_id': new_dm_id,
+        'owner_of_dm' : user_id,
+        'members': user_lists
+    }
+
+    store["dms"].append(new_dm)
+    data_store.set(store)
+    save()
+    return {"dm_id" : new_dm_id}
 
 # dm/list/v1
 @APP.route("/dm/list/v1", methods=['GET'])
@@ -292,6 +343,26 @@ def user_profile_setemail():
 # user/profile/sethandle/v1
 @APP.route("/user/profile/sethandle/v1", methods=['PUT'])
 def user_profile_sethandle():
+
+    data = request.get_json()
+    new_handle = data["handle_str"]
+    user_id = check_valid_token_and_session(data["token"])
+    store = data_store.get()
+    
+    for user in store["users"]:
+        if user["handle"] == new_handle:
+            raise InputError("Handle already being used")
+        if len(new_handle) > 20 or len(new_handle) < 3:
+            raise InputError("Handle is not valid")
+    if new_handle.isalnum():
+        for user in store["users"]:
+            if user_id == user["id"]:
+                user["handle"] = new_handle
+    
+    else:
+        raise InputError("invalid string")
+    
+    save()
     return {}
 
 #===== admin.py =====#
