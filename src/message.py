@@ -137,3 +137,58 @@ def message_edit_v1(auth_user_id, message_id, message):
     data_store.set(store)
     store = data_store.get()
     return {}
+
+def message_remove_v1(auth_user_id, message_id):
+    """
+    Given a message, update its text with new text. 
+    If new text is blank, the message is deleted.
+
+    Arguments: 
+        auth_user_id (integer) - id of user creating the channel
+        message_id (integer) - id of the message is being deleted
+
+    Exceptions:
+        InputError - Occurs when given:
+                        - message_id does not refer to a valid message within 
+                          a channel/DM that the authorised user has joined
+        AccessError - Occurs when message_id refers to a valid message in a 
+                      joined channel/DM and none of the following are true:
+                        - the message was sent by the authorised user making this request
+                        - the authorised user has owner permissions in the channel/DM
+
+    Return Value:
+        Returns an empty dictionary
+
+    """
+
+    store = data_store.get()
+    channels = store["channels"]
+    messages = store["channel_messages"]
+
+    selected_channel = {}
+    valid_message_id = False
+
+    for target_message in messages:
+        if int(target_message['message_id']) == int(message_id):
+            valid_message_id = True
+            selected_message = target_message
+    
+
+    if not valid_message_id:
+        raise InputError("This message id is not valid.")
+
+    for channel in channels:
+        if int(channel['id']) == int(selected_message['channel_id']):
+            selected_channel = channel
+
+    if auth_user_id not in selected_channel['all_members']:
+        raise AccessError("This user is not a member of this channel.")
+    elif auth_user_id is not selected_message['u_id']:
+        if auth_user_id not in selected_channel['owner_members'] and auth_user_id not in selected_channel['owner_permissions']:
+            raise AccessError("This user is not allowed to edit this message.")
+
+    messages.remove(selected_message)
+
+    data_store.set(store)
+    store = data_store.get()
+    return {}

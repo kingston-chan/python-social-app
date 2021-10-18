@@ -16,7 +16,6 @@ def dm_details_v1(auth_user_id, dm_id):
             dm_exists = True
             member_ids = dm["members"]
             dm_info["name"] = dm["name"]
-
         
     if not dm_exists:
         raise InputError("DM does not exist")
