@@ -2,7 +2,6 @@ from os import error, name
 import sys
 import signal
 from json import dumps
-from typing import final
 from flask import Flask, request
 from requests.models import DecodeError
 from requests.sessions import session
