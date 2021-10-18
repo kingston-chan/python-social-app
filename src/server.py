@@ -2,6 +2,7 @@ from os import error, name
 import sys
 import signal
 from json import dumps
+from typing import final
 from flask import Flask, request
 from requests.models import DecodeError
 from requests.sessions import session
@@ -275,12 +276,14 @@ def dm_create():
     name = name_list[0]
     while i  < len(name_list):
         name = name + ', ' + name_list[i]
+    
+    user_lists.append(user_id)
 
     new_dm = {
         'name': name,
         'dm_id': new_dm_id,
         'owner_of_dm' : user_id,
-        'members': []
+        'members': user_lists
     }
 
     store["dms"].append(new_dm)
