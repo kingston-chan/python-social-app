@@ -45,6 +45,17 @@ def user3():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
     return response.json()
 
+@pytest.fixture
+def user4():
+    user_dict = {
+        "email": "user4@email.com",
+        "password": "password",
+        "name_first": "user",
+        "name_last": "name"
+    }
+    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
+    return response.json()
+
 # ==== Helper functions ==== #
 def create_dm(token, u_ids):
     dm_info = {
@@ -133,7 +144,7 @@ def make_mass_expected_results(start, end, messages_total, message_list):
 '''
 
 # ==== Tests - Errors ==== #
-def test_ch_mess_error_invalid_channel(clear, user1):
+def test_invalid_channel(clear, user1):
     # No channel created
     dm_messages_dict = {
         "token": user1['token'], 
@@ -144,7 +155,7 @@ def test_ch_mess_error_invalid_channel(clear, user1):
     # Raise error
     assert response.status_code == 400
 
-def test_ch_mess_incorrect_start(clear, user1, user2):
+def test_incorrect_start(clear, user1, user2):
     dm_id = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
     dm_messages_dict = {
         "token": user1['token'], 
@@ -155,10 +166,10 @@ def test_ch_mess_incorrect_start(clear, user1, user2):
     # Raise error
     assert response.status_code == 400
 
-def test_ch_mess_error_invalid_member(clear, user1, user2, user3):
+def test_invalid_member(clear, user1, user2, user3):
     dm_id = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
     dm_messages_dict = {
-        "token": user2['token'],
+        "token": user3['token'],
         "dm_id": dm_id, 
         "start": 0
     }
@@ -166,9 +177,58 @@ def test_ch_mess_error_invalid_member(clear, user1, user2, user3):
     # Raise error
     assert response.status_code == 403
 
-def test_ch_mess_error_invalid_member2(clear, user1, user2):
-    dm_id1 = create_dm(user1['token'], "chan_name", True)
-    dm_id2 = create_dm(user2['token'], "chan_name2", True)
+def test_invalid_member_2(clear, user1, user2, user3):
+    dm_id1 = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
+    dm_id2 = create_dm(user1['token'], [user1['auth_user_id'], user3['auth_user_id']])
+    dm_messages_dict = {
+        "token": user2['token'], 
+        "dm_id": dm_id2, 
+        "start": 0
+    }        
+    response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict) 
+    # Raise error
+    assert response.status_code == 403
+
+    dm_messages_dict = {
+        "token": user3['token'], 
+        "dm_id": dm_id1, 
+        "start": 0
+    }        
+    response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict)
+    
+    assert response.status_code == 403 
+
+def test_invalid_member_3(clear, user1, user2, user3, user4):
+    dm_id1 = create_dm(user2['token'], [user2['auth_user_id'], user3['auth_user_id']])
+    dm_id2 = create_dm(user2['token'], [user2['auth_user_id'], user4['auth_user_id']])
+
+    dm_messages_dict = {
+        "token": user4['token'], 
+        "dm_id": dm_id1, 
+        "start": 0
+    }        
+    response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict)
+    # Raise error
+    assert response.status_code == 403 
+
+    dm_messages_dict = {
+        "token": user1['token'], 
+        "dm_id": dm_id1, 
+        "start": 0
+    }        
+    response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict) 
+    # Raise error
+    assert response.status_code == 403
+
+    dm_messages_dict = {
+        "token": user3['token'], 
+        "dm_id": dm_id2, 
+        "start": 0
+    }        
+    response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict) 
+    # Raise error
+    assert response.status_code == 403
+
     dm_messages_dict = {
         "token": user1['token'], 
         "dm_id": dm_id2, 
@@ -178,18 +238,9 @@ def test_ch_mess_error_invalid_member2(clear, user1, user2):
     # Raise error
     assert response.status_code == 403
 
-    dm_messages_dict = {
-        "token": user2['token'], 
-        "dm_id": dm_id1, 
-        "start": 0
-    }        
-    response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict)
-    
-    assert response.status_code == 403 
-
 # ==== Tests - Valids ==== #
-def test_ch_mess_public_channel(clear, user1):
-    dm_id = create_dm(user1['token'], "chan_name", True)
+def test_valid_dm_message(clear, user1, user2):
+    dm_id = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
     dm_messages_dict = {
         "token": user1['token'], 
         "dm_id": dm_id, 
@@ -205,8 +256,8 @@ def test_ch_mess_public_channel(clear, user1):
     }
     assert response_data == expected_result
 
-def test_ch_mess_private_channel(clear, user2):
-    dm_id = create_dm(user2['token'], "chan_name", False)
+def test_valid_dm_message_2(clear, user1, user2, user3):
+    dm_id = create_dm(user2['token'], [user2['token'], user3['token']])
     dm_messages_dict = {
         "token": user2['token'], 
         "dm_id": dm_id, 
@@ -220,100 +271,28 @@ def test_ch_mess_private_channel(clear, user2):
     }
     assert response.json() == expected_result
 
-def test_ch_mess_multiple_channels(clear, user1):
-    dm_id1 = create_dm(user1['token'], "chan_name", True)
-    dm_id2 = create_dm(user1['token'], "chan_name2", False)
-    dm_messages_dict = {
-        "token": user1['token'], 
-        "dm_id": dm_id1, 
-        "start": 0, 
-    }        
-    response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict)
-    expected_result = {
-        "messages": [],
-        "start": 0,
-        "end": -1,
-    }
-    assert response.json() == expected_result
+def test_multiple_channels(clear, user1, user2, user3, user4):
+    dm_id1 = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
+    dm_id2 = create_dm(user1['token'], [user1['auth_user_id'], user3['auth_user_id']])
+    dm_id3 = create_dm(user1['token'], [user1['auth_user_id'], user3['auth_user_id']])
+    dm_id_list = [dm_id1, dm_id2, dm_id3]
+    for dm_id in dm_id_list:
+        dm_messages_dict = {
+            "token": user1['token'], 
+            "dm_id": dm_id, 
+            "start": 0, 
+        }        
+        response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict)
+        expected_result = {
+            "messages": [],
+            "start": 0,
+            "end": -1,
+        }
+        assert response.json() == expected_result
 
-    dm_messages_dict = {
-        "token": user1['token'], 
-        "dm_id": dm_id2, 
-        "start": 0, 
-    }        
-    response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict)
-    expected_result = {
-        "messages": [],
-        "start": 0,
-        "end": -1,
-    }
-    assert response.json() == expected_result
-
-def test_ch_mess_multiple_users_in_public_channel(clear, user1, user2):
-    dm_id = create_dm(user1['token'], "chan_name", True)
-    dm_messages_dict = {
-        "token": user1['token'], 
-        "dm_id": dm_id, 
-        "start": 0, 
-    }        
-    response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict)
-    expected_result = {
-        "messages": [],
-        "start": 0,
-        "end": -1,
-    }
-    assert response.status_code == 200
-    assert response.json() == expected_result
-
-    join_channel(user2['token'], dm_id)
-
-    dm_messages_dict = {
-        "token": user2['token'], 
-        "dm_id": dm_id, 
-        "start": 0, 
-    }        
-    response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict)
-    expected_result = {
-        "messages": [],
-        "start": 0,
-        "end": -1,
-    }
-    assert response.status_code == 200
-    assert response.json() == expected_result
-
-def test_ch_mess_multiple_users_in_private_channel(clear, user1, user2):
-    dm_id = create_dm(user1['token'], "chan_name", False)
-    dm_messages_dict = {
-        "token": user1['token'], 
-        "dm_id": dm_id, 
-        "start": 0, 
-    }        
-    response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict)
-    expected_result = {
-        "messages": [],
-        "start": 0,
-        "end": -1,
-    }
-    assert response.status_code == 200
-    assert response.json() == expected_result
-
-    invite_member_to_channel(user1['token'], dm_id, user2['auth_user_id'])
-
-    dm_messages_dict = {
-        "token": user2['token'], 
-        "dm_id": dm_id, 
-        "start": 0, 
-    }        
-    response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict)
-    expected_result = {
-        "messages": [],
-        "start": 0,
-        "end": -1,
-    }
-    assert response.status_code == 200
-    assert response.json() == expected_result
-
-def test_ch_mess_start_0_total_1(clear, user1):
+# ==== Future Tests ==== #
+'''
+def test_start_0_total_1(clear, user1):
     dm_id = create_dm(user1['token'], "channel_name", True)
     start = 0
     end = 1
@@ -331,7 +310,7 @@ def test_ch_mess_start_0_total_1(clear, user1):
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-def test_ch_mess_start_0_total_50(clear, user1):
+def test_start_0_total_50(clear, user1):
     dm_id = create_dm(user1['token'], "channel_name", True)
     start = 0
     end = 50
@@ -350,7 +329,7 @@ def test_ch_mess_start_0_total_50(clear, user1):
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-def test_ch_mess_start_0_total_55(clear, user1):
+def test_start_0_total_55(clear, user1):
     dm_id = create_dm(user1['token'], "channel_name", True)
     start = 0
     end = 50
@@ -369,7 +348,7 @@ def test_ch_mess_start_0_total_55(clear, user1):
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-def test_ch_mess_start_2_total_3(clear, user1):
+def test_start_2_total_3(clear, user1):
     dm_id = create_dm(user1['token'], "channel_name", True)
     start = 2
     end = 3
@@ -388,7 +367,7 @@ def test_ch_mess_start_2_total_3(clear, user1):
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-def test_ch_mess_start_100_total_150(clear, user1):
+def test_start_100_total_150(clear, user1):
     dm_id = create_dm(user1['token'], "channel_name", True)
     start = 100
     end = 150
@@ -407,7 +386,7 @@ def test_ch_mess_start_100_total_150(clear, user1):
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-def test_ch_mess_start_60_total_110(clear, user1):
+def test_start_60_total_110(clear, user1):
     dm_id = create_dm(user1['token'], "channel_name", True)
     start = 60
     end = 110
@@ -425,3 +404,4 @@ def test_ch_mess_start_60_total_110(clear, user1):
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+'''
