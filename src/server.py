@@ -287,7 +287,7 @@ def dm_create():
 
     store["dms"].append(new_dm)
     data_store.set(store)
-
+    save()
     return {"dm_id" : new_dm_id}
 
 # dm/list/v1
