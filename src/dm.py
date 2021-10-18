@@ -22,8 +22,6 @@ def dm_create_v1(auth_user_id, u_ids):
    
     name_list = sorted(name_list)
 
-    print(name_list)
-
     i = 1
     name = name_list[0]
     while i  < len(name_list):
