@@ -1,4 +1,4 @@
-from os import error
+from os import error, name
 import sys
 import signal
 from json import dumps
@@ -7,6 +7,7 @@ from requests.models import DecodeError
 from requests.sessions import session
 from flask_cors import CORS
 from src import channel
+from src import user
 from src.error import InputError, AccessError
 from src import config
 from src.channels import channels_create_v1, channels_list_v1
@@ -245,7 +246,49 @@ def message_senddm():
 # dm/create/v1
 @APP.route("/dm/create/v1", methods=['POST'])
 def dm_create():
-    return {}
+    data = request.get_json()
+    user_token = data["token"]
+    user_lists = data["u_ids"]
+
+    user_id = check_valid_token_and_session(user_token)
+    store = data_store.get()
+    name_list= []
+
+    new_dm_id = len(store["dms"]) + 1
+
+    for users in user_lists:
+        i = False
+        for user in store["users"]:
+            if users == user["id"]:
+                i = True
+                if user["handle"] == None and user["email"] == None:
+                    raise InputError("Invalid users") 
+                else:
+                    name_list.append(user["handle"])
+        if i == False:
+            raise InputError("Invalid users") 
+   
+   
+    name_list = sorted(name_list)
+
+    i = 1
+    name = name_list[0]
+    while i  < len(name_list):
+        name = name + ', ' + name_list[i]
+    
+    user_lists.append(user_id)
+
+    new_dm = {
+        'name': name,
+        'dm_id': new_dm_id,
+        'owner_of_dm' : user_id,
+        'members': user_lists
+    }
+
+    store["dms"].append(new_dm)
+    data_store.set(store)
+    save()
+    return {"dm_id" : new_dm_id}
 
 # dm/list/v1
 @APP.route("/dm/list/v1", methods=['GET'])
