@@ -41,8 +41,8 @@ def test_succesful_case1():
     i = True
 
     for dict in list_of_dicts:
-        list_of_members = requests.get(f"{BASE_URL}/dm/details/v1", params=dict["dm_id"])
-        if u_id not in list_of_members["members"]:
+        response = requests.get(f"{BASE_URL}/dm/details/v1", params=dict["dm_id"])
+        if u_id not in response["members"]:
             i = False
     
     assert i == True
