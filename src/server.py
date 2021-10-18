@@ -248,21 +248,28 @@ def message_senddm():
 def dm_create():
     data = request.get_json()
     user_token = data["token"]
-    user_lists = data["dm_id"]
+    user_lists = data["u_ids"]
 
     user_id = check_valid_token_and_session(user_token)
     store = data_store.get()
     name_list= []
 
-    new_dm_id = len(store["dm"]) + 1
+    new_dm_id = len(store["dms"]) + 1
+
     for users in user_lists:
-        if users not in store["users"]:
-            raise ImportError("Invalid users")
-        if users["handle"] == None and users["email"] == None:
-            raise ImportError("Invalid users")
+        i = False
         for user in store["users"]:
-            if users == user:
-                name_list.append(users["handle"])
+            if users == user["id"]:
+                i = True
+                if user["handle"] == None and user["email"] == None:
+                    raise InputError("Invalid users") 
+                else:
+                    name_list.append(user["handle"])
+        if i == False:
+            raise InputError("Invalid users") 
+   
+   
+    name_list = sorted(name_list)
 
     i = 1
     name = name_list[0]
@@ -273,10 +280,10 @@ def dm_create():
         'name': name,
         'dm_id': new_dm_id,
         'owner_of_dm' : user_id,
-        'sent_to': []
+        'members': []
     }
 
-    dm.append(new_dm)
+    store["dms"].append(new_dm)
     data_store.set(store)
 
     return {"dm_id" : new_dm_id}
