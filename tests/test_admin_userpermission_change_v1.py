@@ -26,10 +26,6 @@ def test_member_to_global(clear_and_register):
     assert user2_channels[1]["channel_id"] == channel2_id
     assert user2_channels[1]["name"] == "channel2"
 
-    # # Can remove users
-    # user3_id = rh.auth_register("random3@gmail.com", "123abc!@#", "Dan", "Smith").json()["auth_user_id"]
-    # rh.admin_user_remove(user2_token, user3_id)
-    # assert len(rh.users_all(user2_token).json()["users"]) == 2
 
     # Can also change others permission
     user1_id = rh.auth_login("random@gmail.com", "123abc!@#").json()["auth_user_id"]
@@ -63,41 +59,65 @@ def test_member_to_global(clear_and_register):
     channel1_details = rh.channel_details(user2_token, channel1_id).json()
     assert len(channel1_details["owner_members"]) == 1
 
+    # # Can remove users
+    rh.admin_user_remove(user2_token, user3_id)
+    assert len(rh.users_all(user2_token).json()["users"]) == 2
+    user3_profile = rh.user_profile(user2_token, user3_id).json()["user"]
+    assert user3_profile["name_first"] == "Removed"
+    assert user3_profile["name_last"] == "user"
+
+
 # # Permission change from global owner to member is successful:
 def test_global_to_member(clear_and_register):
     user2 = rh.auth_register("random2@gmail.com", "123abc!@#", "Bob", "Smith").json()
     user2_token = user2["token"]
     user2_id = user2["auth_user_id"]
+    
     channel1_id = rh.channels_create(user2_token, "channel1", True).json()["channel_id"]
-    rh.channel_join(clear_and_register, channel1_id)
+    channel2_id = rh.channels_create(clear_and_register, "channel2", True).json()["channel_id"]
+
+    user3 = rh.auth_register("random3@gmail.com", "123abc!@#", "Bob", "Smith").json()
+    user3_id = user3["auth_user_id"]
+    user3_token = user3["token"]
+    
+    response = rh.channel_join(clear_and_register, channel1_id)
+    assert response.status_code == 200
+    
+    response = rh.channel_join(user3_token, channel1_id)
+    assert response.status_code == 200
+    
+    # Has owner permissions
+    response = rh.channel_addowner(clear_and_register, channel1_id, user3_id)
+    assert response.status_code == 200
 
     # change user2 to global owner
     rh.admin_userpermission_change(clear_and_register, user2_id, 1)
     user1_id = rh.auth_login("random@gmail.com", "123abc!@#").json()["auth_user_id"]
 
     # change user1 to member
-    rh.admin_userpermission_change(user2_token, user1_id, 2)
+    response = rh.admin_userpermission_change(user2_token, user1_id, 2)
+    assert response.status_code == 200
 
     # Cannot join private channels
-    channel2_id = rh.channels_create(user2_token, "channel2", False).json()["channel_id"]
-    response = rh.channel_join(clear_and_register, channel2_id)
+    channel3_id = rh.channels_create(user2_token, "channel3", False).json()["channel_id"]
+    response = rh.channel_join(clear_and_register, channel3_id)
     assert response.status_code == 403
 
-#     # Cannot remove users
-#     response = rh.admin_user_remove(clear_and_register, user3_id)
-#     assert response.status_code == 403
+    # Cannot remove users
+    response = rh.admin_user_remove(clear_and_register, user3_id)
+    assert response.status_code == 403
 
     # Cannot change others permission
-    user3 = rh.auth_register("random3@gmail.com", "123abc!@#", "Bob", "Smith").json()
-    user3_id = user3["auth_user_id"]
-    user3_token = user3["token"]
     response = rh.admin_userpermission_change(clear_and_register, user3_id, 1)
     assert response.status_code == 403
 
-    # Owner permission in joined channels is revoked
-    rh.channel_join(user3_token, channel1_id)
-    response = rh.channel_addowner(clear_and_register, channel1_id, user3_id)
+    # Owner permission in joined channels is revoked if not an owner
+    response = rh.channel_removeowner(clear_and_register, channel1_id, user3_id)
     assert response.status_code == 403
+
+    rh.channel_join(user3_token, channel2_id)
+    response = rh.channel_addowner(clear_and_register, channel2_id, user3_id)
+    assert response.status_code == 200
 
 # Invalid inputs
 
@@ -108,11 +128,18 @@ def test_invalid_uid(clear_and_register):
     response = rh.admin_userpermission_change(clear_and_register, 99, 1)
     assert response.status_code == 400
 
+# - u_id refers to removed user
+def test_removed_user(clear_and_register):
+    user2_id = rh.auth_register("random2@gmail.com", "123abc!@#", "Bob", "Smith").json()["auth_user_id"]
+    rh.admin_user_remove(clear_and_register, user2_id)
+    response = rh.admin_userpermission_change(clear_and_register, user2_id, 1)
+    assert response.status_code == 400
+
 # - u_id refers to a user who is the only global owner and they are being demoted to a user
-# def test_only_global_onwer_demoted(clear_and_register):
-#     global_owner_id = rh.auth_login("random@gmail.com", "123abc!@#").json()["auth_user_id"]
-#     response = rh.admin_userpermission_change(clear_and_register, global_owner_id, 2)
-#     assert response.status_code == 400
+def test_only_global_owner_demoted(clear_and_register):
+    global_owner_id = rh.auth_login("random@gmail.com", "123abc!@#").json()["auth_user_id"]
+    response = rh.admin_userpermission_change(clear_and_register, global_owner_id, 2)
+    assert response.status_code == 400
 
 # - permission_id is invalid
 def test_invalid_permission_id(clear_and_register):
@@ -139,8 +166,9 @@ def test_invalid_token():
     assert response.status_code == 403
 
 # Invalid session
-# def test_invalid_session(clear_and_register):
-#     user2_id = rh.auth_register("random2@gmail.com", "123abc!@#", "Bob", "Smith").json()["auth_user_id"]
-#     rh.auth_logout(clear_and_register)
-#     response = rh.admin_userpermission_change(clear_and_register, user2_id, 1)
-#     assert response.status_code == 403
+def test_invalid_session(clear_and_register):
+    user2_id = rh.auth_register("random2@gmail.com", "123abc!@#", "Bob", "Smith").json()["auth_user_id"]
+    rh.auth_logout(clear_and_register)
+    response = rh.admin_userpermission_change(clear_and_register, user2_id, 1)
+    assert response.status_code == 403
+
