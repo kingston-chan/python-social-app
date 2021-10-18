@@ -18,9 +18,9 @@ import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
-from src.user import list_all_users
+from src.user import list_all_users, user_profile_v1, user_profile_setname_v1
 from src.message import message_send_v1, message_edit_v1, message_remove_v1
-from src.admin import admin_userpermission_change_v1
+from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -328,12 +328,24 @@ def users_all():
 # user/profile/v1
 @APP.route("/user/profile/v1", methods=['GET'])
 def user_profile(): 
-    return {}
+    token = request.args.get("token")
+    u_id = request.args.get("u_id")
+    check_valid_token_and_session(token)
+    profile = user_profile_v1(u_id)
+    save()
+    return dumps({"user": profile})
 
 # user/profile/setname/v1
 @APP.route("/user/profile/setname/v1", methods=['PUT'])
 def user_profile_setname():
-    return {}
+    data = request.get_json()
+    first_name = data["name_first"]
+    last_name = data["name_last"]
+    user_id = check_valid_token_and_session(data["token"])
+    user_profile_setname_v1(user_id, first_name, last_name)
+    save()
+    return dumps({})
+
 
 # user/profile/setemail/v1
 @APP.route("/user/profile/setemail/v1", methods=['PUT'])
@@ -370,7 +382,11 @@ def user_profile_sethandle():
 # admin/user/remove/v1
 @APP.route("/admin/user/remove/v1", methods=['DELETE'])
 def admin_user_remove():
-    return {}
+    data = request.get_json()
+    auth_user_id = check_valid_token_and_session(data["token"])
+    admin_user_remove_v1(auth_user_id, data["u_id"])
+    save()
+    return dumps({})
 
 # admin/userpermission/change/v1
 @APP.route("/admin/userpermission/change/v1", methods=['POST'])
