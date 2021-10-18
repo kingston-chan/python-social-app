@@ -14,34 +14,42 @@ def register_user(email, password, first_name, last_name):
 # ==== Tests with correct input ==== #
 
 # Lists all users given valid token
-def test_return_profile():
+def test_user_valid():
     requests.delete(f"{url}/clear/v1")
     
     reg_response = register_user("email@email.com", "password", "Julian", "Winzer")
 
     user_token = reg_response["token"]
-    user_id = reg_response["auth_user_id"]
     
-    
-    response = requests.get(f"{url}/user/profile/v1", params={"token": user_token, "u_id": user_id})
-    response_data = response.json()
+    response = requests.put(f"{url}/user/profile/setname/v1", json={"token": user_token, "name_first": 'John', "name_last":'Smith'})
 
-    assert response_data == {"user": {"u_id": 1, "email": 'email@email.com', "name_first": 'Julian', "name_last": 'Winzer', "handle_str": 'julianwinzer'}}
+    assert response.status_code == 200
 
 # ==== Tests with incorrect/invalid input ==== #
-def test_invalid_id():
+def test_user_invalid_first_name():
     requests.delete(f"{url}/clear/v1")
     
     reg_response = register_user("email@email.com", "password", "Julian", "Winzer")
 
     user_token = reg_response["token"]
     
-    response = requests.get(f"{url}/user/profile/v1", params={"token": user_token, "u_id": -3})
+    response = requests.put(f"{url}/user/profile/setname/v1", json={"token": user_token, "name_first": '', "name_last":'Smith'})
+
+    assert response.status_code == 400
+
+def test_user_invalid_last_name():
+    requests.delete(f"{url}/clear/v1")
+    
+    reg_response = register_user("email@email.com", "password", "Julian", "Winzer")
+
+    user_token = reg_response["token"]
+    
+    response = requests.put(f"{url}/user/profile/setname/v1", json={"token": user_token, "name_first": 'John', "name_last":''})
 
     assert response.status_code == 400
 
 # Invalid token
 def test_invalid_token():
     requests.delete(f"{url}/clear/v1")
-    response = requests.get(f"{url}/user/profile/v1", params={ "token": "invalidtoken", "user_id": 1})
+    response = requests.put(f"{url}/user/profile/setname/v1", json={ "token": "invalidtoken", "name_first": 'John', "name_last":'Smith'})
     assert response.status_code == 403
