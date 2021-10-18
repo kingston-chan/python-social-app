@@ -181,7 +181,6 @@ def test_dm_details_unauthorised_token():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
     response_data = response.json()
     owner_token = response_data["token"]
-    owner_u_id = response_data["auth_user_id"]
 
     invited_member_data = {
         "email": "eagle@gmail.com",
