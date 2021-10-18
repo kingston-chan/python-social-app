@@ -546,32 +546,104 @@ def test_channel_messages_interaction2(clear, user1):
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
-    message_id = response_data['message_id']
+    message_id1 = response_data['message_id']
+    time_created1 = int(time.time())
+
+    message_response = send_message(user1['token'], channel_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 2
+    message_id2 = response_data['message_id']
+    time_created2 = int(time.time())
 
     messages_response = print_channel_messages(user1['token'], channel_id, 0)
     response_data = messages_response.json()
     expected_result = {
         "messages": [
             {
+                "message_id": 2,
+                "u_id": user1['auth_user_id'],
+                "message": "Hello",
+                "time_created": time_created2
+            }, 
+            {
                 "message_id": 1,
                 "u_id": user1['auth_user_id'],
                 "message": "Hello",
-                "time_created": int(time.time()) 
+                "time_created": time_created1    
             }
         ],
         "start": 0,
         "end": -1,
     }
-    assert response_data == expected_result
+    assert response_data['start'] == expected_result['start']
+    assert response_data['end'] == expected_result['end']
+    for x in range(len(response_data['messages'])):
+        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
+        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
+        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
+        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-    message_response = edit_message(user1['token'], message_id, "")
+    message_response = edit_message(user1['token'], message_id2, "Woah")
     assert message_response.status_code == 200
 
     messages_response = print_channel_messages(user1['token'], channel_id, 0)
     response_data = messages_response.json()
     expected_result = {
-        "messages": [],
+        "messages": [
+            {
+                "message_id": 2,
+                "u_id": user1['auth_user_id'],
+                "message": "Woah",
+                "time_created": time_created2
+            }, 
+            {
+                "message_id": 1,
+                "u_id": user1['auth_user_id'],
+                "message": "Hello",
+                "time_created": time_created1    
+            }
+        ],
         "start": 0,
         "end": -1,
     }
-    assert response_data == expected_result
+
+    assert response_data['start'] == expected_result['start']
+    assert response_data['end'] == expected_result['end']
+    for x in range(len(response_data['messages'])):
+        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
+        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
+        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
+        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+
+    message_response = edit_message(user1['token'], message_id1, "Jeez")
+    assert message_response.status_code == 200
+
+    messages_response = print_channel_messages(user1['token'], channel_id, 0)
+    response_data = messages_response.json()
+    expected_result = {
+        "messages": [
+            {
+                "message_id": 2,
+                "u_id": user1['auth_user_id'],
+                "message": "Woah",
+                "time_created": time_created2
+            }, 
+            {
+                "message_id": 1,
+                "u_id": user1['auth_user_id'],
+                "message": "Jeez",
+                "time_created": time_created1    
+            }
+        ],
+        "start": 0,
+        "end": -1,
+    }
+
+    assert response_data['start'] == expected_result['start']
+    assert response_data['end'] == expected_result['end']
+    for x in range(len(response_data['messages'])):
+        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
+        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
+        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
+        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
