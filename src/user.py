@@ -59,4 +59,5 @@ def user_profile_setname_v1(user_id, first_name, last_name):
             u["name_first"] = first_name
             u["name_last"] = last_name
     
-
+    store = users
+    data_store.set(store)
