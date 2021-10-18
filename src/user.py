@@ -42,7 +42,10 @@ def user_profile_v1(user_id):
     
     for u in users:
         if user_id == u["id"]:
-            user_dict = {"user_id": user_id, "email": u["email"], "name_first": u["name_first"], "name_last": u["name_last"], "handle": u["handle"]}
+            user_dict = {"u_id": user_id, "email": u["email"], "name_first": u["name_first"], "name_last": u["name_last"], "handle_str": u["handle"]}
             return user_dict
         
     raise InputError("u_id does not refer to a valid user")
+
+def user_profile_setname_v1():
+    pass
