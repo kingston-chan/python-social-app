@@ -17,21 +17,31 @@ def register_user(email, password, first_name, last_name):
 def test_return_profile():
     requests.delete(f"{url}/clear/v1")
     
-    reg_response = register_user("email@gmail.com", "password", "Julian", "Winzer")
-    assert reg_response.status_code == 200
+    reg_response = register_user("email@email.com", "password", "Julian", "Winzer")
 
     user_token = reg_response["token"]
     user_id = reg_response["auth_user_id"]
     
-    response = requests.get(f"{url}/users/profile/v1", params={"token": user_token, "u_id": user_id})
+    
+    response = requests.get(f"{url}/user/profile/v1", params={"token": user_token, "u_id": user_id})
     response_data = response.json()
 
     assert response_data == {"user_id": 1, "email": 'email@email.com', "name_first": 'Julian', "name_last": 'Winzer', "handle": 'julianwinzer'}
 
 # ==== Tests with incorrect/invalid input ==== #
+def test_invalid_id():
+    requests.delete(f"{url}/clear/v1")
+    
+    reg_response = register_user("email@email.com", "password", "Julian", "Winzer")
+
+    user_token = reg_response["token"]
+    
+    response = requests.get(f"{url}/user/profile/v1", params={"token": user_token, "u_id": -3})
+
+    assert response.status_code == 400
 
 # Invalid token
 def test_invalid_token():
     requests.delete(f"{url}/clear/v1")
-    response = requests.get(f"{url}/users/profile/v1", params={ "token": "invalidtoken", "user_id": 1})
+    response = requests.get(f"{url}/user/profile/v1", params={ "token": "invalidtoken", "user_id": 1})
     assert response.status_code == 403
