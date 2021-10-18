@@ -333,7 +333,7 @@ def user_profile():
     check_valid_token_and_session(token)
     profile = user_profile_v1(u_id)
     save()
-    return dumps(profile)
+    return dumps({"user": profile})
 
 # user/profile/setname/v1
 @APP.route("/user/profile/setname/v1", methods=['PUT'])
