@@ -51,16 +51,19 @@ def admin_userpermission_change_v1(auth_user_id, u_id, permission_id):
         raise InputError("Invalid permission id")
 
     channels = store["channels"]
+    
     if permission_id == 1:
         user_being_changed[0]["permission"] = 1
         for channel in channels:
-            if u_id in channel["all_members"] and not u_id in channel["owner_permissions"]:
-                channel["owner_permissions"].append(u_id) 
-    else:
+            if u_id in channel["all_members"] and u_id not in channel["owner_permissions"]:
+                channel["owner_permissions"].append(u_id)
+     
+    if permission_id == 2:
         user_being_changed[0]["permission"] = 2
         for channel in channels:
-            if u_id in channel["all_members"] and u_id in channel["owner_permissions"] and not u_id in ["owner_members"]:
+            if u_id in channel["owner_permissions"] and u_id not in channel["owner_members"]:
                 channel["owner_permissions"].remove(u_id)
+    
     data_store.set(store)
     return {}
 
