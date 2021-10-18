@@ -7,6 +7,7 @@ def clear_v1():
     store['channels'].clear()
     store['channel_messages'].clear()
     store['dm_messages'].clear()
+    store['dms'].clear()
     store['message_id_gen'] = 0
     store['session_count'] = 0
     data_store.set(store)
