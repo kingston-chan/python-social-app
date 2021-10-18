@@ -65,7 +65,7 @@ def admin_userpermission_change_v1(auth_user_id, u_id, permission_id):
     
     # Exceptions
     uid_user = check_valid_user_and_owner(auth_user_id, u_id, store["users"], permission_id)
-    # Invalid permission id
+    # Check for invalid permission id
     if permission_id not in [1,2]:
         raise InputError("Invalid permission id")
     
