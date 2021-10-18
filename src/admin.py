@@ -16,8 +16,8 @@ def change_removed_user_message(u_id, messages):
 
 def check_valid_user_and_owner(auth_user_id, u_id, users, permission=None):
     """Helper function to raise appropriate errors and return the user of u_id"""
-    auth_id_user = list(filter(lambda user: (user["id"] == auth_user_id)), users)
-    uid_user = list(filter(lambda user: (user["id"] == u_id)), users)
+    auth_id_user = list(filter(lambda user: (user["id"] == auth_user_id), users))
+    uid_user = list(filter(lambda user: (user["id"] == u_id), users))
     global_owners = list(filter(lambda user: (user["permission"] == 1), users))
 
     # uid is invalid
@@ -27,15 +27,15 @@ def check_valid_user_and_owner(auth_user_id, u_id, users, permission=None):
     if uid_user[0]["email"] is None and uid_user[0]["handle"] is None:
         raise InputError("Removed User")
     # Auth user id is not a global owner
-    if auth_id_user[0]["permissions"] != 1:
+    if auth_id_user[0]["permission"] != 1:
         raise AccessError("Authorised user is not a global owner")
 
     if permission:
         # U_id refers to a user who is the only global owner
-        if uid_user[0]["permissions"] == 1 and len(global_owners) == 1 and permission == 2:
+        if uid_user[0]["permission"] == 1 and len(global_owners) == 1 and permission == 2:
             raise InputError("Cannot demote only global owner")
     else:
-        if uid_user[0]["permissions"] == 1 and len(global_owners) == 1:
+        if uid_user[0]["permission"] == 1 and len(global_owners) == 1:
             raise InputError("Cannot remove only global owner")
 
     return uid_user
@@ -109,32 +109,27 @@ def admin_user_remove_v1(auth_user_id, u_id):
         Returns an empty dictionary on successful user removal
     """
     store = data_store.get()
-    users = store["users"]
     
-    check_valid_user_and_owner(auth_user_id, u_id, users)
-
-    channels = store["channels"]
-    dms = store["dms"]
+    check_valid_user_and_owner(auth_user_id, u_id, store["users"])
     
-    for channel in channels:
+    for channel in store["channels"]:
+        if u_id in channel["all_members"]:
+            channel["all_members"].remove(u_id)
         if u_id in channel["owner_permissions"]:
             channel["owner_permissions"].remove(u_id)
         if u_id in channel["owner_members"]:
             channel["owner_members"].remove(u_id)
-        if u_id in channel["all_members"]:
-            channel["all_members"].remove(u_id)
     
-    for dm in dms:
+    for dm in store["dms"]:
         if u_id in dm["members"]:
             dm["members"].remove(u_id)
-
-    channel_messages = store["channel_messages"]
-    dm_messages = store["dm_messages"]
     
-    store["dm_messages"] = change_removed_user_message(u_id, dm_messages)
-    store["channel_messages"] = change_removed_user_message(u_id, channel_messages)
+    store["dm_messages"] = change_removed_user_message(u_id, store["dm_messages"])
+    store["channel_messages"] = change_removed_user_message(u_id, store["channel_messages"])
 
-    for user in users:
+    store["sessions"][u_id].clear()
+
+    for user in store["users"]:
         if user["id"] == u_id:
             user["email"] = None 
             user["password"] = None
