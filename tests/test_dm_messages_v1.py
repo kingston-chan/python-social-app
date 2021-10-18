@@ -64,7 +64,7 @@ def create_dm(token, u_ids):
     }
     response = requests.post(f"{BASE_URL}/dm/create/v1", json=dm_info)
     response_data = response.json()
-    return int(response_data['dm_id'])
+    return response_data['dm_id']
 
 def print_dm_messages(token, dm_id, start):
     messages_info = {
@@ -257,7 +257,7 @@ def test_valid_dm_message(clear, user1, user2):
     assert response_data == expected_result
 
 def test_valid_dm_message_2(clear, user1, user2, user3):
-    dm_id = create_dm(user2['token'], [user2['token'], user3['token']])
+    dm_id = create_dm(user2['token'], [user2['auth_user_id'], user3['auth_user_id']])
     dm_messages_dict = {
         "token": user2['token'], 
         "dm_id": dm_id, 

@@ -89,6 +89,30 @@ def dm_details_v1(auth_user_id, dm_id):
     return dm_info
 
 def dm_messages_v1(auth_user_id, dm_id, start):
+    """
+    Given a DM with ID dm_id that the authorised user is a member of, return 
+    up to 50 messages between index "start" and "start + 50".
+
+    Arguments: 
+        auth_user_id (integer) - ID of the member of the DM
+        dm_id (integer) - ID of the DM
+        start (integer) - The index number of the first message to be returned.
+
+    Exceptions:
+        InputError - Occurs when given:
+                        - dm_id does not refer to a valid DM
+                        - start is greater than the total number of 
+                          messages in the DM
+
+        AccessError - Occurs when given:
+                        - dm_id is valid and the authorised user is not 
+                          a member of the DM
+        
+    Return Values:
+        Returns a dictionary of a list of DM messages from index["start"] to
+        index["start+50"], the start value and the end value.
+    
+    """
 # Checks if dm and start are valid inputs.
     dm_valid = False
     start_valid = False
