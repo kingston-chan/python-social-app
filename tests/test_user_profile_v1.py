@@ -26,7 +26,7 @@ def test_return_profile():
     response = requests.get(f"{url}/user/profile/v1", params={"token": user_token, "u_id": user_id})
     response_data = response.json()
 
-    assert response_data == {"user_id": 1, "email": 'email@email.com', "name_first": 'Julian', "name_last": 'Winzer', "handle": 'julianwinzer'}
+    assert response_data == {"u_id": 1, "email": 'email@email.com', "name_first": 'Julian', "name_last": 'Winzer', "handle_str": 'julianwinzer'}
 
 # ==== Tests with incorrect/invalid input ==== #
 def test_invalid_id():
