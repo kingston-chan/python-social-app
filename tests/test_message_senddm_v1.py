@@ -46,6 +46,18 @@ def user3():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
     return response.json()
 
+@pytest.fixture
+def user4():
+    user_dict = {
+        "email": "user4@email.com",
+        "password": "password",
+        "name_first": "user",
+        "name_last": "name"
+    }
+    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
+    return response.json()
+
+
 # ==== Helper functions ==== #
 def create_dm(token, u_ids):
     channel_info = {
@@ -54,7 +66,7 @@ def create_dm(token, u_ids):
     }
     response = requests.post(f"{BASE_URL}/dm/create/v1", json=channel_info)
     response_data = response.json()
-    return int(response_data['dm_id'])
+    return int(response_data['message_id'])
 
 def print_dm_messages(token, dm_id, start):
     dm_messages_info = {

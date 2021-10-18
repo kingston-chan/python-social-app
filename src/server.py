@@ -239,7 +239,11 @@ def message_remove():
 # message/senddm/v1
 @APP.route("/message/senddm/v1", methods=['POST'])
 def message_senddm():
-    return {}
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    new_dm_message = message_send_v1(user_id, data["dm_id"], data["message"])
+    save()
+    return dumps(new_dm_message)
 
 #====== dm.py =====#
 
