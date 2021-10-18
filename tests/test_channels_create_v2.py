@@ -1,83 +1,78 @@
-import requests, pytest, json
-from src.config import port
-
-BASE_URL = 'http://127.0.0.1:' + str(port)
+import pytest
+import tests.route_helpers as rh
 
 @pytest.fixture
 def clear_and_register():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_info = {
-        "email": "random@gmail.com", 
-        "password": "123abc!@#", 
-        "name_first": "John", 
-        "name_last": "Smith"
-    }
-
-    return requests.post(f"{BASE_URL}/auth/register/v2", json=user_info).json()["token"]
-
-# ==== Helper functions ==== #
-
-def create_channel(token, name, is_public):
-    channel_info = {
-        "token": token, 
-        "name": name, 
-        "is_public": is_public
-    }
-    return requests.post(f"{BASE_URL}/channels/create/v2", json=channel_info)
-
-def list_channels(token):
-    return requests.get(f"{BASE_URL}/channels/list/v2", params={ "token": token })
+    rh.clear()
+    return rh.auth_register("random@gmail.com", "123abc!@#", "John", "Smith").json()["token"]
 
 # ==== Tests with correct input ==== #
 
 # Creates a channel successfully
 def test_can_create_channel(clear_and_register):
-    response = create_channel(clear_and_register, "channel1", True)
+    response = rh.channels_create(clear_and_register, "channel1", True)
     assert response.status_code == 200
-    
-    # response_data = response.json()
-    # channel1_id = response_data['channel_id']
 
-    # response = list_channels(clear_and_register)
-    # response_data = response.json()
+    channel1_id = response.json()['channel_id']
+
+    user1_channels = rh.channels_list(clear_and_register).json()["channels"]
     
-    # assert response_data["channels"][0]["channel_id"] == channel1_id
-    # assert response_data["channels"][0]["name"] == "channel1"
+    assert user1_channels[0]["channel_id"] == channel1_id
+    assert user1_channels[0]["name"] == "channel1"
+
+# Created channel must be either private or public 
+def test_channel_private_public(clear_and_register):
+    channel1 = rh.channels_create(clear_and_register, "channel1", True).json()["channel_id"]
+    channel2 = rh.channels_create(clear_and_register, "channel2", False).json()["channel_id"]
+    channel_details1 = rh.channel_details(clear_and_register, channel1).json()
+    channel_details2 = rh.channel_details(clear_and_register, channel2).json()
+    assert channel_details1['is_public'] == True
+    assert channel_details2['is_public'] == False
+
+# User who creates the channel is channel owner and member (automatically joins), 
+# Channel can also have multiple owners and members
+def test_channel_owner(clear_and_register):
+    user2 = rh.auth_register("random2@gmail.com", "123abc!@#", "Jane", "Smith").json()["token"]
+    channel1 = rh.channels_create(clear_and_register, "channel1", True).json()["channel_id"]
+    rh.channel_join(user2, channel1)
+    channel_details = rh.channel_details(clear_and_register, channel1).json()
+    assert len(channel_details["owner_members"]) == 1
+    assert len(channel_details["all_members"]) == 2
 
 
 # ==== Tests with incorrect/invalid input ==== #
 
 # Invalid token
-def test_invalid_token(clear_and_register):
-    response = create_channel("invalid_token", "channel1", True)
+def test_invalid_token():
+    rh.clear()
+    response = rh.channels_create("invalid_token", "channel1", True)
     assert response.status_code == 403
 
 # Invalid name (less than 1 character, more than 20 characters)
 def test_invalid_name(clear_and_register):
-    response = create_channel(clear_and_register, "", True)
+    response = rh.channels_create(clear_and_register, "", True)
     assert response.status_code == 400
 
-    response = create_channel(clear_and_register, "morethantwentycharacters", True)
+    response = rh.channels_create(clear_and_register, "morethantwentycharacters", True)
     assert response.status_code == 400
 
-    response = create_channel(clear_and_register, "                    ", True)
+    response = rh.channels_create(clear_and_register, "                    ", True)
     assert response.status_code == 400
 
 # Channel name already exists
 def test_channel_name_already_exists(clear_and_register):
-    create_channel(clear_and_register, "channel1", True)
-    response = create_channel(clear_and_register, "channel1", True)
+    rh.channels_create(clear_and_register, "channel1", True)
+    response = rh.channels_create(clear_and_register, "channel1", True)
     assert response.status_code == 400
 
-    response = create_channel(clear_and_register, "CHANNEL1", True)
+    response = rh.channels_create(clear_and_register, "CHANNEL1", True)
     assert response.status_code == 400
 
-    response = create_channel(clear_and_register, "     CHannEL1     ", True)
+    response = rh.channels_create(clear_and_register, "     CHannEL1     ", True)
     assert response.status_code == 400
 
-# Invalid session id
-# def test_invalid_session(clear_and_register):
-#     requests.post(f"{BASE_URL}/auth/logout/v1", json={ "token": clear_and_register })
-#     response = create_channel(clear_and_register, "channel1", True)
-#     assert response.status_code == 403
+#Invalid session id
+def test_invalid_session(clear_and_register):
+    rh.auth_logout(clear_and_register)
+    response = rh.channels_create(clear_and_register, "channel1", True)
+    assert response.status_code == 403

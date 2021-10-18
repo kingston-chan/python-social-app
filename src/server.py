@@ -1,4 +1,4 @@
-from os import error
+from os import error, name
 import sys
 import signal
 from json import dumps
@@ -7,6 +7,7 @@ from requests.models import DecodeError
 from requests.sessions import session
 from flask_cors import CORS
 from src import channel
+from src import user
 from src.error import InputError, AccessError
 from src import config
 from src.channels import channels_create_v1, channels_list_v1
@@ -17,10 +18,10 @@ import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
-from src.user import list_all_users
+from src.dm import dm_details_v1, dm_create_v1, dm_leave_v1
+from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1
 from src.message import message_send_v1, message_edit_v1, message_remove_v1
-from src.admin import admin_userpermission_change_v1
-from src.dm import dm_leave_v1
+from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -246,7 +247,13 @@ def message_senddm():
 # dm/create/v1
 @APP.route("/dm/create/v1", methods=['POST'])
 def dm_create():
-    return {}
+    data = request.get_json()
+    user_token = data["token"]
+    user_lists = data["u_ids"]
+    user_id = check_valid_token_and_session(user_token)
+    dm_id = dm_create_v1(user_id, user_lists)
+    save()
+    return dumps(dm_id)
 
 # dm/list/v1
 @APP.route("/dm/list/v1", methods=['GET'])
@@ -261,7 +268,11 @@ def dm_remove():
 # dm/details/v1
 @APP.route("/dm/details/v1", methods=['GET'])
 def dm_details():
-    return {}
+    response = request.args.to_dict()
+    user_id = check_valid_token_and_session(response["token"])
+    dm_info = dm_details_v1(user_id, int(response["dm_id"]))
+    save()
+    return dumps(dm_info)
 
 # dm/leave/v1
 @APP.route("/dm/leave/v1", methods=['POST'])
@@ -290,17 +301,34 @@ def users_all():
 # user/profile/v1
 @APP.route("/user/profile/v1", methods=['GET'])
 def user_profile(): 
-    return {}
+    token = request.args.get("token")
+    u_id = request.args.get("u_id")
+    check_valid_token_and_session(token)
+    profile = user_profile_v1(u_id)
+    save()
+    return dumps({"user": profile})
 
 # user/profile/setname/v1
 @APP.route("/user/profile/setname/v1", methods=['PUT'])
 def user_profile_setname():
-    return {}
+    data = request.get_json()
+    first_name = data["name_first"]
+    last_name = data["name_last"]
+    user_id = check_valid_token_and_session(data["token"])
+    user_profile_setname_v1(user_id, first_name, last_name)
+    save()
+    return dumps({})
+
 
 # user/profile/setemail/v1
 @APP.route("/user/profile/setemail/v1", methods=['PUT'])
 def user_profile_setemail():
-    return {}
+    data = request.get_json()
+    user_email = data["email"]
+    user_id = check_valid_token_and_session(data["token"])
+    user_profile_setemail_v1(user_id, user_email)
+    save()
+    return dumps({})
 
 # user/profile/sethandle/v1
 @APP.route("/user/profile/sethandle/v1", methods=['PUT'])
@@ -332,7 +360,11 @@ def user_profile_sethandle():
 # admin/user/remove/v1
 @APP.route("/admin/user/remove/v1", methods=['DELETE'])
 def admin_user_remove():
-    return {}
+    data = request.get_json()
+    auth_user_id = check_valid_token_and_session(data["token"])
+    admin_user_remove_v1(auth_user_id, data["u_id"])
+    save()
+    return dumps({})
 
 # admin/userpermission/change/v1
 @APP.route("/admin/userpermission/change/v1", methods=['POST'])

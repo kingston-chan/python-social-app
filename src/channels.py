@@ -8,16 +8,6 @@ Functions to:
 from src.error import InputError, AccessError
 from src.data_store import data_store
 
-def user_exists(auth_user_id, users):
-    """Helper function to verify user"""
-    user_exist = False
-    for user in users:
-        if user['id'] == auth_user_id:
-            user_exist = True
-
-    if not user_exist:
-        raise AccessError("User does not exist")
-
 def channels_list_v1(auth_user_id):
     """
     List all channels that the user is a member of
@@ -36,11 +26,7 @@ def channels_list_v1(auth_user_id):
 
     """
     store = data_store.get()
-    users = store['users']
     channels = store['channels']
-
-    # Check if auth_user_id is valid
-    user_exists(auth_user_id, users)
 
     channels_list = []
     # Append all the channels the user is part of, that being a member or an owner
@@ -74,9 +60,6 @@ def channels_listall_v1(auth_user_id):
     # Grabs the items in the data_store
     store = data_store.get()
     channels = store['channels']
-    users = store['users']
-    # Checks if the user exists
-    user_exists(auth_user_id, users)
     # Loops through 'channels' and appends a dictionary with 'channel_id' and
     # 'name' to a list.
     channels_list = []
@@ -112,11 +95,7 @@ def channels_create_v1(auth_user_id, name, is_public):
                         
     """
     store = data_store.get()
-    users = store['users']
     channels = store['channels']
-
-    # Check if user exists
-    user_exists(auth_user_id, users)
 
     # Trim any leading/trailing whitespace characters in name
     name = name.strip()
