@@ -7,7 +7,7 @@ BASE_URL = url
 #400 is input error
 #403 is access error
 
-def test_invlaid_token():
+def test_invalid_token():
     requests.delete(f"{url}/clear/v1")
     response = requests.get(f"{url}/dm/list/v1", params={"token" : 1 , "u_ids" : [1]})
     assert response.status_code == 403 
@@ -35,17 +35,29 @@ def test_succesful_case1():
     dm_id = response_data["dm_id"]
 
     list_of_dicts = requests.get(f"{url}/dm/list/v1", params={"token" : input_token })
+
     #list_of_dicts = {dm_id , name}
     #dm_details(dm_id) = {name, members}
 
-    i = True
 
-    for dict in list_of_dicts:
-        response = requests.get(f"{BASE_URL}/dm/details/v1", params=dict["dm_id"])
-        if u_id not in response["members"]:
-            i = False
+    list_of_dicts = list_of_dicts.json()
+    print (list_of_dicts)
+    created_dict = list_of_dicts["dms"][0]
+    print(created_dict)
+    created_dm_id = created_dict["dm_id"]
+
     
-    assert i == True
+
+
+    response = requests.get(f"{BASE_URL}/dm/details/v1", params={"token": input_token,"dm_id" : created_dm_id})
+
+    response_data = response.json()
+    print(response_data)
+    if u_id not in response_data["members"]:
+        i = False
+
+    assert i  == True
+    
 
 
 
