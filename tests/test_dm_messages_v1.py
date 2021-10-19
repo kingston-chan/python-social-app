@@ -72,22 +72,20 @@ def print_dm_messages(token, dm_id, start):
     }
     return requests.get(f"{BASE_URL}/dm/messages/v1", params=messages_info)
 
-# ==== Future Helper Functions ==== #
-
-def send_message(token, dm_id, message):
-    message_dict = {
+def send_dm_message(token, dm_id, message):
+    dm_message_dict = {
         "token": token,
         "dm_id": dm_id,
         "message": message
     }
-    return requests.post(f"{BASE_URL}/message/senddm/v1", json=message_dict)
+    return requests.post(f"{BASE_URL}/message/senddm/v1", json=dm_message_dict)
 
 def send_mass_dm_messages(user, messages_total, dm_id):
     message_list = []
     loop = 0
     while loop < messages_total:
         current_time = int(time.time())
-        response_data = send_message(user['token'], dm_id, "hello").json()
+        response_data = send_dm_message(user['token'], dm_id, "hello").json()
         message_id = response_data['message_id']
         message_dict = {
             "message_id":  message_id,

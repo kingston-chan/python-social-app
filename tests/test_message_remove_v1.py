@@ -103,12 +103,48 @@ def print_channel_messages(token, channel_id, start):
     }
     return requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_info)
 
+def create_dm(token, u_ids):
+    dm_info = {
+        "token": token, 
+        "u_ids": u_ids
+    }
+    response = requests.post(f"{BASE_URL}/dm/create/v1", json=dm_info)
+    response_data = response.json()
+    return int(response_data['dm_id'])
+
+def send_dm_message(token, dm_id, message):
+    dm_message_dict = {
+        "token": token,
+        "dm_id": dm_id,
+        "message": message
+    }
+    return requests.post(f"{BASE_URL}/message/senddm/v1", json=dm_message_dict)
+
+def print_dm_messages(token, dm_id, start):
+    messages_info = {
+        "token": token,
+        "dm_id": dm_id,
+        "start": start 
+    }
+    return requests.get(f"{BASE_URL}/dm/messages/v1", params=messages_info)
+
 # ==== Tests - Errors ==== #
 ## Input Error - 400 ##
 def test_invalid_fake_message_id(clear, user1):
     channel_id = create_channel(user1['token'], "chan_name", True)
 
     message_response = send_message(user1['token'], channel_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+
+    message_response = remove_message(user1['token'], response_data['message_id'] + 1)
+    assert message_response.status_code == 400
+
+def test_invalid_fake_message_id_2(clear, user1, user2):
+    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
+
+    message_response = send_dm_message(user1['token'], dm_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
@@ -130,17 +166,41 @@ def test_unauthorised_user(clear, user1, user2, user3):
     message_response = remove_message(user3['token'], response_data['message_id'])
     assert message_response.status_code == 403
 
-def test_user_not_owner(clear, user1, user2):
+def test_user_not_owner(clear, user1, user2, user3):
     channel_id = create_channel(user1['token'], "chan_name", True)
     join_channel(user2['token'], channel_id)
+    join_channel(user3['token'], channel_id)
 
-    message_response = send_message(user1['token'], channel_id, "Hello")
+    message_response = send_message(user2['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
-    message_response = remove_message(user2['token'], response_data['message_id'])
+    message_response = remove_message(user3['token'], response_data['message_id'])
     assert message_response.status_code == 403
+
+def test_unauthorised_user_in_dm(clear, user1, user2, user3):
+    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
+
+    message_response = send_dm_message(user2['token'], dm_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+
+    message_response = remove_message(user3['token'], response_data['message_id'])
+    assert message_response.status_code == 403
+
+def test_user_not_owner_in_dm(clear, user1, user2, user3):
+    dm_id = create_dm(user1['token'], [user2['auth_user_id'], user3['auth_user_id']])
+
+    message_response = send_dm_message(user2['token'], dm_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+
+    message_response = remove_message(user3['token'], response_data['message_id'])
+    assert message_response.status_code == 403
+
 
 # ==== Tests - Valids ==== #
 def test_one_user_removes_one_message_in_one_channel(clear, user1):
@@ -436,3 +496,135 @@ def test_channel_messages_interaction2(clear, user1):
     }
 
     assert response_data == expected_result
+
+def test_one_user_removes_one_message_in_one_dm(clear, user1, user2):
+    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
+    message_response = send_dm_message(user1['token'], dm_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+    message_id = response_data['message_id']
+
+    dm_messages = print_dm_messages(user1['token'], dm_id, 0)
+    response_data = dm_messages.json()
+    expected_result = {
+        "messages": [
+            {
+                "message_id": message_id,
+                "u_id": user1['auth_user_id'],
+                "message": "Hello",
+                "time_created": int(time.time()) 
+            }
+        ],
+        "start": 0,
+        "end": -1,
+    }
+    assert response_data['start'] == expected_result['start']
+    assert response_data['end'] == expected_result['end']
+    for x in range(len(response_data['messages'])):
+        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
+        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
+        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
+        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+
+    message_response = remove_message(user1['token'], message_id)
+    assert message_response.status_code == 200
+
+    dm_messages = print_dm_messages(user1['token'], dm_id, 0)
+    response_data = dm_messages.json()
+    expected_result = {
+        "messages": [],
+        "start": 0,
+        "end": -1,
+    }
+    assert expected_result == response_data
+
+def test_one_user_removes_in_channel_and_dm(clear, user1, user2, user3):
+    # Edits in channel
+    channel_id = create_channel(user1['token'], "chan_name", True)
+    message_response = send_message(user1['token'], channel_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+    message_id = response_data['message_id']
+
+    messages = print_channel_messages(user1['token'], channel_id, 0)
+    response_data = messages.json()
+    expected_result = {
+        "messages": [
+            {
+                "message_id": message_id,
+                "u_id": user1['auth_user_id'],
+                "message": "Hello",
+                "time_created": int(time.time()) 
+            }
+        ],
+        "start": 0,
+        "end": -1,
+    }
+    assert response_data['start'] == expected_result['start']
+    assert response_data['end'] == expected_result['end']
+    for x in range(len(response_data['messages'])):
+        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
+        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
+        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
+        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+
+    message = remove_message(user1['token'], message_id)
+    assert message.status_code == 200
+
+    messages = print_channel_messages(user1['token'], channel_id, 0)
+    response_data = messages.json()
+    expected_result = {
+        "messages": [],
+        "start": 0,
+        "end": -1,
+    }
+    assert expected_result == response_data
+
+    # Creates a middle DM
+    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
+    dm_message = send_dm_message(user1['token'], dm_id, "Hello")
+    message_id = dm_message.json()['message_id']
+    assert message_id == 2
+    assert dm_message.status_code == 200
+
+    # Creates a DM and edits a sent message in it
+    dm_id = create_dm(user1['token'], [user3['auth_user_id']])
+    dm_message = send_dm_message(user3['token'], dm_id, "Hello")
+    message_id = dm_message.json()['message_id']
+    assert message_id == 3
+    assert dm_message.status_code == 200
+    dm_messages = print_dm_messages(user1['token'], dm_id, 0)
+    response_data = dm_messages.json()
+    expected_result = {
+        "messages": [
+            {
+                "message_id": message_id,
+                "u_id": user3['auth_user_id'],
+                "message": "Hello",
+                "time_created": int(time.time()) 
+            }
+        ],
+        "start": 0,
+        "end": -1,
+    }
+    assert response_data['start'] == expected_result['start']
+    assert response_data['end'] == expected_result['end']
+    for x in range(len(response_data['messages'])):
+        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
+        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
+        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
+        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+
+    dm_message = remove_message(user1['token'], message_id)
+    assert dm_message.status_code == 200
+
+    dm_messages = print_dm_messages(user1['token'], dm_id, 0)
+    response_data = dm_messages.json()
+    expected_result = {
+        "messages": [],
+        "start": 0,
+        "end": -1,
+    }
+    assert expected_result == response_data
