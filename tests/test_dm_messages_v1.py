@@ -163,11 +163,11 @@ def test_invalid_member_2(clear, user1, user2, user3):
     assert dm_created.status_code == 200
     dm_id2 = dm_created.json()['dm_id']
 
-    dm_messages = print_dm_messages(user2['token'], 2, 0)
+    dm_messages = print_dm_messages(user2['token'], dm_id2, 0)
     # Raise error
     assert dm_messages.status_code == 403
 
-    dm_messages = print_dm_messages(user3['token'], 1, 0)
+    dm_messages = print_dm_messages(user3['token'], dm_id1, 0)
     # Raise error
     assert dm_messages.status_code == 403
 
