@@ -156,7 +156,7 @@ def test_invalid_dm(clear, user1):
     assert response.status_code == 400
 
 def test_incorrect_start(clear, user1, user2):
-    dm_id = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
+    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
     dm_messages_dict = {
         "token": user1['token'], 
         "dm_id": dm_id, 
@@ -167,7 +167,7 @@ def test_incorrect_start(clear, user1, user2):
     assert response.status_code == 400
 
 def test_invalid_member(clear, user1, user2, user3):
-    dm_id = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
+    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
     dm_messages_dict = {
         "token": user3['token'],
         "dm_id": dm_id, 
@@ -178,8 +178,8 @@ def test_invalid_member(clear, user1, user2, user3):
     assert response.status_code == 403
 
 def test_invalid_member_2(clear, user1, user2, user3):
-    dm_id1 = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
-    dm_id2 = create_dm(user1['token'], [user1['auth_user_id'], user3['auth_user_id']])
+    dm_id1 = create_dm(user1['token'], [user2['auth_user_id']])
+    dm_id2 = create_dm(user1['token'], [user3['auth_user_id']])
     dm_messages_dict = {
         "token": user2['token'], 
         "dm_id": dm_id2, 
@@ -199,8 +199,8 @@ def test_invalid_member_2(clear, user1, user2, user3):
     assert response.status_code == 403 
 
 def test_invalid_member_3(clear, user1, user2, user3, user4):
-    dm_id1 = create_dm(user2['token'], [user2['auth_user_id'], user3['auth_user_id']])
-    dm_id2 = create_dm(user2['token'], [user2['auth_user_id'], user4['auth_user_id']])
+    dm_id1 = create_dm(user2['token'], [user3['auth_user_id']])
+    dm_id2 = create_dm(user2['token'], [user4['auth_user_id']])
 
     dm_messages_dict = {
         "token": user4['token'], 
@@ -240,7 +240,7 @@ def test_invalid_member_3(clear, user1, user2, user3, user4):
 
 # ==== Tests - Valids ==== #
 def test_valid_dm_message(clear, user1, user2):
-    dm_id = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
+    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
     dm_messages_dict = {
         "token": user1['token'], 
         "dm_id": dm_id, 
@@ -257,7 +257,7 @@ def test_valid_dm_message(clear, user1, user2):
     assert response_data == expected_result
 
 def test_valid_dm_message_2(clear, user1, user2, user3):
-    dm_id = create_dm(user2['token'], [user2['auth_user_id'], user3['auth_user_id']])
+    dm_id = create_dm(user2['token'], [user3['auth_user_id']])
     dm_messages_dict = {
         "token": user2['token'], 
         "dm_id": dm_id, 
@@ -272,9 +272,9 @@ def test_valid_dm_message_2(clear, user1, user2, user3):
     assert response.json() == expected_result
 
 def test_multiple_channels(clear, user1, user2, user3, user4):
-    dm_id1 = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
-    dm_id2 = create_dm(user1['token'], [user1['auth_user_id'], user3['auth_user_id']])
-    dm_id3 = create_dm(user1['token'], [user1['auth_user_id'], user3['auth_user_id']])
+    dm_id1 = create_dm(user1['token'], [user2['auth_user_id']])
+    dm_id2 = create_dm(user1['token'], [user3['auth_user_id']])
+    dm_id3 = create_dm(user1['token'], [user4['auth_user_id']])
     dm_id_list = [dm_id1, dm_id2, dm_id3]
     for dm_id in dm_id_list:
         dm_messages_dict = {
@@ -289,6 +289,24 @@ def test_multiple_channels(clear, user1, user2, user3, user4):
             "end": -1,
         }
         assert response.json() == expected_result
+
+def test_one_channel_multiple_people(clear, user1, user2, user3, user4):
+    dm_id = create_dm(user1['token'], [user2['auth_user_id'], user3['auth_user_id'], user4['auth_user_id']])
+    token_list = [user1['token'], user2['token'], user3['token'], user4['token']]
+    for token in token_list:
+        dm_messages_dict = {
+            "token": token, 
+            "dm_id": dm_id, 
+            "start": 0, 
+        }        
+        response = requests.get(f"{BASE_URL}/dm/messages/v1", params=dm_messages_dict)
+        expected_result = {
+            "messages": [],
+            "start": 0,
+            "end": -1,
+        }
+        assert response.json() == expected_result 
+
 
 # ==== Future Tests ==== #
 '''
