@@ -254,7 +254,7 @@ def dm_create():
     dm_id = dm_create_v1(user_id, user_lists)
     save()
     return dumps(dm_id)
-
+                                                        
 # dm/list/v1
 @APP.route("/dm/list/v1", methods=['GET'])
 def dm_list():
