@@ -643,7 +643,7 @@ def test_delete_dm_message(clear, user1, user2):
     }
     assert response_data == expected_result
 
-def test_owner_edits_another_users_message(clear, user1, user2):
+def test_owner_edits_another_users_dm_message(clear, user1, user2):
     dm_id = create_dm(user1['token'], [user2['auth_user_id']])
     dm_message = send_dm_message(user2['token'], dm_id, "Hello")
     message_id = dm_message.json()['message_id']
