@@ -22,9 +22,6 @@ def dm_create_v1(auth_user_id, u_ids):
     for users in u_ids:
         i = False
         for user in store["users"]:
-            if auth_user_id == user["id"]:
-                owner_name = user["handle"]
-
             if users == user["id"]:
                 i = True
                 if user["handle"] == None and user["email"] == None:
@@ -33,7 +30,11 @@ def dm_create_v1(auth_user_id, u_ids):
                     name_list.append(user["handle"])
         if i == False:
             raise InputError("Invalid users") 
-   
+
+    for user in store["users"]:
+        if auth_user_id == user["id"]:
+            owner_name = user["handle"]
+
     name_list.append(owner_name)
     name_list = sorted(name_list)
 
