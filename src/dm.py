@@ -212,3 +212,15 @@ def dm_messages_v1(auth_user_id, dm_id, start):
         'start': start,
         'end': end,
     }
+def dm_list_v1(auth_user_id):
+
+    data = data_store.get()
+    list_of_dms = data["dms"]
+
+    return_list = []
+
+    for dicts in list_of_dms:
+        if auth_user_id in dicts["members"]:
+            new_item = {"dm_id" : dicts["dm_id"], "name" : dicts["name"]}
+            return_list.append(new_item)
+    return {"dms" : return_list}
