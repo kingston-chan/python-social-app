@@ -22,7 +22,6 @@ def test_succesful_case1():
     response = requests.post(f"{url}/auth/register/v2", json=new_user) 
     response_data = response.json()
     new_user_token = response_data["token"]
-    owner_uid = response_data["auth_user_id"]
 
     new_user = {"email" : "fakeguy1@gmail.com" , "password": "fake123456","name_first" : "faker", "name_last" : "is_a_faker1" }
 
@@ -50,7 +49,6 @@ def test_succesful_case2():
     new_user2 = {"email" : "fakeguy2@gmail.com" , "password": "fake123457","name_first" : "faker", "name_last" : "is_a_faker2" }
 
     response = requests.post(f"{url}/auth/register/v2", json=new_user)
-    u_id = response.json()["auth_user_id"]
     owner_token = response.json()["token"]
     response = requests.post(f"{url}/auth/register/v2", json=new_user1)
     u_id1 = response.json()["auth_user_id"]
@@ -59,7 +57,6 @@ def test_succesful_case2():
     u_id2 = response.json()["auth_user_id"]
 
     response = requests.post(f"{BASE_URL}/dm/create/v1", json={ "token" : owner_token, "u_ids" : [u_id1,u_id2] })
-    response_data = response.json()
         
     list_of_dicts = requests.get(f"{url}/dm/list/v1", params={"token" : input_token })
 
@@ -69,7 +66,6 @@ def test_succesful_case2():
 
     assert expected_output == output
 
-#pass token through auth user logut to invalidate sessions
 
 def test_successfull_case3():
     requests.delete(f"{url}/clear/v1")
@@ -79,7 +75,6 @@ def test_successfull_case3():
     new_user2 = {"email" : "fakeguy2@gmail.com" , "password": "fake123457","name_first" : "faker", "name_last" : "is_a_faker2" }
 
     response = requests.post(f"{url}/auth/register/v2", json=new_user)
-    u_id = response.json()["auth_user_id"]
     owner_token = response.json()["token"]
     response = requests.post(f"{url}/auth/register/v2", json=new_user1)
     u_id1 = response.json()["auth_user_id"]
@@ -88,9 +83,7 @@ def test_successfull_case3():
     u_id2 = response.json()["auth_user_id"]  
 
     response = requests.post(f"{BASE_URL}/dm/create/v1", json={ "token" : owner_token, "u_ids" : [u_id1,u_id2] })
-    response_data = response.json()
     response = requests.post(f"{BASE_URL}/dm/create/v1", json={ "token" : owner_token, "u_ids" : [u_id2] })
-    response_data = response.json()
     
     list_of_dicts = requests.get(f"{url}/dm/list/v1", params={"token" : input_token })
 
@@ -106,11 +99,9 @@ def test_just_owner():
     new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
 
     response = requests.post(f"{url}/auth/register/v2", json=new_user)
-    u_id = response.json()["auth_user_id"]
     owner_token = response.json()["token"] 
 
     response = requests.post(f"{BASE_URL}/dm/create/v1", json={ "token" : owner_token, "u_ids" : [] })
-    response_data = response.json()
     
     list_of_dicts = requests.get(f"{url}/dm/list/v1", params={"token" : owner_token })
 
