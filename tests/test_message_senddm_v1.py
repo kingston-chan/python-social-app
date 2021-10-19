@@ -57,16 +57,13 @@ def user4():
     response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
     return response.json()
 
-
 # ==== Helper functions ==== #
 def create_dm(token, u_ids):
-    channel_info = {
+    dm_info = {
         "token": token, 
         "u_ids": u_ids
     }
-    response = requests.post(f"{BASE_URL}/dm/create/v1", json=channel_info)
-    response_data = response.json()
-    return int(response_data['message_id'])
+    return requests.post(f"{BASE_URL}/dm/create/v1", json=dm_info)
 
 def print_dm_messages(token, dm_id, start):
     dm_messages_info = {
@@ -87,53 +84,72 @@ def send_dm_message(token, dm_id, message):
 # ==== Tests - Errors ==== #
 ## Input Error - 400 ##
 def test_invalid_dm(clear, user1, user2):
-    dm_id = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
+    dm_created = create_dm(user1['token'], [user2['auth_user_id']])
+    assert dm_created.status_code == 200
+    dm_id = dm_created.json()['dm_id']
     message_response = send_dm_message(user1['token'], dm_id + 1, "Hello")
     assert message_response.status_code == 400
 
 def test_message_too_long(clear, user1, user2):
-    dm_id = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
+    dm_created = create_dm(user1['token'], [user2['auth_user_id']])
+    assert dm_created.status_code == 200
+    dm_id = dm_created.json()['dm_id']
     message_response = send_dm_message(user1['token'], dm_id, "A"*1500)
     assert message_response.status_code == 400
 
 def test_message_too_short(clear, user1, user2):
-    dm_id = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
+    dm_created = create_dm(user1['token'], [user2['auth_user_id']])
+    assert dm_created.status_code == 200
+    dm_id = dm_created.json()['dm_id']
     message_response = send_dm_message(user1['token'], dm_id, "")
     assert message_response.status_code == 400
 
 ## Access Error - 403 ##
 def test_real_unauthorised_user(clear, user1, user2, user3):
-    dm_id = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
+    dm_created = create_dm(user1['token'], [user2['auth_user_id']])
+    assert dm_created.status_code == 200
+    dm_id = dm_created.json()['dm_id']
     message_response = send_dm_message(user3['token'], dm_id, "Hello")
     assert message_response.status_code == 403
 
 def test_real_unauthorised_user2(clear, user1, user2, user3, user4):
-    dm_id = create_dm(user2['token'], [user2['auth_user_id'], user3['auth_user_id']])
+    dm_created = create_dm(user2['token'], [user3['auth_user_id']])
+    assert dm_created.status_code == 200
+    dm_id = dm_created.json()['dm_id']
     message_response = send_dm_message(user4['token'], dm_id, "Hello")
     assert message_response.status_code == 403
 
-def test_real_unauthorised_user3(clear, user1, user2, user3):
-    dm_id = create_dm(user2['token'], [user2['auth_user_id'], user3['auth_user_id']])
+def test_real_unauthorised_user3(clear, user1, user2, user3, user4):
+    dm_created = create_dm(user2['token'], [user3['auth_user_id'], user4['auth_user_id']])
+    assert dm_created.status_code == 200
+    dm_id = dm_created.json()['dm_id']
     message_response = send_dm_message(user1['token'], dm_id, "Hello")
     assert message_response.status_code == 403
 
 def test_dummy_unauthorised_user(clear, user1, user2):
-    dm_id = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
+    dm_created = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
+    assert dm_created.status_code == 200
+    dm_id = dm_created.json()['dm_id']
     message_response = send_dm_message(9999, dm_id, "Hello")
     assert message_response.status_code == 403
 
 # ==== Tests - Valids ==== #
 def test_one_user_sends_one_message_in_one_dm(clear, user1, user2):
-    dm_id = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
+    dm_created = create_dm(user1['token'], [user2['auth_user_id']])
+    assert dm_created.status_code == 200
+    dm_id = dm_created.json()['dm_id']
     message_response = send_dm_message(user1['token'], dm_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
 def test_multiple_users_sends_multiple_messages_in_multiple_dms(clear, user1, user2, user3):
-    dm_id1 = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
-    dm_id2 = create_dm(user1['token'], [user1['auth_user_id'], user3['auth_user_id']])
-
+    dm_created1 = create_dm(user1['token'], [user2['auth_user_id']])
+    dm_created2 = create_dm(user1['token'], [user3['auth_user_id']])
+    assert dm_created1.status_code == 200
+    dm_id1 = dm_created1.json()['dm_id']
+    assert dm_created2.status_code == 200
+    dm_id2 = dm_created2.json()['dm_id']
     message_response = send_dm_message(user1['token'], dm_id1, "One")
     response_data = message_response.json()
     assert message_response.status_code == 200
@@ -175,8 +191,9 @@ def test_multiple_users_sends_multiple_messages_in_multiple_dms(clear, user1, us
     assert response_data['message_id'] == 8
 
 def test_dm_messages_interaction(clear, user1, user2):
-    dm_id = create_dm(user1['token'], [user1['auth_user_id'], user2['auth_user_id']])
-
+    dm_created = create_dm(user1['token'], [user2['auth_user_id']])
+    assert dm_created.status_code == 200
+    dm_id = dm_created.json()['dm_id']
     message_response = send_dm_message(user1['token'], dm_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200

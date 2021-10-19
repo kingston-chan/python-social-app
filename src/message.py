@@ -222,7 +222,7 @@ def message_senddm_v1(auth_user_id, dm_id, message):
     valid_message = False
 
     for dm in dms:
-        if dm['id'] == dm_messages:
+        if dm['dm_id'] == dm_id:
             valid_dm = True
             selected_dm = dm
     
@@ -237,7 +237,7 @@ def message_senddm_v1(auth_user_id, dm_id, message):
         else:
             raise InputError("This message is too long.")
 
-    if auth_user_id not in selected_dm['u_ids']:
+    if auth_user_id not in selected_dm['members']:
         raise AccessError("This user is not a member of this DM.")
 
     store['message_id_gen'] += 1

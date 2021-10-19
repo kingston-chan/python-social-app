@@ -140,7 +140,7 @@ def dm_messages_v1(auth_user_id, dm_id, start):
         index["start+50"], the start value and the end value.
     
     """
-# Checks if dm and start are valid inputs.
+    # Checks if dm and start are valid inputs.
     dm_valid = False
     start_valid = False
     selected_dm = {}
@@ -150,7 +150,7 @@ def dm_messages_v1(auth_user_id, dm_id, start):
 
     # Scans if the DM exists.
     for dm in dms:
-        if dm['dm_id'] == dm_id:
+        if int(dm['dm_id']) == int(dm_id):
             dm_valid = True
             # Checks if the start value is valid within the length of 
             # messages in the DM.
@@ -160,7 +160,7 @@ def dm_messages_v1(auth_user_id, dm_id, start):
 
     # If the dm_id or start value are invalid, then errors are raised.
     if dm_valid is False:
-        raise InputError("This dm is not valid.")
+        raise InputError("This DM is not valid.")
     if start_valid is False:
         raise InputError("This start is not valid.")
     
