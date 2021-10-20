@@ -38,18 +38,18 @@ def test_removed_users_messages(clear_and_register):
     user2_id = user2["auth_user_id"]
     channel1_id = rh.channels_create(clear_and_register, "channel1", True).json()["channel_id"]
     rh.channel_join(user2_token, channel1_id)
-    # dm1_id = rh.dm_create(clear_and_register, [user2_id]).json()["dm_id"]
+    dm1_id = rh.dm_create(clear_and_register, [user2_id]).json()["dm_id"]
     rh.message_send(clear_and_register, channel1_id, "hello user2")
     rh.message_send(user2_token, channel1_id, "hello user1")
-    # rh.message_senddm(clear_and_register, dm1_id, "hello user2")
-    # rh.message_senddm(user2_token, dm1_id, "hello user1")
+    rh.message_senddm(clear_and_register, dm1_id, "hello user2")
+    rh.message_senddm(user2_token, dm1_id, "hello user1")
     rh.admin_user_remove(clear_and_register, user2_id)
 
     channel1_messages = rh.channel_messages(clear_and_register, channel1_id, 0).json()["messages"]
     assert channel1_messages[0]["message"] == "Removed user"
 
-    # dm1_messages = rh.dm_messages(clear_and_register, dm1_id, 0).json()["messages"]
-    # assert dm1_messages[0]["message"] == "Removed user"
+    dm1_messages = rh.dm_messages(clear_and_register, dm1_id, 0).json()["messages"]
+    assert dm1_messages[0]["message"] == "Removed user"
 
 # Profile is retrieveable but first name is replaced with "Removed" and last name with "user"
 def test_removed_users_profile(clear_and_register):
