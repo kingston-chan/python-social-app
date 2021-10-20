@@ -20,12 +20,16 @@ def test_removing_one_dm():
     response = requests.post(f"{url}/dm/create/v1", json={"token" : new_user_token, "u_ids" : []}) 
     dm_id = response.json()["dm_id"]
 
-    expected_output = {"dms" : []}
-
     response = requests.delete(f"{url}/dm/remove/v1", json={"token" : new_user_token , "dm_id" : dm_id})
     output = response.json()
 
-    assert expected_output == output
+    output = requests.get(f"{url}/dm/list/v1", params={"token" : new_user_token })
+
+
+    expected_output = []
+
+
+    assert expected_output == output.json()["dms"]
 
 def test_invalid_dm_id():
     requests.delete(f"{url}/clear/v1")
@@ -42,7 +46,7 @@ def test_invalid_dm_id():
 
 def test_invlaid_token():
     requests.delete(f"{url}/clear/v1")
-    response = requests.post(f"{url}/dm/remove/v1", json={"token" : 1 , "dm_id" : 1})
+    response = requests.delete(f"{url}/dm/remove/v1", json={"token" : 1 , "dm_id" : 1})
     assert response.status_code == 403 
 
 
@@ -63,5 +67,5 @@ def test_not_auth_user():
 
     response = requests.post(f"{url}/dm/create/v1", json={"token" : user1_token, "u_ids" : [user2_id]}) 
     dm_id = response.json()["dm_id"]
-    response = requests.post(f"{url}/dm/remove/v1", json={"token" : user2_token, "dm_id" : dm_id})
+    response = requests.delete(f"{url}/dm/remove/v1", json={"token" : user2_token, "dm_id" : dm_id})
     assert response.status_code == 403 
