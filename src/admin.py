@@ -62,25 +62,24 @@ def admin_userpermission_change_v1(auth_user_id, u_id, permission_id):
         Returns an empty dictionary on successful user permission change
     """
     store = data_store.get()
-    users = store["users"]
     
     # Exceptions
-    uid_user = check_valid_user_and_owner(auth_user_id, u_id, users, permission_id)
-    # Invalid permission id
-    if not permission_id in [1,2]:
+    uid_user = check_valid_user_and_owner(auth_user_id, u_id, store["users"], permission_id)
+    # Check for invalid permission id
+    if permission_id not in [1,2]:
         raise InputError("Invalid permission id")
-
-    channels = store["channels"]
+    
     if permission_id == 1:
         uid_user[0]["permission"] = 1
-        for channel in channels:
-            if u_id in channel["all_members"] and not u_id in channel["owner_permissions"]:
+        for channel in store["channels"]:
+            if u_id in channel["all_members"] and u_id not in channel["owner_permissions"]:
                 channel["owner_permissions"].append(u_id) 
     else:
         uid_user[0]["permission"] = 2
-        for channel in channels:
-            if u_id in channel["all_members"] and u_id in channel["owner_permissions"] and not u_id in ["owner_members"]:
+        for channel in store["channels"]:
+            if u_id in channel["owner_permissions"] and u_id not in channel["owner_members"]:
                 channel["owner_permissions"].remove(u_id)
+    
     data_store.set(store)
     return {}
 

@@ -18,6 +18,7 @@ import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
+from src.dm import dm_details_v1, dm_create_v1, dm_leave_v1, dm_messages_v1, dm_list_v1
 from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1
 from src.message import message_send_v1, message_edit_v1, message_remove_v1
 from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
@@ -249,51 +250,19 @@ def dm_create():
     data = request.get_json()
     user_token = data["token"]
     user_lists = data["u_ids"]
-
     user_id = check_valid_token_and_session(user_token)
-    store = data_store.get()
-    name_list= []
-
-    new_dm_id = len(store["dms"]) + 1
-
-    for users in user_lists:
-        i = False
-        for user in store["users"]:
-            if users == user["id"]:
-                i = True
-                if user["handle"] == None and user["email"] == None:
-                    raise InputError("Invalid users") 
-                else:
-                    name_list.append(user["handle"])
-        if i == False:
-            raise InputError("Invalid users") 
-   
-   
-    name_list = sorted(name_list)
-
-    i = 1
-    name = name_list[0]
-    while i  < len(name_list):
-        name = name + ', ' + name_list[i]
-    
-    user_lists.append(user_id)
-
-    new_dm = {
-        'name': name,
-        'dm_id': new_dm_id,
-        'owner_of_dm' : user_id,
-        'members': user_lists
-    }
-
-    store["dms"].append(new_dm)
-    data_store.set(store)
+    dm_id = dm_create_v1(user_id, user_lists)
     save()
-    return {"dm_id" : new_dm_id}
+    return dumps(dm_id)
 
 # dm/list/v1
 @APP.route("/dm/list/v1", methods=['GET'])
 def dm_list():
-    return {}
+    info = request.args.to_dict()
+    info_token = info["token"]
+    auth_user_id = check_valid_token_and_session(info_token)
+    list_of_dms = dm_list_v1(auth_user_id)
+    return dumps(list_of_dms)
 
 # dm/remove/v1
 @APP.route("/dm/remove/v1", methods=['DELETE'])
@@ -303,17 +272,29 @@ def dm_remove():
 # dm/details/v1
 @APP.route("/dm/details/v1", methods=['GET'])
 def dm_details():
-    return {}
+    response = request.args.to_dict()
+    user_id = check_valid_token_and_session(response["token"])
+    dm_info = dm_details_v1(user_id, int(response["dm_id"]))
+    save()
+    return dumps(dm_info)
 
 # dm/leave/v1
 @APP.route("/dm/leave/v1", methods=['POST'])
 def dm_leave():
+    response = request.get_json()
+    user_id = check_valid_token_and_session(response["token"])
+    dm_leave_v1(user_id, response["dm_id"])
+    save()
     return {}
 
 # dm/messages/v1
 @APP.route("/dm/messages/v1", methods=['GET'])
-def login():
-    return {}
+def dm_messages():
+    token = request.args.get("token")
+    user_id = check_valid_token_and_session(token)
+    dm_channel_messages = dm_messages_v1(user_id, int(request.args.get("dm_id")), int(request.args.get("start")))
+    save()
+    return dumps(dm_channel_messages)
 
 #===== user.py =====#
 
