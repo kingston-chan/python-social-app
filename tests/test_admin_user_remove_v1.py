@@ -38,7 +38,7 @@ def test_removed_users_messages(clear_and_register):
     user2_id = user2["auth_user_id"]
     channel1_id = rh.channels_create(clear_and_register, "channel1", True).json()["channel_id"]
     rh.channel_join(user2_token, channel1_id)
-    dm1_id = rh.dm_create(clear_and_register, [user2_id]).json()["dm_id"]
+    # dm1_id = rh.dm_create(clear_and_register, [user2_id]).json()["dm_id"]
     rh.message_send(clear_and_register, channel1_id, "hello user2")
     rh.message_send(user2_token, channel1_id, "hello user1")
     # rh.message_senddm(clear_and_register, dm1_id, "hello user2")
