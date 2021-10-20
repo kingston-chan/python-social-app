@@ -27,13 +27,13 @@ def test_succesful_case1():
 
     response = requests.post(f"{url}/auth/register/v2", json=new_user) 
     response_data = response.json()
-    input_token = response_data["token"]
+    user1_token = response_data["token"]
     u_id = response_data["auth_user_id"]
 
     response = requests.post(f"{BASE_URL}/dm/create/v1", json={ "token" : new_user_token, "u_ids" : [u_id] })
     response_data = response.json()
 
-    list_of_dicts = requests.get(f"{url}/dm/list/v1", params={"token" : input_token })
+    list_of_dicts = requests.get(f"{url}/dm/list/v1", params={"token" : user1_token })
 
     list_of_dicts = list_of_dicts.json()
 
@@ -52,13 +52,13 @@ def test_succesful_case2():
     owner_token = response.json()["token"]
     response = requests.post(f"{url}/auth/register/v2", json=new_user1)
     u_id1 = response.json()["auth_user_id"]
-    input_token = response.json()["token"]
+    user1_token = response.json()["token"]
     response = requests.post(f"{url}/auth/register/v2", json=new_user2)
     u_id2 = response.json()["auth_user_id"]
 
     response = requests.post(f"{BASE_URL}/dm/create/v1", json={ "token" : owner_token, "u_ids" : [u_id1,u_id2] })
         
-    list_of_dicts = requests.get(f"{url}/dm/list/v1", params={"token" : input_token })
+    list_of_dicts = requests.get(f"{url}/dm/list/v1", params={"token" : user1_token })
 
     output = list_of_dicts.json()
 
@@ -78,14 +78,14 @@ def test_successfull_case3():
     owner_token = response.json()["token"]
     response = requests.post(f"{url}/auth/register/v2", json=new_user1)
     u_id1 = response.json()["auth_user_id"]
-    input_token = response.json()["token"]
+    user1_token = response.json()["token"]
     response = requests.post(f"{url}/auth/register/v2", json=new_user2)
     u_id2 = response.json()["auth_user_id"]  
 
     response = requests.post(f"{BASE_URL}/dm/create/v1", json={ "token" : owner_token, "u_ids" : [u_id1,u_id2] })
     response = requests.post(f"{BASE_URL}/dm/create/v1", json={ "token" : owner_token, "u_ids" : [u_id2] })
     
-    list_of_dicts = requests.get(f"{url}/dm/list/v1", params={"token" : input_token })
+    list_of_dicts = requests.get(f"{url}/dm/list/v1", params={"token" : user1_token })
 
     output = list_of_dicts.json()
 
