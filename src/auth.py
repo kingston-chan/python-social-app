@@ -27,10 +27,7 @@ def auth_login_v1(email, password):
     
     store = data_store.get()
     users = store['users']
-
-    # determine if the email has already been used
-    if not dict_search(email, users, 'email'):
-        raise InputError('Email does not exist')
+        
     
     # when the email is correct determine if the password matches
     for u in users:
@@ -41,6 +38,9 @@ def auth_login_v1(email, password):
                 'auth_user_id': u['id'],
                 'token': create_jwt(u['id'])
             }
+
+    raise InputError('Email does not exist')
+
 
 def auth_logout_v1(token):
 

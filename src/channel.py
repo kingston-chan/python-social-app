@@ -50,12 +50,12 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
         raise InputError("not valid channel ID")   
     #checks for valid user 
     for user in users:
-        if u_id == user['id']:
+        if u_id == user['id'] and user["email"] is not None and user["handle"] is not None:
             valid_user = 1
             break
     
     if valid_user == 0:
-        raise InputError("not valid user")   
+        raise InputError("not valid user")
     #checks to see if member
     if u_id in channel['all_members']:
         raise InputError("already member")
@@ -63,7 +63,7 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     channel['all_members'].append(u_id)
     
     if user['permission'] == 1:
-        channel['owner_permissions'].append(u_id)   
+        channel['owner_permissions'].append(u_id)
     
     data_store.set(store)
     
@@ -102,9 +102,6 @@ def channel_details_v1(auth_user_id, channel_id):
     channels = store['channels']
     users = store['users']
     channel_details = {}
-
-    # Checks if user exist
-    check_valid_user(auth_user_id, users)
     
     channel_exists = False
     owner_ids = None
@@ -276,8 +273,7 @@ def channel_join_v1(auth_user_id, channel_id):
     users = store['users']
     channels = store['channels']
 
-    # Check if user is valid
-    user = check_valid_user(auth_user_id, users)
+    user = list(filter((lambda user: user["id"] == auth_user_id), users))[0]
     
     # Check if channel is valid
     channel_exists = 0
@@ -449,16 +445,3 @@ def assign_user_info(user_data_placeholder):
         'name_last': user_data_placeholder['name_last'],
         'handle_str':user_data_placeholder['handle']
     }
-
-def check_valid_user(id, users):
-    """Helper function to check if user is valid and returns the user if valid"""
-    user_exists = False
-    for user in users:
-        if id == user['id']:
-            user_exists = True
-            break
-    
-    if not user_exists:
-        raise AccessError("User is not authorised.")
-    else:
-        return user

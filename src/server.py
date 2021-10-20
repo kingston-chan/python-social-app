@@ -50,17 +50,6 @@ APP.register_error_handler(Exception, defaultHandler)
 
 #### NO NEED TO MODIFY ABOVE THIS POINT, EXCEPT IMPORTS
 
-# Example
-# @APP.route("/echo", methods=['GET'])
-# def echo():
-#     data = request.args.get('data')
-#     if data == 'echo':
-#    	    raise InputError(description='Cannot echo "echo"')
-#     return dumps({
-#         'data': data
-#     })
-
-
 def check_valid_token_and_session(token):
     """Helper function to check if token is valid and session is valid"""
     sessions = data_store.get()["sessions"]
@@ -259,7 +248,7 @@ def dm_create():
     dm_id = dm_create_v1(user_id, user_lists)
     save()
     return dumps(dm_id)
-
+                                                        
 # dm/list/v1
 @APP.route("/dm/list/v1", methods=['GET'])
 def dm_list():

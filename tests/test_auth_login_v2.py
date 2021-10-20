@@ -92,3 +92,42 @@ def test_login_valid_multiple_times():
     assert response_data["auth_user_id"] == 1
 
     assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 3}
+
+def test_login_valid_multiple_users():
+    requests.delete(f"{BASE_URL}/clear/v1")
+
+    user1_data = {
+        "email": "email@email.com",
+        "password": "password",
+        "name_first": "Julian",
+        "name_last": "Winzer"
+    }
+
+    user2_data = {
+        "email": "email2@email.com",
+        "password": "password",
+        "name_first": "Julian",
+        "name_last": "Winzer"
+    }
+
+    user3_data = {
+        "email": "email3@email.com",
+        "password": "password",
+        "name_first": "Julian",
+        "name_last": "Winzer"
+    }
+
+    
+    
+    requests.post(f"{BASE_URL}/auth/register/v2", json=user1_data)
+    requests.post(f"{BASE_URL}/auth/register/v2", json=user2_data)
+    requests.post(f"{BASE_URL}/auth/register/v2", json=user3_data)
+    
+    
+    response = requests.post(f"{BASE_URL}/auth/login/v2", json=user3_data)
+    response_data = response.json()
+    
+
+    assert response_data["auth_user_id"] == 3
+
+    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 3, 'session_id': 4}
