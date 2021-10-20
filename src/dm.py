@@ -224,3 +224,19 @@ def dm_list_v1(auth_user_id):
             new_item = {"dm_id" : dicts["dm_id"], "name" : dicts["name"]}
             return_list.append(new_item)
     return {"dms" : return_list}
+
+def dm_remove_v1(auth_user_id, dm_id):
+    store = data_store.get()
+    list_of_dms = store["dms"]
+    i = False
+    for dms in list_of_dms:
+        if dms["dm_id"] == dm_id:
+            i = True
+            if dms["owner_of_dm"] != auth_user_id:
+                raise AccessError("Not owner of DM")
+            else:
+                dms["members"].clear()
+    if i == False:
+        raise InputError("DM does not exist")
+    data_store.set(store)
+    return {}

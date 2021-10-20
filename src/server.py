@@ -18,7 +18,7 @@ import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
-from src.dm import dm_details_v1, dm_create_v1, dm_leave_v1, dm_messages_v1, dm_list_v1
+from src.dm import dm_details_v1, dm_create_v1, dm_leave_v1, dm_messages_v1, dm_list_v1, dm_remove_v1
 from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1
 from src.message import message_send_v1, message_edit_v1, message_remove_v1, message_senddm_v1
 from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
@@ -261,7 +261,13 @@ def dm_list():
 # dm/remove/v1
 @APP.route("/dm/remove/v1", methods=['DELETE'])
 def dm_remove():
-    return {}
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"]) 
+    #user_id for valid user 
+    dm_id = data["dm_id"]
+    dm_remove_v1(user_id, dm_id)
+    save()
+    return dumps({})
 
 # dm/details/v1
 @APP.route("/dm/details/v1", methods=['GET'])
