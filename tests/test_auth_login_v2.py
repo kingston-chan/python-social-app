@@ -117,10 +117,10 @@ def test_login_valid_multiple_users():
 
     
     
-    response = requests.post(f"{BASE_URL}/auth/login/v2", json=user2_data)
+    response = requests.post(f"{BASE_URL}/auth/login/v2", json=user1_data)
     response_data = response.json()
     
 
-    assert response_data["auth_user_id"] == 2
+    assert response_data["auth_user_id"] == 1
 
-    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 2, 'session_id': 3}
+    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 3}
