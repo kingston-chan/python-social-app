@@ -1,7 +1,6 @@
 import json
 import requests
 import pytest
-from requests.sessions import extract_cookies_to_jar
 from src.config import url
 import tests.route_helpers as rh
 
