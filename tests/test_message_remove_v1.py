@@ -103,6 +103,29 @@ def print_channel_messages(token, channel_id, start):
     }
     return requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_info)
 
+def leave_channel(token, channel_id):
+    leave_info = {
+        "token": token,
+        "channel_id": channel_id,
+    }
+    return requests.post(f"{BASE_URL}/channel/leave/v1", json=leave_info)
+
+def add_owner(token, channel_id, u_id):
+    add_info = {
+        "token": token,
+        "channel_id": channel_id,
+        "u_id": u_id
+    }
+    return requests.post(f"{BASE_URL}/channel/addowner/v1", json=add_info)
+
+def remove_owner(token, channel_id, u_id):
+    remove_info = {
+        "token": token,
+        "channel_id": channel_id,
+        "u_id": u_id
+    }
+    return requests.post(f"{BASE_URL}/channel/removeowner/v1", json=remove_info)
+
 def create_dm(token, u_ids):
     dm_info = {
         "token": token, 
@@ -152,6 +175,47 @@ def test_invalid_fake_message_id_2(clear, user1, user2):
     message_response = remove_message(user1['token'], response_data['message_id'] + 1)
     assert message_response.status_code == 400
 
+def test_user_left_and_tries_to_remove(clear, user1, user2):
+    channel_id = create_channel(user1['token'], "chan_name", True)
+    join_channel(user2['token'], channel_id)
+
+    message_response = send_message(user2['token'], channel_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+    message_id = response_data['message_id']
+
+    leave_channel(user2['token'], channel_id)
+
+    message_response = remove_message(user2['token'], message_id)
+    assert message_response.status_code == 400
+
+def test_owner_left_and_tries_to_remove(clear, user1, user2):
+    channel_id = create_channel(user1['token'], "chan_name", True)
+    join_channel(user2['token'], channel_id)
+
+    message_response = send_message(user1['token'], channel_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+    message_id = response_data['message_id']
+
+    leave_channel(user1['token'], channel_id)
+
+    message_response = remove_message(user1['token'], message_id)
+    assert message_response.status_code == 400
+
+def test_user_not_in_dm(clear, user1, user2, user3):
+    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
+
+    message_response = send_dm_message(user2['token'], dm_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+
+    message_response = remove_message(user3['token'], response_data['message_id'])
+    assert message_response.status_code == 400
+
 ## Access Error - 403 ##
 def test_unauthorised_user(clear, user1, user2, user3):
     channel_id = create_channel(user1['token'], "chan_name", True)
@@ -179,17 +243,6 @@ def test_user_not_owner(clear, user1, user2, user3):
     message_response = remove_message(user3['token'], response_data['message_id'])
     assert message_response.status_code == 403
 
-def test_unauthorised_user_in_dm(clear, user1, user2, user3):
-    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
-
-    message_response = send_dm_message(user2['token'], dm_id, "Hello")
-    response_data = message_response.json()
-    assert message_response.status_code == 200
-    assert response_data['message_id'] == 1
-
-    message_response = remove_message(user3['token'], response_data['message_id'])
-    assert message_response.status_code == 403
-
 def test_user_not_owner_in_dm(clear, user1, user2, user3):
     dm_id = create_dm(user1['token'], [user2['auth_user_id'], user3['auth_user_id']])
 
@@ -200,7 +253,6 @@ def test_user_not_owner_in_dm(clear, user1, user2, user3):
 
     message_response = remove_message(user3['token'], response_data['message_id'])
     assert message_response.status_code == 403
-
 
 # ==== Tests - Valids ==== #
 def test_one_user_removes_one_message_in_one_channel(clear, user1):
@@ -376,6 +428,21 @@ def test_one_user_invited_removes_one_messages_in_private_channel(clear, user1, 
     message_id = response_data['message_id']
 
     message_response = remove_message(user1['token'], message_id)
+    assert message_response.status_code == 200
+
+def test_user_becomes_owner_removes(clear, user1, user2):
+    channel_id = create_channel(user1['token'], "chan_name2", True)
+    join_channel(user2['token'], channel_id)
+
+    message_response = send_message(user1['token'], channel_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+    message_id = response_data['message_id']
+
+    add_owner(user1['token'], channel_id, user2['auth_user_id'])
+
+    message_response = remove_message(user2['token'], message_id)
     assert message_response.status_code == 200
 
 def test_channel_messages_interaction(clear, user1):

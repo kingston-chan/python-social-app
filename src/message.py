@@ -133,8 +133,8 @@ def message_edit_v1(auth_user_id, message_id, message):
             if int(channel['id']) == int(selected_message['channel_id']):
                 selected_channel = channel
         if auth_user_id not in selected_channel['all_members']:
-            raise AccessError("This user is not a member of this channel.")
-        elif auth_user_id is not selected_message['u_id'] and auth_user_id not in selected_channel['owner_members'] and auth_user_id not in selected_channel['owner_permissions']:
+            raise InputError("This user is not a member of this channel.")
+        elif (auth_user_id is not selected_message['u_id']) and (auth_user_id not in selected_channel['owner_permissions']):
                 raise AccessError("This user is not allowed to edit this message.")
         
         if message == "":
@@ -146,9 +146,9 @@ def message_edit_v1(auth_user_id, message_id, message):
             if int(dm['dm_id']) == int(selected_message['dm_id']):
                 selected_dm = dm
         if auth_user_id not in dm['members']:
-            raise AccessError("This user is not a member of this DM.")
+            raise InputError("This user is not a member of this DM.")
         elif (auth_user_id is not selected_message['u_id']) and (auth_user_id is not selected_dm['owner_of_dm']):
-                raise AccessError("This user is not allowed to edit this message.")
+                raise AccessError("This user is not allowed to edit this DM message.")
 
         if message == "":
             dm_messages.remove(selected_message)
@@ -213,8 +213,8 @@ def message_remove_v1(auth_user_id, message_id):
             if int(channel['id']) == int(selected_message['channel_id']):
                 selected_channel = channel
         if auth_user_id not in selected_channel['all_members']:
-            raise AccessError("This user is not a member of this channel.")
-        elif auth_user_id is not selected_message['u_id'] and auth_user_id not in selected_channel['owner_members'] and auth_user_id not in selected_channel['owner_permissions']:
+            raise InputError("This user is not a member of this channel.")
+        elif auth_user_id is not selected_message['u_id'] and auth_user_id not in selected_channel['owner_permissions']:
             raise AccessError("This user is not allowed to edit this message.")
 
         channel_messages.remove(selected_message)
@@ -223,9 +223,9 @@ def message_remove_v1(auth_user_id, message_id):
             if int(dm['dm_id']) == int(selected_message['dm_id']):
                 selected_dm = dm
         if auth_user_id not in selected_dm['members']:
-            raise AccessError("This user is not a member of this DM.")
+            raise InputError("This user is not a member of this DM.")
         elif auth_user_id is not selected_message['u_id'] and auth_user_id is not selected_dm['owner_of_dm']:
-                raise AccessError("This user is not allowed to edit this message.")
+            raise AccessError("This user is not allowed to edit this DM message.")
 
         dm_messages.remove(selected_message)
 
