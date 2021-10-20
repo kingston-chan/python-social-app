@@ -1,7 +1,9 @@
+import json
 import requests
 import pytest
 from requests.sessions import extract_cookies_to_jar
 from src.config import url
+import tests.route_helpers as rh
 
 BASE_URL = url
 
@@ -92,3 +94,25 @@ def test_two_dms_with_dm_list():
     expected_output = {"dms" : [{"dm_id" : 1, "name" : "fakerisafaker"},{"dm_id" : 2, "name" : "fakerisafaker"}]}
 
     assert expected_output == list_of_dicts.json()
+
+
+def test_users_removed():
+    requests.delete(f"{url}/clear/v1")
+
+    user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
+    user1 = {"email" : "fakeguy1@gmail.com" , "password": "fake123456","name_first" : "faker", "name_last" : "is_a_faker1" }
+
+    response = requests.post(f"{url}/auth/register/v2", json=user) 
+    response_data = response.json()
+    user_token = response_data["token"]
+
+
+    response = requests.post(f"{url}/auth/register/v2", json=user1) 
+    response_data = response.json()
+    user1_id = response_data["auth_user_id"]
+
+    response = requests.delete(f"{url}/admin/user/remove/v1", json={"token" : user_token, "u_id" : user1_id})
+
+    response = requests.post(f"{url}/dm/create/v1", json={"token" : user_token, "u_ids" : [user1_id]})
+
+    assert response.status_code == 400  
