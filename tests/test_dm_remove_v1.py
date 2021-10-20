@@ -82,7 +82,6 @@ def test_removing_one_dm_with_two_created():
 
     response = requests.post(f"{url}/auth/register/v2", json=user2) 
     response_data = response.json()
-    user2_token = response_data["token"]
     user2_id = response_data["auth_user_id"]
 
     response = requests.post(f"{url}/dm/create/v1", json={"token" : user1_token, "u_ids" : []}) 
