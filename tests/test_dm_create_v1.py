@@ -76,7 +76,7 @@ def test_two_identical_dms():
 
     assert dm_id["dm_id"] == 2
 
-def test_two_identical_dms():
+def test_two_dms_with_dm_list():
     requests.delete(f"{url}/clear/v1")
 
     new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
