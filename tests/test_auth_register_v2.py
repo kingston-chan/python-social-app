@@ -192,3 +192,19 @@ def test_register_valid_multiple_identical():
     assert response_data["auth_user_id"] == 2
 
     assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 2, 'session_id': 2}
+
+def test_register_valid_long_handle():
+    requests.delete(f"{BASE_URL}/clear/v1")
+
+    user_data = {
+        "email": "email@email.com",
+        "password": "password",
+        "name_first": "ThisHandleIsTooLong",
+        "name_last": "ThisHandleIsTooLong"
+    }
+
+    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
+    response_data = response.json()
+
+    assert response_data["auth_user_id"] == 1
+    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
