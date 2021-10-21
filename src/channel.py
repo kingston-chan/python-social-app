@@ -303,6 +303,27 @@ def channel_join_v1(auth_user_id, channel_id):
     return {}
 
 def channel_addowner_v1(auth_user_id, channel_id, u_id):
+    """
+    Make user with user u_id the owner of the channel.
+
+    Arguments:
+        auth_user_id (integer) - ID of the authorised user promoting.
+        channel_id (integer) - ID of the channel requested for channel_addowner.
+        u_id (integer) - ID of the user being promoted.
+    
+    Exceptions:
+        InputError - Occurs when:
+                        - channel_id does not refer to a valid channel.
+                        - u_id does not refer to a valid user
+                        - u_id refers to a user who is not a member of the channel
+                        - u_id refers to a user who is already an owner of the channel
+        AccessError - Occurs when:
+                        - channel_id is valid but the authorised user does not
+                        have owner permissions for the channel.
+    
+    Return Value:
+        Returns an empty dictionary on success.
+    """
     store = data_store.get()
     users = store['users']
     channels = store['channels']
@@ -392,6 +413,27 @@ def channel_leave_v1(auth_user_id, channel_id):
     raise InputError("Invalid channel id")
     
 def channel_removeowner_v1(auth_user_id, channel_id, u_id):
+    """
+    Removes user with user u_id as an owner of the channel.
+
+    Arguments:
+        auth_user_id (integer) - ID of the authorised user demoting.
+        channel_id (integer) - ID of the channel requested for channel_addowner.
+        u_id (integer) - ID of the user being demoted.
+    
+    Exceptions:
+        InputError - Occurs when:
+                        - channel_id does not refer to a valid channel.
+                        - u_id does not refer to a valid user
+                        - u_id refers to a user who is not a member of the channel
+                        - u_id refers to a user who is already an owner of the channel
+        AccessError - Occurs when:
+                        - channel_id is valid but the authorised user does not
+                        have owner permissions for the channel.
+    
+    Return Value:
+        Returns an empty dictionary on success.
+    """
     store = data_store.get()
     channels = store["channels"]
     users = store["users"]
