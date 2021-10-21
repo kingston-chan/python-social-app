@@ -50,12 +50,12 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
         raise InputError("not valid channel ID")   
     #checks for valid user 
     for user in users:
-        if u_id == user['id']:
+        if u_id == user['id'] and user["email"] is not None and user["handle"] is not None:
             valid_user = 1
             break
     
     if valid_user == 0:
-        raise InputError("not valid user")   
+        raise InputError("not valid user")
     #checks to see if member
     if u_id in channel['all_members']:
         raise InputError("already member")
@@ -63,7 +63,7 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     channel['all_members'].append(u_id)
     
     if user['permission'] == 1:
-        channel['owner_permissions'].append(u_id)   
+        channel['owner_permissions'].append(u_id)
     
     data_store.set(store)
     
@@ -102,9 +102,6 @@ def channel_details_v1(auth_user_id, channel_id):
     channels = store['channels']
     users = store['users']
     channel_details = {}
-
-    # Checks if user exist
-    check_valid_user(auth_user_id, users)
     
     channel_exists = False
     owner_ids = None
@@ -181,6 +178,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     selected_channel = {}
     store = data_store.get()
     channels = store['channels']
+    channel_messages = store['channel_messages']
 
     # Scans if the channel exists.
     for channel in channels:
@@ -188,7 +186,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
             channel_valid = True
             # Checks if the start value is valid within the length of 
             # messages in the channel.
-            if start <= len(channel['messages']):
+            if start <= len(list(filter(lambda x: (x['channel_id'] == channel_id), channel_messages))):
                 start_valid = True
                 selected_channel = channel  # Channel is also selected
 
@@ -209,18 +207,34 @@ def channel_messages_v1(auth_user_id, channel_id, start):
         raise AccessError('User is not authorised.')
 
     # The channel is scanned for its messages.
+
+    selected_channel_messages = []
+
+    if channel_messages == []:
+        length = 0
+    else:
+        selected_channel_messages = list(filter(lambda x: (x['channel_id'] == channel_id), channel_messages))
+        selected_channel_messages.reverse()
+        length = len(selected_channel_messages)
+
     index = start
     counter = 0
-    channel_messages = selected_channel['messages']
     selected_messages = []
-    while index < len(channel_messages) and counter < 50:
-        selected_messages.append(channel_messages[index])
+    while index < length and counter < 50:
+        selected_message = selected_channel_messages[index]
+        message_dict = {
+            "message_id": selected_message['message_id'],
+            "u_id": selected_message['u_id'],
+            "message": selected_message['message'],
+            "time_created": selected_message['time_created']
+        }
+        selected_messages.append(message_dict)
         index += 1
         counter += 1
 
     # If the scanner hits the end of the messages, the end is -1
     # else, the end is the final message index.
-    if counter != 50 or index == len(channel_messages):
+    if index == length:
         end = -1
     else:
         end = index
@@ -259,8 +273,7 @@ def channel_join_v1(auth_user_id, channel_id):
     users = store['users']
     channels = store['channels']
 
-    # Check if user is valid
-    user = check_valid_user(auth_user_id, users)
+    user = list(filter((lambda user: user["id"] == auth_user_id), users))[0]
     
     # Check if channel is valid
     channel_exists = 0
@@ -289,6 +302,57 @@ def channel_join_v1(auth_user_id, channel_id):
 
     return {}
 
+def channel_addowner_v1(auth_user_id, channel_id, u_id):
+    store = data_store.get()
+    users = store['users']
+    channels = store['channels']
+
+    user_exists = False
+    for user in users:
+        if u_id == user['id']:
+            user_exists = True
+            break
+    
+    if not user_exists:
+        raise InputError("User is not authorised.")
+
+    channel_exists = False
+    owner_ids = None
+    all_members_ids = None
+    owner_perms_ids = None
+
+    # Searches for a channel with the same ID and stores its information.
+    # Also checks if a channel exists.
+    for channel in channels:
+        if channel["id"] == channel_id:
+            channel_exists = True
+            # channel["owner_members"] and channel["all_members"] are lists of user IDs.
+            owner_ids = channel["owner_members"]
+            all_members_ids = channel["all_members"]
+            owner_perms_ids = channel["owner_permissions"]
+
+    if not channel_exists:
+        raise InputError("Channel does not exist") 
+    
+    if auth_user_id not in owner_ids and auth_user_id not in owner_perms_ids:
+        raise AccessError("User is not an owner/does not have the owner permissions.")
+
+    if u_id not in all_members_ids:
+        raise InputError("User is not a member of the channel")
+
+    if u_id in owner_ids:
+        raise InputError("User is already an owner of the channel")
+
+    for channel in channels:
+        if channel["id"] == channel_id:
+            channel["owner_members"].append(u_id)
+            channel["owner_permissions"].append(u_id)
+
+
+    data_store.set(store)
+
+    return {}
+
 def channel_leave_v1(auth_user_id, channel_id):
     """
     Auth_user_id leaves the channel by being removed from the channels
@@ -308,8 +372,7 @@ def channel_leave_v1(auth_user_id, channel_id):
         Returns an empty dictionary when user successfully leaves the channel
     """
     store = data_store.get()
-    channels = store["channels"]
-    for channel in channels:
+    for channel in store["channels"]:
         # Find channel corresponding to channel_id
         if channel["id"] == channel_id:
             # Check if auth user id is in the members list
@@ -327,6 +390,50 @@ def channel_leave_v1(auth_user_id, channel_id):
             return {}
     raise InputError("Invalid channel id")
     
+def channel_removeowner_v1(auth_user_id, channel_id, u_id):
+    store = data_store.get()
+    channels = store["channels"]
+    users = store["users"]
+    
+    owner_ids = None
+    owner_perms_ids = None
+
+    channel_exists = False
+    for channel in channels:
+        if channel["id"] == channel_id:
+            channel_exists = True
+            owner_ids = channel["owner_members"]
+            owner_perms_ids = channel["owner_permissions"]
+
+    if not channel_exists:
+        raise InputError("Channel does not exist")
+    
+    user_exists = False
+    for user in users:
+        if u_id == user['id']:
+            user_exists = True
+            break
+    
+    if not user_exists:
+        raise InputError("User is not authorised.")
+
+    if u_id not in owner_ids and u_id not in owner_perms_ids:
+        raise InputError("User is not an owner/does not have owner perms")
+    
+    if u_id in owner_ids and len(owner_ids) == 1:
+        raise InputError("User is currently the only owner of the channel")
+
+    if auth_user_id not in owner_ids and auth_user_id not in owner_perms_ids:
+        raise AccessError("User is not an owner/does not have owner perms")
+    
+    for channel in channels:
+        if channel["id"] == channel_id:
+            channel["owner_members"].remove(u_id)
+            channel["owner_permissions"].remove(u_id)
+    
+    data_store.set(store)
+
+    return {}
 
 
 def assign_user_info(user_data_placeholder):
@@ -338,16 +445,3 @@ def assign_user_info(user_data_placeholder):
         'name_last': user_data_placeholder['name_last'],
         'handle_str':user_data_placeholder['handle']
     }
-
-def check_valid_user(id, users):
-    """Helper function to check if user is valid and returns the user if valid"""
-    user_exists = False
-    for user in users:
-        if id == user['id']:
-            user_exists = True
-            break
-    
-    if not user_exists:
-        raise AccessError("User is not authorised.")
-    else:
-        return user

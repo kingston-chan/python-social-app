@@ -4,8 +4,10 @@ def clear_v1():
     store = data_store.get()
     store['users'].clear()
     store['sessions'].clear()
-    store['dms'].clear()
     store['channels'].clear()
-    store['message_count'] = 0
-    store['session_count'] = 0
+    store['channel_messages'].clear()
+    store['dm_messages'].clear()
+    store['dms'].clear()
+    store['message_id_gen'] = 0
+    store['session_id_gen'] = 0
     data_store.set(store)

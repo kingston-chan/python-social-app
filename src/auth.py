@@ -27,21 +27,38 @@ def auth_login_v1(email, password):
     
     store = data_store.get()
     users = store['users']
+        
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-    # determine if the email has already been used
-    if not dict_search(email, users, 'email'):
-        raise InputError('Email does not exist')
-    
     # when the email is correct determine if the password matches
     for u in users:
-        if u['email'] == email and not jwt.decode(u['password'], HASHCODE, algorithms=['HS256']) == {"password": password}:
+        if u['email'] == email and not u['password'] == hashed_password:
             raise InputError('Password is incorrect')
-        elif u['email'] == email and jwt.decode(u['password'], HASHCODE, algorithms=['HS256']) == {"password": password}:
+        elif u['email'] == email and u['password'] == hashed_password:
             return {
                 'auth_user_id': u['id'],
                 'token': create_jwt(u['id'])
             }
 
+    raise InputError('Email does not exist')
+
+
+def auth_logout_v1(token):
+
+    
+    store = data_store.get()
+    
+    token_dict = jwt.decode(token, HASHCODE, algorithms=['HS256'])
+
+    user_id = token_dict["user_id"]
+    user_session = token_dict["session_id"]
+
+    
+    store['sessions'][user_id].remove(user_session)
+    data_store.set(store)
+    
+    return {}
+    
 
 def auth_register_v1(email, password, name_first, name_last):
     """
@@ -112,7 +129,7 @@ def auth_register_v1(email, password, name_first, name_last):
         while dict_search(u_id, users, 'id'):
             u_id += 1
 
-        hashed_password = jwt.encode({"password": password}, HASHCODE, algorithm='HS256')
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
         # add all given data into a dictionary to be added to the data store
         user_dict = {'email': email, 'password': hashed_password, 'name_first': name_first, 'name_last': name_last, 'handle': handle, 'id': u_id, 'permission': permission}
@@ -148,9 +165,9 @@ def dict_search(item, users, item_name):
 
 def create_session():
     store = data_store.get()
-    store["session_count"] += 1
+    store["session_id_gen"] += 1
     data_store.set(store)
-    return store["session_count"]
+    return store["session_id_gen"]
 
 def create_jwt(u_id):
     store = data_store.get()

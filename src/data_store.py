@@ -29,11 +29,11 @@ initial_object = {
     'users': [],
     'channels': [],
     'channel_messages': [],
-    'dms': [],
     'dm_messages': [],
+    'dms' : [],
     'sessions': {},
-    'message_count': 0,
-    'session_count': 0,
+    'message_id_gen': 0,
+    'session_id_gen': 0,
 }
 ## YOU SHOULD MODIFY THIS OBJECT ABOVE
 
