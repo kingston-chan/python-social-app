@@ -28,12 +28,13 @@ def auth_login_v1(email, password):
     store = data_store.get()
     users = store['users']
         
-    
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
     # when the email is correct determine if the password matches
     for u in users:
-        if u['email'] == email and not jwt.decode(u['password'], HASHCODE, algorithms=['HS256']) == {"password": password}:
+        if u['email'] == email and not u['password'] == hashed_password:
             raise InputError('Password is incorrect')
-        elif u['email'] == email and jwt.decode(u['password'], HASHCODE, algorithms=['HS256']) == {"password": password}:
+        elif u['email'] == email and u['password'] == hashed_password:
             return {
                 'auth_user_id': u['id'],
                 'token': create_jwt(u['id'])
@@ -128,7 +129,7 @@ def auth_register_v1(email, password, name_first, name_last):
         while dict_search(u_id, users, 'id'):
             u_id += 1
 
-        hashed_password = jwt.encode({"password": password}, HASHCODE, algorithm='HS256')
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
         # add all given data into a dictionary to be added to the data store
         user_dict = {'email': email, 'password': hashed_password, 'name_first': name_first, 'name_last': name_last, 'handle': handle, 'id': u_id, 'permission': permission}
