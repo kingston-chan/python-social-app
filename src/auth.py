@@ -20,7 +20,7 @@ def auth_login_v1(email, password):
         AccessError - does not occur in this function
 
     Return Value:
-        Returns a dictionary containing the user id if the user has succesfully logged in
+        Returns a dictionary containing the user id and a token if the user has succesfully logged in
 
     """
     
@@ -44,7 +44,19 @@ def auth_login_v1(email, password):
 
 
 def auth_logout_v1(token):
+    """
+    Given a users token, invalidate it to log the user out 
+    
+    Arguments:
+        token (string) - a token storing the following: {'user_id': 1, 'session_id': 1}
 
+    Exceptions:
+        None
+
+    Return Value:
+        Empty dictionary
+
+    """
     
     store = data_store.get()
     
@@ -79,7 +91,7 @@ def auth_register_v1(email, password, name_first, name_last):
         AccessError - does not occur in this function
 
     Return Value:
-        Returns a dictionary containing the user id
+        Returns a dictionary containing the user id and a token
         Adds the following information to data_store in a dictionary:
             - email
             - password
@@ -163,12 +175,14 @@ def dict_search(item, users, item_name):
         if u[item_name] == item:
             return 1
 
+# helper fucntion to create a session for the user
 def create_session():
     store = data_store.get()
     store["session_count"] += 1
     data_store.set(store)
     return store["session_count"]
 
+# helper function to create a jwt for the user given their u_id
 def create_jwt(u_id):
     store = data_store.get()
     session_id = create_session()
