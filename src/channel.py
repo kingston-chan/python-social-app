@@ -410,9 +410,11 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
         raise InputError("Channel does not exist")
     
     user_exists = False
+    user_permission = None
     for user in users:
         if u_id == user['id']:
             user_exists = True
+            user_permission = user["permission"]
             break
     
     if not user_exists:
@@ -430,7 +432,8 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
     for channel in channels:
         if channel["id"] == channel_id:
             channel["owner_members"].remove(u_id)
-            channel["owner_permissions"].remove(u_id)
+            if user_permission != 1:
+                channel["owner_permissions"].remove(u_id)
     
     data_store.set(store)
 
