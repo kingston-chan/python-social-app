@@ -87,19 +87,3 @@ def test_succesful_case():
 
     response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": user_token, "handle_str": new_handle})
     assert response.status_code == 200
-
-def test_handle_already_used2():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
-    new_user1 = {"email" : "fakeguy1@gmail.com" , "password": "fake123456","name_first" : "faker", "name_last" : "is_a_faker1" }
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user1) 
-    response_data = response.json()
-    user_token = response_data["token"]
-    
-    new_handle = "thispersonisfake"
-
-    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": user_token, "handle_str": new_handle})
-
-    assert response.status_code == 200

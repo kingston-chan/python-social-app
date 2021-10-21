@@ -87,20 +87,3 @@ def dict_search(item, users, item_name):
     for u in users:
         if u[item_name] == item:
             return 1
-
-def user_profile_sethandle_v1(auth_user_id, handle_str):
-    store = data_store.get()
-    for user in store["users"]:
-        if user["handle"] == handle_str:
-            raise InputError("Handle already being used")
-        if len(handle_str) > 20 or len(handle_str) < 3:
-            raise InputError("Handle is not valid")
-    if handle_str.isalnum():
-        for user in store["users"]:
-            if auth_user_id == user["id"]:
-                user["handle"] = handle_str
-    
-    else:
-        raise InputError("invalid string")
-    
-    return{}
