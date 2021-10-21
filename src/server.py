@@ -160,7 +160,7 @@ def channel_invite():
     data = request.get_json() # { token, channel_id, u_id }
     user_info = check_valid_token_and_session(data["token"])
     channel_invite_v1(user_info, data["channel_id"], data["u_id"])
-    return {}
+    return dumps({})
 
 # channel/messages/v2
 @APP.route("/channel/messages/v2", methods=['GET'])
@@ -178,7 +178,7 @@ def channel_leave():
     user_id = check_valid_token_and_session(data["token"])
     channel_leave_v1(user_id, data["channel_id"])
     save()
-    return {}
+    return dumps({})
 
 # channel/addowner/v1
 @APP.route("/channel/addowner/v1", methods=['POST'])
@@ -187,7 +187,7 @@ def channel_addowner():
     user_id = check_valid_token_and_session(response["token"])
     channel_addowner_v1(user_id, response["channel_id"], response["u_id"])
     save()
-    return {}
+    return dumps({})
 
 # channel/removeowner/v1
 @APP.route("/channel/removeowner/v1", methods=['POST'])
@@ -196,7 +196,7 @@ def channel_removeowner():
     user_id = check_valid_token_and_session(response["token"])
     channel_removeowner_v1(user_id, response["channel_id"], response["u_id"])
     save()
-    return {}
+    return dumps({})
 
 #====== message.py =====#
 
@@ -285,7 +285,7 @@ def dm_leave():
     user_id = check_valid_token_and_session(response["token"])
     dm_leave_v1(user_id, response["dm_id"])
     save()
-    return {}
+    return dumps({})
 
 # dm/messages/v1
 @APP.route("/dm/messages/v1", methods=['GET'])
