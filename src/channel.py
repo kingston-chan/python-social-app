@@ -346,7 +346,8 @@ def channel_addowner_v1(auth_user_id, channel_id, u_id):
     for channel in channels:
         if channel["id"] == channel_id:
             channel["owner_members"].append(u_id)
-            channel["owner_permissions"].append(u_id)
+            if u_id not in channel["owner_permissions"]:
+                channel["owner_permissions"].append(u_id)
 
 
     data_store.set(store)
