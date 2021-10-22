@@ -268,7 +268,7 @@ def message_edit(token, message_id, message):
     """
     info = { 
         "token": token, 
-        "channel_id": message_id,
+        "message_id": message_id,
         "message": message 
     }
     return requests.put(f"{url}/message/edit/v1", json=info)
@@ -286,7 +286,7 @@ def message_remove(token, message_id):
     """
     info = { 
         "token": token, 
-        "channel_id": message_id
+        "message_id": message_id
     }
     return requests.delete(f"{url}/message/remove/v1", json=info)
 
