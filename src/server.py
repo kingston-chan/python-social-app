@@ -58,7 +58,10 @@ def check_valid_token_and_session(token):
         user_session = jwt.decode(token, HASHCODE, algorithms=['HS256'])
     except Exception as invalid_jwt:
         raise AccessError("Invalid JWT") from invalid_jwt
-    if not user_session["session_id"] in sessions[user_session["user_id"]]:
+    if user_session["user_id"] in sessions:
+        if user_session["session_id"] not in sessions[user_session["user_id"]]:
+            raise AccessError("Invalid session")
+    else:
         raise AccessError("Invalid session")
     return user_session["user_id"]
 
