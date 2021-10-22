@@ -165,7 +165,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
 
         AccessError - Occurs when given:
                         - channel_id is valid and the authorised user is not 
-                          a member of the channe
+                          a member of the channel
         
     Return Values:
         Returns a dictionary of a list of messages from index["start"] to
@@ -260,7 +260,6 @@ def channel_join_v1(auth_user_id, channel_id):
                     - channel_id does not exist/invalid
                     - auth_user_id is already a member of the channel
     AccessError - Occurs when given:
-                    - auth_user_id does not exist/invalid
                     - channel_id corresponding to channel is private and 
                       the user is not a global owner or a member of the 
                       channel
