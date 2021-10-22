@@ -31,6 +31,7 @@ initial_object = {
     'channel_messages': [],
     'dm_messages': [],
     'dms' : [],
+    'dm_id_gen' : 0,
     'sessions': {},
     'message_id_gen': 0,
     'session_count': 0,
