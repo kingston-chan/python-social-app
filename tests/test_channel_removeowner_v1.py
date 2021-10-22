@@ -172,12 +172,6 @@ def test_removeowner_unauthorised_token():
     owner_token = response_data["token"]  
     owner_u_id = response_data["auth_user_id"]
 
-    channel_1_info = {
-        "token": owner_token,
-        "name": "channel_1",
-        "is_public": True
-    }
-
     response = rh.channels_create(owner_token, "channel_1", True)
     response_data = response.json()
     channel_1 = response_data["channel_id"]

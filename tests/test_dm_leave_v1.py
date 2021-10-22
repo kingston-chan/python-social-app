@@ -58,7 +58,6 @@ def test_dm_leave_invalid_dm_id():
 
     response = rh.dm_create(owner_token, [invited_member_u_id])
     response_data = response.json()
-    dm_id = response_data["dm_id"]
 
     fake_dm_id = 9999
 
