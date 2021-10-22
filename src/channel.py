@@ -424,8 +424,8 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
         InputError - Occurs when:
                         - channel_id does not refer to a valid channel.
                         - u_id does not refer to a valid user
-                        - u_id refers to a user who is not a member of the channel
-                        - u_id refers to a user who is already an owner of the channel
+                        - u_id refers to a user who is not an owner of the channel
+                        - u_id refers to a user who is currently the only owner of the channel
         AccessError - Occurs when:
                         - channel_id is valid but the authorised user does not
                         have owner permissions for the channel.
