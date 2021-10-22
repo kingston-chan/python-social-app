@@ -18,10 +18,11 @@ import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
-from src.dm import dm_details_v1, dm_create_v1, dm_leave_v1, dm_messages_v1
-from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1
-from src.message import message_send_v1, message_edit_v1, message_remove_v1
+from src.dm import dm_details_v1, dm_create_v1, dm_leave_v1, dm_messages_v1, dm_list_v1, dm_remove_v1
+from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1, user_profile_sethandle_v1
+from src.message import message_send_v1, message_edit_v1, message_remove_v1, message_senddm_v1
 from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
+from src.dm import dm_details_v1
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
@@ -49,17 +50,6 @@ APP.register_error_handler(Exception, defaultHandler)
 
 #### NO NEED TO MODIFY ABOVE THIS POINT, EXCEPT IMPORTS
 
-# Example
-# @APP.route("/echo", methods=['GET'])
-# def echo():
-#     data = request.args.get('data')
-#     if data == 'echo':
-#    	    raise InputError(description='Cannot echo "echo"')
-#     return dumps({
-#         'data': data
-#     })
-
-
 def check_valid_token_and_session(token):
     """Helper function to check if token is valid and session is valid"""
     sessions = data_store.get()["sessions"]
@@ -68,7 +58,10 @@ def check_valid_token_and_session(token):
         user_session = jwt.decode(token, HASHCODE, algorithms=['HS256'])
     except Exception as invalid_jwt:
         raise AccessError("Invalid JWT") from invalid_jwt
-    if not user_session["session_id"] in sessions[user_session["user_id"]]:
+    if user_session["user_id"] in sessions:
+        if user_session["session_id"] not in sessions[user_session["user_id"]]:
+            raise AccessError("Invalid session")
+    else:
         raise AccessError("Invalid session")
     return user_session["user_id"]
 
@@ -170,7 +163,7 @@ def channel_invite():
     data = request.get_json() # { token, channel_id, u_id }
     user_info = check_valid_token_and_session(data["token"])
     channel_invite_v1(user_info, data["channel_id"], data["u_id"])
-    return {}
+    return dumps({})
 
 # channel/messages/v2
 @APP.route("/channel/messages/v2", methods=['GET'])
@@ -188,7 +181,7 @@ def channel_leave():
     user_id = check_valid_token_and_session(data["token"])
     channel_leave_v1(user_id, data["channel_id"])
     save()
-    return {}
+    return dumps({})
 
 # channel/addowner/v1
 @APP.route("/channel/addowner/v1", methods=['POST'])
@@ -197,7 +190,7 @@ def channel_addowner():
     user_id = check_valid_token_and_session(response["token"])
     channel_addowner_v1(user_id, response["channel_id"], response["u_id"])
     save()
-    return {}
+    return dumps({})
 
 # channel/removeowner/v1
 @APP.route("/channel/removeowner/v1", methods=['POST'])
@@ -206,7 +199,7 @@ def channel_removeowner():
     user_id = check_valid_token_and_session(response["token"])
     channel_removeowner_v1(user_id, response["channel_id"], response["u_id"])
     save()
-    return {}
+    return dumps({})
 
 #====== message.py =====#
 
@@ -240,7 +233,11 @@ def message_remove():
 # message/senddm/v1
 @APP.route("/message/senddm/v1", methods=['POST'])
 def message_senddm():
-    return {}
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    new_dm_message = message_senddm_v1(user_id, data["dm_id"], data["message"])
+    save()
+    return dumps(new_dm_message)
 
 #====== dm.py =====#
 
@@ -254,16 +251,26 @@ def dm_create():
     dm_id = dm_create_v1(user_id, user_lists)
     save()
     return dumps(dm_id)
-
+                                                        
 # dm/list/v1
 @APP.route("/dm/list/v1", methods=['GET'])
 def dm_list():
-    return {}
+    info = request.args.to_dict()
+    info_token = info["token"]
+    auth_user_id = check_valid_token_and_session(info_token)
+    list_of_dms = dm_list_v1(auth_user_id)
+    return dumps(list_of_dms)
 
 # dm/remove/v1
 @APP.route("/dm/remove/v1", methods=['DELETE'])
 def dm_remove():
-    return {}
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"]) 
+    #user_id for valid user 
+    dm_id = data["dm_id"]
+    dm_remove_v1(user_id, dm_id)
+    save()
+    return dumps({})
 
 # dm/details/v1
 @APP.route("/dm/details/v1", methods=['GET'])
@@ -281,7 +288,7 @@ def dm_leave():
     user_id = check_valid_token_and_session(response["token"])
     dm_leave_v1(user_id, response["dm_id"])
     save()
-    return {}
+    return dumps({})
 
 # dm/messages/v1
 @APP.route("/dm/messages/v1", methods=['GET'])
@@ -337,27 +344,12 @@ def user_profile_setemail():
 # user/profile/sethandle/v1
 @APP.route("/user/profile/sethandle/v1", methods=['PUT'])
 def user_profile_sethandle():
-
     data = request.get_json()
     new_handle = data["handle_str"]
     user_id = check_valid_token_and_session(data["token"])
-    store = data_store.get()
-    
-    for user in store["users"]:
-        if user["handle"] == new_handle:
-            raise InputError("Handle already being used")
-        if len(new_handle) > 20 or len(new_handle) < 3:
-            raise InputError("Handle is not valid")
-    if new_handle.isalnum():
-        for user in store["users"]:
-            if user_id == user["id"]:
-                user["handle"] = new_handle
-    
-    else:
-        raise InputError("invalid string")
-    
+    user_profile_sethandle_v1(user_id, new_handle)
     save()
-    return {}
+    return dumps({})
 
 #===== admin.py =====#
 
