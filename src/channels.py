@@ -17,7 +17,6 @@ def channels_list_v1(auth_user_id):
 
     Exceptions:
         InputError - does not occur in this function
-        AccessError - occurs when given auth_user_id is invalid
 
     Return Value:
         Returns a dictionary containing 'channels' which is a list of channels
@@ -50,7 +49,6 @@ def channels_listall_v1(auth_user_id):
     
     Exceptions:
         InputError - Does not occur in this function
-        AccessError - Occurs when the user doesn't exist.
     
     Return Value:
         Returns a list of dictionaries containing:
@@ -87,7 +85,6 @@ def channels_create_v1(auth_user_id, name, is_public):
                         - name for channel is not between 1 and 20
                           characters inclusive
                         - channel name already exists (case sensitive)
-        AccessError - Occurs when auth_user_id is invalid
 
     Return Value:
         Return a dictionary containing the channel id on successful 
