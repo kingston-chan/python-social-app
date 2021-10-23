@@ -17,7 +17,7 @@ def dm_create_v1(auth_user_id, u_ids):
 
     owner_name = None
 
-    new_dm_id = len(store["dms"]) + 1
+    new_dm_id = dm_id_count()
 
     for users in u_ids:
         i = False
@@ -276,8 +276,17 @@ def dm_remove_v1(auth_user_id, dm_id):
             if dms["owner_of_dm"] != auth_user_id:
                 raise AccessError("Not owner of DM")
             else:
-                dms["members"].clear()
+                list_of_dms.remove(dms)
     if i == False:
         raise InputError("DM does not exist")
     data_store.set(store)
     return {}
+
+def dm_id_count():
+    store = data_store.get()
+    store["dm_id_gen"] += 1
+    dms_id = store["dm_id_gen"]
+    data_store.set(store)
+    return dms_id
+
+    

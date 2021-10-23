@@ -165,7 +165,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
 
         AccessError - Occurs when given:
                         - channel_id is valid and the authorised user is not 
-                          a member of the channe
+                          a member of the channel
         
     Return Values:
         Returns a dictionary of a list of messages from index["start"] to
@@ -260,7 +260,6 @@ def channel_join_v1(auth_user_id, channel_id):
                     - channel_id does not exist/invalid
                     - auth_user_id is already a member of the channel
     AccessError - Occurs when given:
-                    - auth_user_id does not exist/invalid
                     - channel_id corresponding to channel is private and 
                       the user is not a global owner or a member of the 
                       channel
@@ -425,8 +424,8 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
         InputError - Occurs when:
                         - channel_id does not refer to a valid channel.
                         - u_id does not refer to a valid user
-                        - u_id refers to a user who is not a member of the channel
-                        - u_id refers to a user who is already an owner of the channel
+                        - u_id refers to a user who is not an owner of the channel
+                        - u_id refers to a user who is currently the only owner of the channel
         AccessError - Occurs when:
                         - channel_id is valid but the authorised user does not
                         have owner permissions for the channel.
