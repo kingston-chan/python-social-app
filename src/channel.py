@@ -362,7 +362,7 @@ def channel_addowner_v1(auth_user_id, channel_id, u_id):
         raise InputError(description="User is not a member of the channel")
 
     if u_id in owner_ids:
-        raise InputError("User is already an owner of the channel")
+        raise InputError(description="User is already an owner of the channel")
 
     for channel in channels:
         if channel["id"] == channel_id:
