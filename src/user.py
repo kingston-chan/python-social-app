@@ -63,7 +63,7 @@ def user_profile_v1(user_id):
             user_dict = {"u_id": user_id, "email": u["email"], "name_first": u["name_first"], "name_last": u["name_last"], "handle_str": u["handle"]}
             return user_dict
         
-    raise InputError("u_id does not refer to a valid user")
+    raise InputError(description="u_id does not refer to a valid user")
 
 def user_profile_setname_v1(user_id, first_name, last_name):
     """
@@ -83,7 +83,7 @@ def user_profile_setname_v1(user_id, first_name, last_name):
     users = store["users"]
 
     if not 1 <= len(first_name) <= 50 or not 1 <= len(last_name) <= 50:
-        raise InputError("Name length is too long or short")
+        raise InputError(description="Name length is too long or short")
     
     for u in users:
         if user_id == u["id"]:
@@ -112,10 +112,10 @@ def user_profile_setemail_v1(user_id, user_email):
     users = store["users"]
 
     if not re.match(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$', user_email):
-        raise InputError("Email is an invalid format")
+        raise InputError(description="Email is an invalid format")
     
     if dict_search(user_email, users, 'email'):
-        raise InputError('Email is already being used by another user')
+        raise InputError(description='Email is already being used by another user')
 
 
     for u in users:
@@ -127,24 +127,23 @@ def user_profile_setemail_v1(user_id, user_email):
     data_store.set(store)
 
 
-def dict_search(item, users, item_name):
-    for u in users:
-        if u[item_name] == item:
-            return 1
-
 def user_profile_sethandle_v1(auth_user_id, handle_str):
     store = data_store.get()
     for user in store["users"]:
         if user["handle"] == handle_str:
-            raise InputError("Handle already being used")
+            raise InputError(description="Handle already being used")
         if len(handle_str) > 20 or len(handle_str) < 3:
-            raise InputError("Handle is not valid")
+            raise InputError(description="Handle is not valid")
     if handle_str.isalnum():
         for user in store["users"]:
             if auth_user_id == user["id"]:
                 user["handle"] = handle_str
-    
     else:
-        raise InputError("invalid string")
-    
+        raise InputError(description="invalid string")
     return{}
+
+
+def dict_search(item, users, item_name):
+    for u in users:
+        if u[item_name] == item:
+            return 1
