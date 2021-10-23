@@ -15,13 +15,11 @@ def clear():
     requests.delete(f"{BASE_URL}/clear/v1")
 @pytest.fixture
 def user1():
-    new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user)
+    response = rh.auth_register("fakeguy@gmail.com","fake12345","faker", "is_a_faker")
     return response.json()
 @pytest.fixture
-def user2():
-    new_user1 = {"email" : "fakeguy1@gmail.com" , "password": "fake123451","name_first" : "faker", "name_last" : "is_a_faker1" }   
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user1)
+def user2():   
+    response = rh.auth_register("fakeguy1@gmail.com","fake123451","faker", "is_a_faker1")
     return response.json()
 
 #==tests==#
