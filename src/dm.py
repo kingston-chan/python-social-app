@@ -181,7 +181,7 @@ def dm_messages_v1(auth_user_id, dm_id, start):
         index["start+50"], the start value and the end value.
     
     """
-    # Checks if dm and start are valid inputs.
+    # Checks if DM and start are valid inputs.
     dm_valid = False
     start_valid = False
     selected_dm = {}
@@ -253,6 +253,7 @@ def dm_messages_v1(auth_user_id, dm_id, start):
         'start': start,
         'end': end,
     }
+
 def dm_list_v1(auth_user_id):
 
     data = data_store.get()
