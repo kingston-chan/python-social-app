@@ -1,14 +1,8 @@
-from os import error, name
-import sys
 import signal
 from json import dumps
 from flask import Flask, request
-from requests.models import DecodeError
-from requests.sessions import session
 from flask_cors import CORS
-from src import channel
-from src import user
-from src.error import InputError, AccessError
+from src.error import AccessError
 from src import config
 from src.channels import channels_create_v1, channels_list_v1
 from src.data_store import data_store
@@ -57,12 +51,12 @@ def check_valid_token_and_session(token):
     try:
         user_session = jwt.decode(token, HASHCODE, algorithms=['HS256'])
     except Exception as invalid_jwt:
-        raise AccessError("Invalid JWT") from invalid_jwt
+        raise AccessError(description="Invalid JWT") from invalid_jwt
     if user_session["user_id"] in sessions:
         if user_session["session_id"] not in sessions[user_session["user_id"]]:
-            raise AccessError("Invalid session")
+            raise AccessError(description="Invalid session")
     else:
-        raise AccessError("Invalid session")
+        raise AccessError(description="Invalid session")
     return user_session["user_id"]
 
 def save():
