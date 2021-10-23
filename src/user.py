@@ -128,6 +128,18 @@ def user_profile_setemail_v1(user_id, user_email):
 
 
 def user_profile_sethandle_v1(auth_user_id, handle_str):
+    '''
+    Update the authorised user's handle (i.e. display name)
+    Arguements
+        - token
+        - handle_str
+    Excpetions
+        -InputError ==> length of handle_str is not between 3 and 20 characters inclusive
+        -InputError ==> handle_str contains characters that are not alphanumeric
+        -InputError ==> the handle is already used by another user
+    return type
+        - empty list 
+    '''
     store = data_store.get()
     for user in store["users"]:
         if user["handle"] == handle_str:
