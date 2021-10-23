@@ -131,8 +131,8 @@ def user_profile_sethandle_v1(auth_user_id, handle_str):
     '''
     Update the authorised user's handle (i.e. display name)
     Arguements
-        - token
-        - handle_str
+        - auth-user_id (integer)
+        - handle_str (string)
     Excpetions
         -InputError ==> length of handle_str is not between 3 and 20 characters inclusive
         -InputError ==> handle_str contains characters that are not alphanumeric

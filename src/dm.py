@@ -15,8 +15,8 @@ def dm_create_v1(auth_user_id, u_ids):
     '''
     This function creates a dm with the user with the inputted token bieng the owener of the dm and the list of user ids including members of the dm 
     Arguements
-        -token
-        -a list of user ids that the dm is bieng created with 
+        -auth_user_id (integer)
+        -a list of user ids that the dm is bieng created with (list of integers)
     Exception 
         - InputError => when any of user id's in the list of ids is invalid i.e. does not valid user
     return value 
@@ -268,7 +268,7 @@ def dm_list_v1(auth_user_id):
     Return a list of dms that the the user beliongs to where the user is passed as a token through the function
 
     Arguement
-        - token 
+        - auth_user_id (integer) 
     Return value
         - returns a list dictionaries of dm's in the form of 
                 {"dms" : [{"dm_id" : xxxxx, "name" : yyyyy}]}
@@ -291,8 +291,8 @@ def dm_remove_v1(auth_user_id, dm_id):
     Remove an existing DM, so all members are no longer in the DM. This can only be done by the original creator of the DM.
 
     Aurgurments
-        - token
-        - dm_id
+        - auth_user_id (integer)
+        - dm_id (integer)
     Exceptions
         - InputError => when any of dm_id is not a valid id, the dm of that id does not exist or a wrong type of input i.e. string 
         -AccessError => when dm_id is valid and the authorised user is not the original DM creator
