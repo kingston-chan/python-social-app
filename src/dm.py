@@ -91,6 +91,7 @@ def dm_leave_v1(auth_user_id, dm_id):
 
     member_ids = None
 
+    # Checks if a dm exists.
     dm_exists = False
     for dm in dms:
         if dm["dm_id"] == dm_id:
@@ -103,9 +104,8 @@ def dm_leave_v1(auth_user_id, dm_id):
     if auth_user_id not in member_ids:
         raise AccessError(description="User is not apart of the DM")
 
-    for dm in dms:
-        if dm["dm_id"] == dm_id:
-            dm["members"].remove(auth_user_id)
+    # Removes the member from the members_list.
+    member_ids.remove(auth_user_id)
     
     data_store.set(store)
     
@@ -145,6 +145,7 @@ def dm_details_v1(auth_user_id, dm_id):
 
     member_ids = None
     
+    # Checks if the dm exists.
     dm_exists = False
     for dm in dms:
         if dm["dm_id"] == dm_id:
@@ -159,6 +160,7 @@ def dm_details_v1(auth_user_id, dm_id):
     if auth_user_id not in member_ids:
         raise AccessError(description="User is not apart of the DM")
     
+    # Grabs the member's info and assigns it to the dictionary.
     for user in users:
         if user["id"] in member_ids:
             user_info = assign_user_info(user)
