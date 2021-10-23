@@ -1,23 +1,39 @@
 import requests
 import tests.route_helpers as rh
 from src.config import url
+import pytest
 
-
+BASE_URL = url
 #400 is input error
 #403 is access error
-def test_invalid_channel():
-    requests.delete(f"{url}/clear/v1")
-
+#==Fixtures==#
+@pytest.fixture
+def clear():
+    requests.delete(f"{BASE_URL}/clear/v1")
+@pytest.fixture
+def user1():
     new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
+    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user)
+    return response.json()
+@pytest.fixture
+def user2():
+    new_user1 = {"email" : "fakeguy1@gmail.com" , "password": "fake123451","name_first" : "faker", "name_last" : "is_a_faker1" }   
+    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user1)
+    return response.json()
+#==test==#
+def test_invalid_channel(clear,user1):
+    #requests.delete(f"{url}/clear/v1")
 
-    response = requests.post(f"{url}/auth/register/v2", json=new_user) 
-    response_data = response.json()
-    auth_user_token = response_data["token"]
+    #new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
 
-    channel_data = {"token" : auth_user_token, "name" : "joshuasucks", "is_public": True} 
+    #response = requests.post(f"{url}/auth/register/v2", json=new_user) 
+    #response_data = response.json()
+    auth_user_token = user1["token"]
 
-    response = requests.post(f"{url}/channels/create/v2", json=channel_data)
+    #channel_data = {"token" : auth_user_token, "name" : "joshuasucks", "is_public": True} 
 
+    #response = requests.post(f"{url}/channels/create/v2", json=channel_data)
+    response = rh.channels_create()
     response_data = response.json()
 
     invalid_channel_id = response_data["channel_id"] + 1
