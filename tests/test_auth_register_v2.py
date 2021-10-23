@@ -1,210 +1,138 @@
-import requests
-import jwt
-from src.config import port
-
-
-BASE_URL = 'http://127.0.0.1:' + str(port)
+import pytest, jwt, time
+import tests.route_helpers as rh
 
 HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
 # Invalid input tests:
 
 def test_register_invalid_email():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_data = {
-        "email": "email",
-        "password": "password",
-        "name_first": "Julian",
-        "name_last": "Winzer"
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-
+    rh.clear()
+    response = rh.auth_register("email", "password", "Julian", "Winzer")
     assert response.status_code == 400
 
 
 def test_register_invalid_password():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_data = {
-        "email": "email@email.com",
-        "password": "pass",
-        "name_first": "Julian",
-        "name_last": "Winzer"
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-
+    rh.clear()
+    response = rh.auth_register("email@email.com", "pass", "Julian", "Winzer")
     assert response.status_code == 400
-
 
 def test_register_invalid_fName():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_data = {
-        "email": "email@email.com",
-        "password": "password",
-        "name_first": "",
-        "name_last": "Winzer"
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-
+    rh.clear()
+    response = rh.auth_register("email@email.com", "password", "", "Winzer")
     assert response.status_code == 400
 
-
 def test_register_invalid_lName():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_data = {
-        "email": "email@email.com",
-        "password": "password",
-        "name_first": "Julian",
-        "name_last": ""
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-
+    rh.clear()
+    response = rh.auth_register("email@email.com", "password", "Julian", "")
     assert response.status_code == 400
 
 
 def test_register_invalid_multiple():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_data = {
-        "email": "email@email.com",
-        "password": "pass",
-        "name_first": "Julian",
-        "name_last": ""
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-
+    rh.clear()
+    response = rh.auth_register("email@email.com", "pass", "Julian", "")
     assert response.status_code == 400
 
 def test_register_identical_emails():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_data = {
-        "email": "email@email.com",
-        "password": "password",
-        "name_first": "Julian",
-        "name_last": "Winzer"
-    }
-
-    requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-
+    rh.clear()
+    rh.auth_register("email@email.com", "password", "Julian", "Winzer")
+    response = rh.auth_register("email@email.com", "password", "Julian", "Winzer")
     assert response.status_code == 400
 
 # Valid input tests:
 
+def test_successful_register():
+    rh.clear()
+    user = rh.auth_register("email@email.com", "password", "Julian", "Winzer").json()
+    user_tok = user["token"]
+    user_id = user["auth_user_id"]
+
+    user_profile = rh.user_profile(user_tok, user_id).json()["user"]
+
+    assert user_profile["u_id"] == user_id
+    assert user_profile["email"] == "email@email.com"
+    assert user_profile["name_first"] == "Julian"
+    assert user_profile["name_last"] == "Winzer"
+    assert user_profile["handle_str"] == "julianwinzer"
+
 def test_register_valid_input():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_data = {
-        "email": "email@email.com",
-        "password": "password",
-        "name_first": "Julian",
-        "name_last": "Winzer"
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
+    rh.clear()
+    response = rh.auth_register("email@email.com", "password", "Julian", "Winzer")
+    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
+    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    assert token["user_id"] == 1
+    assert token["session_id"] == 1
+    assert abs(token["time_created"] - time_created) < 2
+
 
 def test_register_valid_numbers():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_data = {
-        "email": "161998@439876.com",
-        "password": "2354335425",
-        "name_first": "24352345",
-        "name_last": "34553"
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
+    rh.clear()
+    response = rh.auth_register("161998@439876.com", "2354335425", "24352345", "34553")
+    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
+    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    assert token["user_id"] == 1
+    assert token["session_id"] == 1
+    assert abs(token["time_created"] - time_created) < 2
 
 def test_register_valid_symbols():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_data = {
-        "email": "email@email.com",
-        "password": "password",
-        "name_first": "Ju!@#$%^&*lian",
-        "name_last": "Winzer"
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
+    rh.clear()
+    response = rh.auth_register("email@email.com", "password", "Ju!@#$%^&*lian", "Winzer")
+    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
+    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    assert token["user_id"] == 1
+    assert token["session_id"] == 1
+    assert abs(token["time_created"] - time_created) < 2
 
 def test_register_valid_spaces():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_data = {
-        "email": "email@email.com",
-        "password": "password",
-        "name_first": " J u l i a n ",
-        "name_last": " W i n z e r "
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
+    rh.clear()
+    response = rh.auth_register("email@email.com", "password", " J u l i a n ", " W i n z e r ")
+    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
+    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    assert token["user_id"] == 1
+    assert token["session_id"] == 1
+    assert abs(token["time_created"] - time_created) < 2
 
 def test_register_valid_multiple_identical():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_data = {
-        "email": "email@email.com",
-        "password": "password",
-        "name_first": "Julian",
-        "name_last": "Winzer"
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
+    rh.clear()
+    response = rh.auth_register("email@email.com", "password", "Julian", "Winzer")
+    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
+    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    assert token["user_id"] == 1
+    assert token["session_id"] == 1
+    assert abs(token["time_created"] - time_created) < 2
 
-    user_data2 = {
-        "email": "email2@email.com",
-        "password": "password",
-        "name_first": "Julian",
-        "name_last": "Winzer"
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data2)
+    response = rh.auth_register("email2@email.com", "password", "Julian", "Winzer")
+    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 2
-
-    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 2, 'session_id': 2}
+    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    assert token["user_id"] == 2
+    assert token["session_id"] == 2
+    assert abs(token["time_created"] - time_created) < 2
 
 def test_register_valid_long_handle():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_data = {
-        "email": "email@email.com",
-        "password": "password",
-        "name_first": "ThisHandleIsTooLong",
-        "name_last": "ThisHandleIsTooLong"
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
+    rh.clear()
+    response = rh.auth_register("email2@email.com", "password", "ThisHandleIsTooLong", "ThisHandleIsTooLong")
+    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    assert jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256']) == {'user_id': 1, 'session_id': 1}
+    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    assert token["user_id"] == 1
+    assert token["session_id"] == 1
+    assert abs(token["time_created"] - time_created) < 2
