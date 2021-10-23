@@ -1,105 +1,76 @@
 import requests
 import pytest
 from src.config import url
+import tests.route_helpers as rh
 
 BASE_URL = url
 
 #400 is input error
 #403 is access error
 
-def test_input_string_too_long():
-    requests.delete(f"{BASE_URL}/clear/v1")
+#==Fixtures==#
+@pytest.fixture
+def clear():
+    rh.clear()
+@pytest.fixture
+def user1():
+    response = rh.auth_register("fakeguy@gmail.com","fake12345","faker", "is_a_faker")
+    return response.json()
+@pytest.fixture
+def user2():   
+    response = rh.auth_register("fakeguy1@gmail.com","fake123451","faker", "is_a_faker1")
+    return response.json()
 
-    new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
-
-    response_data = response.json()
-    user_token = response_data["token"]
+#==tests==#
+def test_input_string_too_long(clear,user1):
+    user_token = user1["token"]
     
     new_handle = "thispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfakethispersonisfake"
 
-    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": user_token, "handle_str": new_handle})
+    response = rh.user_profile_sethandle(user_token,new_handle)   
 
     assert response.status_code == 400
 
-def test_non_alphanumeric_inputs():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
-
-    response_data = response.json()
-    user_token = response_data["token"]
+def test_non_alphanumeric_inputs(clear,user1):
+    user_token = user1["token"]
     
     new_handle = "***********"
 
-    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": user_token, "handle_str": new_handle})
+    response = rh.user_profile_sethandle(user_token,new_handle) 
 
     assert response.status_code == 400
-def test_handle_string_is_used():
-    requests.delete(f"{BASE_URL}/clear/v1")
 
-    new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
-    
-    response_data = response.json()
-    user_token = response_data["token"]
+def test_handle_string_is_used(clear, user1,user2):
+    user_token = user1["token"]
 
     new_handle = "thispersonisfake"
 
-    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": user_token, "handle_str": new_handle})
+    rh.user_profile_sethandle(user_token,new_handle) 
 
-    new_user = {"email" : "fakeguy1@gmail.com" , "password": "fake123451","name_first" : "faker1", "name_last" : "is_a_faker1" }
+    user_token = user2["token"]
 
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
 
-    response_data = response.json()
-
-    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": user_token, "handle_str": new_handle})
+    response = rh.user_profile_sethandle(user_token,new_handle)
     assert response.status_code == 400
 
-def test_invalid_token():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
-    
+def test_invalid_token(clear):
     new_handle = "thispersonisfake"
-
-    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": 1, "handle_str": new_handle})
+    response = rh.user_profile_sethandle(1,new_handle)    
     assert response.status_code == 403
 
-def test_succesful_case():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
-
-    response_data = response.json()
-    user_token = response_data["token"]
+def test_succesful_case(clear,user1):
+    user_token = user1["token"]
     
     new_handle = "thispersonisfake"
 
-    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": user_token, "handle_str": new_handle})
+    response = rh.user_profile_sethandle(user_token,new_handle)
     assert response.status_code == 200
 
-def test_handle_already_used2():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
-    new_user1 = {"email" : "fakeguy1@gmail.com" , "password": "fake123456","name_first" : "faker", "name_last" : "is_a_faker1" }
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user) 
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user1) 
-    response_data = response.json()
-    user_token = response_data["token"]
+def test_handle_already_used2(clear,user1,user2):
+    user_token = user2["token"]
     
-    new_handle = "thispersonisfake"
+    new_handle = "thispersonisafake"
 
-    response = requests.put(f"{BASE_URL}/user/profile/sethandle/v1", json={"token": user_token, "handle_str": new_handle})
+    response = rh.user_profile_sethandle(user_token,new_handle) 
 
     assert response.status_code == 200
