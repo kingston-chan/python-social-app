@@ -12,7 +12,7 @@ BASE_URL = url
 #==Fixtures==#
 @pytest.fixture
 def clear():
-    requests.delete(f"{BASE_URL}/clear/v1")
+    rh.clear()
 @pytest.fixture
 def user1():
     response = rh.auth_register("fakeguy@gmail.com","fake12345","faker", "is_a_faker")
