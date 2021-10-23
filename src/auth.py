@@ -31,7 +31,7 @@ def auth_login_v1(email, password):
     # when the email is correct determine if the password matches
     for u in users:
         if u['email'] == email and not u['password'] == hashed_password:
-            raise InputError('Password is incorrect')
+            raise InputError(description='Password is incorrect')
         elif u['email'] == email and u['password'] == hashed_password:
             return {
                 'auth_user_id': u['id'],
@@ -112,7 +112,7 @@ def auth_register_v1(email, password, name_first, name_last):
         else: permission = 2
         
         if dict_search(email, users, 'email'):
-            raise InputError('Email is already being used by another user')
+            raise InputError(description='Email is already being used by another user')
             
 
         # create a handle for the user
@@ -151,15 +151,15 @@ def auth_register_v1(email, password, name_first, name_last):
         
     # when any of the inputs are invalid raise an input error
     elif len(password) < 6:
-        raise InputError('Password too short')
+        raise InputError(description='Password too short')
     
     elif not 1 <= len(name_first) <= 50:
-        raise InputError('First name too long or short')
+        raise InputError(description='First name too long or short')
     
     elif not 1 <= len(name_last) <= 50:
-        raise InputError('Last name too long or short')
+        raise InputError(description='Last name too long or short')
     else:
-        raise InputError('Email is an invalid format')
+        raise InputError(description='Email is an invalid format')
     
     return {
         'auth_user_id': u_id,
