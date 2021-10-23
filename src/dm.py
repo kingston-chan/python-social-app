@@ -17,7 +17,7 @@ def dm_create_v1(auth_user_id, u_ids):
 
     owner_name = None
 
-    new_dm_id = len(store["dms"]) + 1
+    new_dm_id = dm_id_count()
 
     for users in u_ids:
         i = False
@@ -59,6 +59,23 @@ def dm_create_v1(auth_user_id, u_ids):
     return {"dm_id" : new_dm_id}
 
 def dm_leave_v1(auth_user_id, dm_id):
+    """
+    If the authorised user is a member of the DM of "dm_id", 
+    remove the user as a member of the DM.
+
+    Arguments:
+        auth_user_id (integer) - ID of the user requesting to leave the DM.
+        dm_id (integer) - ID of the DM requested for DM details.
+    
+    Exceptions:
+        InputError - Occurs when dm_id does not refer to a valid DM.
+        AccessError - Occurs when dm_id is valid but the authorised user is
+        not a member of the DM.
+    
+    Return Value:
+        Returns an empty dictionary upon success.
+    """
+
     store = data_store.get()
     dms = store['dms']
 
@@ -85,6 +102,30 @@ def dm_leave_v1(auth_user_id, dm_id):
     return {}
 
 def dm_details_v1(auth_user_id, dm_id):
+    """
+    If the authorised user is a member of the DM of "dm_id", 
+    provide basic details about the DM.
+
+    Arguments:
+        auth_user_id (integer) - ID of the user requesting for DM details.
+        dm_id (integer) - ID of the DM requested for DM details.
+    
+    Exceptions:
+        InputError - Occurs when dm_id does not refer to a valid DM.
+        AccessError - Occurs when dm_id is valid but the authorised user is
+        not a member of the DM.
+    
+    Return Value:
+        Returns a dictionary containing:
+            - name (string)
+            - members (list of dictionaries)
+        The list of dictionaries contains the following:
+            - u_id (integer)
+            - email (string)
+            - name_first (string)
+            - name_last (string)
+            - handle_str (string)
+    """
     store = data_store.get()
     users = store['users']
     dms = store['dms']
@@ -235,8 +276,17 @@ def dm_remove_v1(auth_user_id, dm_id):
             if dms["owner_of_dm"] != auth_user_id:
                 raise AccessError("Not owner of DM")
             else:
-                dms["members"].clear()
+                list_of_dms.remove(dms)
     if i == False:
         raise InputError("DM does not exist")
     data_store.set(store)
     return {}
+
+def dm_id_count():
+    store = data_store.get()
+    store["dm_id_gen"] += 1
+    dms_id = store["dm_id_gen"]
+    data_store.set(store)
+    return dms_id
+
+    
