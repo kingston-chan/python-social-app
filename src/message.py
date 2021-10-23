@@ -145,6 +145,8 @@ def message_edit_v1(auth_user_id, message_id, message):
         for dm in dms:
             if int(dm['dm_id']) == int(selected_message['dm_id']):
                 selected_dm = dm
+        if selected_dm == {}:
+            raise InputError("This DM is invalid.")
         if auth_user_id not in dm['members']:
             raise InputError("This user is not a member of this DM.")
         elif auth_user_id is not selected_message['u_id'] and auth_user_id is not selected_dm['owner_of_dm']:
@@ -222,6 +224,8 @@ def message_remove_v1(auth_user_id, message_id):
         for dm in dms:
             if int(dm['dm_id']) == int(selected_message['dm_id']):
                 selected_dm = dm
+        if selected_dm == {}:
+            raise InputError("This DM is invalid.")
         if auth_user_id not in selected_dm['members']:
             raise InputError("This user is not a member of this DM.")
         elif auth_user_id is not selected_message['u_id'] and auth_user_id is not selected_dm['owner_of_dm']:

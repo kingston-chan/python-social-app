@@ -1,7 +1,6 @@
 import requests
 import jwt
 from src.config import port
-from src.data_store import data_store
 
 BASE_URL = 'http://127.0.0.1:' + str(port)
 
