@@ -22,21 +22,21 @@ def check_valid_user_and_owner(auth_user_id, u_id, users, permission=None):
 
     # uid is invalid
     if len(uid_user) != 1:
-        raise InputError("Invalid User")
+        raise InputError(description="Invalid User")
     # uid belongs to removed user
     if uid_user[0]["email"] is None and uid_user[0]["handle"] is None:
-        raise InputError("Removed User")
+        raise InputError(description="Removed User")
     # Auth user id is not a global owner
     if auth_id_user[0]["permission"] != 1:
-        raise AccessError("Authorised user is not a global owner")
+        raise AccessError(description="Authorised user is not a global owner")
 
     if permission:
         # U_id refers to a user who is the only global owner
         if uid_user[0]["permission"] == 1 and len(global_owners) == 1 and permission == 2:
-            raise InputError("Cannot demote only global owner")
+            raise InputError(description="Cannot demote only global owner")
     else:
         if uid_user[0]["permission"] == 1 and len(global_owners) == 1:
-            raise InputError("Cannot remove only global owner")
+            raise InputError(description="Cannot remove only global owner")
 
 
 def admin_userpermission_change_v1(auth_user_id, u_id, permission_id):
@@ -66,7 +66,7 @@ def admin_userpermission_change_v1(auth_user_id, u_id, permission_id):
     check_valid_user_and_owner(auth_user_id, u_id, store["users"], permission_id)
     # Check for invalid permission id
     if permission_id not in [1,2]:
-        raise InputError("Invalid permission id")
+        raise InputError(description="Invalid permission id")
 
     for user in store["users"]:
         if u_id == user["id"]:
