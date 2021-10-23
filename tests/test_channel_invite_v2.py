@@ -33,9 +33,8 @@ def test_invalid_channel(clear,user1,user2):
 
     new_user_id = user2["auth_user_id"]
 
-    response = requests.post(f"{url}/channel/invite/v2", json={"token": auth_user_token, "channel_id": invalid_channel_id, "u_id" : new_user_id})
-    
-
+    #response = requests.post(f"{url}/channel/invite/v2", json={"token": auth_user_token, "channel_id": invalid_channel_id, "u_id" : new_user_id})
+    response = rh.channel_invite(auth_user_token,invalid_channel_id,new_user_id)
     assert response.status_code == 400
 
 def test_already_member(clear, user1):
@@ -47,8 +46,8 @@ def test_already_member(clear, user1):
 
     channel_id = response_data["channel_id"]
 
-    response = requests.post(f"{url}/channel/invite/v2", json={"token": auth_user_token, "channel_id": channel_id, "u_id" : new_user_id})
-
+    #response = requests.post(f"{url}/channel/invite/v2", json={"token": auth_user_token, "channel_id": channel_id, "u_id" : new_user_id})
+    response = rh.channel_invite(auth_user_token,channel_id,new_user_id)
     assert response.status_code == 400
 
 def test_invalid_user_id(clear, user1):
@@ -62,8 +61,8 @@ def test_invalid_user_id(clear, user1):
 
     invalid_u_id = new_user_id + 1
 
-    response = requests.post(f"{url}/channel/invite/v2", json={"token": auth_user_token, "channel_id": channel_id, "u_id" : invalid_u_id})
-
+    #response = requests.post(f"{url}/channel/invite/v2", json={"token": auth_user_token, "channel_id": channel_id, "u_id" : invalid_u_id})
+    response = rh.channel_invite(auth_user_token,channel_id,invalid_u_id)
     assert response.status_code == 400
 
 def test_not_auth_user(clear,user1,user2,user3):
@@ -75,11 +74,11 @@ def test_not_auth_user(clear,user1,user2,user3):
 
     channel_id = response_data["channel_id"]
 
-    invalid_auth_id = user2["auth_user_id"] 
+    invalid_auth_token = user2["token"] 
 
     valid_uid = user3["auth_user_id"]
 
-    response = rh.channel_invite(invalid_auth_id,channel_id,valid_uid)
+    response = rh.channel_invite(invalid_auth_token,channel_id,valid_uid)
     assert response.status_code == 403
 
 def test_positive_casses(clear,user1,user2):
