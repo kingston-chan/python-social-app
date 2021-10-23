@@ -88,10 +88,10 @@ def dm_leave_v1(auth_user_id, dm_id):
             member_ids = dm["members"]
 
     if not dm_exists:
-        raise InputError("DM does not exist")
+        raise InputError(description="DM does not exist")
 
     if auth_user_id not in member_ids:
-        raise AccessError("User is not apart of the DM")
+        raise AccessError(description="User is not apart of the DM")
 
     for dm in dms:
         if dm["dm_id"] == dm_id:
@@ -144,10 +144,10 @@ def dm_details_v1(auth_user_id, dm_id):
             dm_info["members"] = []
         
     if not dm_exists:
-        raise InputError("DM does not exist")
+        raise InputError(description="DM does not exist")
     
     if auth_user_id not in member_ids:
-        raise AccessError("User is not apart of the DM")
+        raise AccessError(description="User is not apart of the DM")
     
     for user in users:
         if user["id"] in member_ids:
