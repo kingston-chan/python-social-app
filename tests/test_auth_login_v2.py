@@ -15,7 +15,7 @@ def test_login_invalid_email(clear_and_register):
     assert response.status_code == 400
 
 def test_login_invalid_password(clear_and_register):
-    response = rh.auth_login("email", "pass")
+    response = rh.auth_login("email@email.com", "pass")
     assert response.status_code == 400
 
 
