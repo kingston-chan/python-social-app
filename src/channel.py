@@ -50,12 +50,12 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
         raise InputError("not valid channel ID")   
     #checks for valid user 
     for user in users:
-        if u_id == user['id']:
+        if u_id == user['id'] and user["email"] is not None and user["handle"] is not None:
             valid_user = 1
             break
     
     if valid_user == 0:
-        raise InputError("not valid user")   
+        raise InputError("not valid user")
     #checks to see if member
     if u_id in channel['all_members']:
         raise InputError("already member")
@@ -63,7 +63,7 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     channel['all_members'].append(u_id)
     
     if user['permission'] == 1:
-        channel['owner_permissions'].append(u_id)   
+        channel['owner_permissions'].append(u_id)
     
     data_store.set(store)
     
@@ -102,9 +102,6 @@ def channel_details_v1(auth_user_id, channel_id):
     channels = store['channels']
     users = store['users']
     channel_details = {}
-
-    # Checks if user exist
-    check_valid_user(auth_user_id, users)
     
     channel_exists = False
     owner_ids = None
@@ -168,7 +165,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
 
         AccessError - Occurs when given:
                         - channel_id is valid and the authorised user is not 
-                          a member of the channe
+                          a member of the channel
         
     Return Values:
         Returns a dictionary of a list of messages from index["start"] to
@@ -263,7 +260,6 @@ def channel_join_v1(auth_user_id, channel_id):
                     - channel_id does not exist/invalid
                     - auth_user_id is already a member of the channel
     AccessError - Occurs when given:
-                    - auth_user_id does not exist/invalid
                     - channel_id corresponding to channel is private and 
                       the user is not a global owner or a member of the 
                       channel
@@ -276,8 +272,7 @@ def channel_join_v1(auth_user_id, channel_id):
     users = store['users']
     channels = store['channels']
 
-    # Check if user is valid
-    user = check_valid_user(auth_user_id, users)
+    user = list(filter((lambda user: user["id"] == auth_user_id), users))[0]
     
     # Check if channel is valid
     channel_exists = 0
@@ -307,6 +302,27 @@ def channel_join_v1(auth_user_id, channel_id):
     return {}
 
 def channel_addowner_v1(auth_user_id, channel_id, u_id):
+    """
+    Make user with user u_id the owner of the channel.
+
+    Arguments:
+        auth_user_id (integer) - ID of the authorised user promoting.
+        channel_id (integer) - ID of the channel requested for channel_addowner.
+        u_id (integer) - ID of the user being promoted.
+    
+    Exceptions:
+        InputError - Occurs when:
+                        - channel_id does not refer to a valid channel.
+                        - u_id does not refer to a valid user
+                        - u_id refers to a user who is not a member of the channel
+                        - u_id refers to a user who is already an owner of the channel
+        AccessError - Occurs when:
+                        - channel_id is valid but the authorised user does not
+                        have owner permissions for the channel.
+    
+    Return Value:
+        Returns an empty dictionary on success.
+    """
     store = data_store.get()
     users = store['users']
     channels = store['channels']
@@ -350,7 +366,8 @@ def channel_addowner_v1(auth_user_id, channel_id, u_id):
     for channel in channels:
         if channel["id"] == channel_id:
             channel["owner_members"].append(u_id)
-            channel["owner_permissions"].append(u_id)
+            if u_id not in channel["owner_permissions"]:
+                channel["owner_permissions"].append(u_id)
 
 
     data_store.set(store)
@@ -395,6 +412,27 @@ def channel_leave_v1(auth_user_id, channel_id):
     raise InputError("Invalid channel id")
     
 def channel_removeowner_v1(auth_user_id, channel_id, u_id):
+    """
+    Removes user with user u_id as an owner of the channel.
+
+    Arguments:
+        auth_user_id (integer) - ID of the authorised user demoting.
+        channel_id (integer) - ID of the channel requested for channel_addowner.
+        u_id (integer) - ID of the user being demoted.
+    
+    Exceptions:
+        InputError - Occurs when:
+                        - channel_id does not refer to a valid channel.
+                        - u_id does not refer to a valid user
+                        - u_id refers to a user who is not an owner of the channel
+                        - u_id refers to a user who is currently the only owner of the channel
+        AccessError - Occurs when:
+                        - channel_id is valid but the authorised user does not
+                        have owner permissions for the channel.
+    
+    Return Value:
+        Returns an empty dictionary on success.
+    """
     store = data_store.get()
     channels = store["channels"]
     users = store["users"]
@@ -413,9 +451,11 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
         raise InputError("Channel does not exist")
     
     user_exists = False
+    user_permission = None
     for user in users:
         if u_id == user['id']:
             user_exists = True
+            user_permission = user["permission"]
             break
     
     if not user_exists:
@@ -433,7 +473,8 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
     for channel in channels:
         if channel["id"] == channel_id:
             channel["owner_members"].remove(u_id)
-            channel["owner_permissions"].remove(u_id)
+            if user_permission != 1:
+                channel["owner_permissions"].remove(u_id)
     
     data_store.set(store)
 
@@ -449,16 +490,3 @@ def assign_user_info(user_data_placeholder):
         'name_last': user_data_placeholder['name_last'],
         'handle_str':user_data_placeholder['handle']
     }
-
-def check_valid_user(id, users):
-    """Helper function to check if user is valid and returns the user if valid"""
-    user_exists = False
-    for user in users:
-        if id == user['id']:
-            user_exists = True
-            break
-    
-    if not user_exists:
-        raise AccessError("User is not authorised.")
-    else:
-        return user

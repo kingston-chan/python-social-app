@@ -25,6 +25,18 @@ def test_user_valid():
 
     assert response.status_code == 200
 
+def test_user_valid_search():
+    requests.delete(f"{url}/clear/v1")
+
+    register_user("email1@email.com", "password", "Julian", "Winzer")
+    reg_response = register_user("email2@email.com", "password", "Julian", "Winzer")
+
+    user_token = reg_response["token"]
+    
+    response = requests.put(f"{url}/user/profile/setemail/v1", json={"token": user_token, "email": 'newemail@newemail.com'})
+
+    assert response.status_code == 200
+
 # ==== Tests with incorrect/invalid input ==== #
 def test_user_invalid_email():
     requests.delete(f"{url}/clear/v1")
