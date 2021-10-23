@@ -145,6 +145,13 @@ def print_dm_messages(token, dm_id, start):
     }
     return requests.get(f"{BASE_URL}/dm/messages/v1", params=messages_info)
 
+def remove_dm(token, dm_id):
+    remove_info = {
+        "token": token,
+        "dm_id": dm_id
+    }
+    return requests.delete(f"{url}/dm/remove/v1", json=remove_info)
+
 # ==== Tests - Errors ==== #
 ## Input Error - 400 ##
 def test_message_too_long(clear, user1):
@@ -213,7 +220,21 @@ def test_user_not_in_dm(clear, user1, user2, user3):
 
     message_response = edit_message(user3['token'], message_id, "Hello again.")
     assert message_response.status_code == 400
-    
+
+def test_deleted_dm(clear, user1, user2):
+    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
+
+    message_response = send_dm_message(user2['token'], dm_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 1
+    message_id = response_data['message_id']
+
+    remove_dm(user1['token'], dm_id)
+
+    edit_response = edit_message(user2['token'], message_id, "Hello again.")
+    assert edit_response.status_code == 400  
+
 ## Access Error - 403 ##
 def test_unauthorised_user(clear, user1, user2, user3):
     channel_id = create_channel(user1['token'], "chan_name", True)
