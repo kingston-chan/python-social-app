@@ -53,7 +53,8 @@ def check_valid_token_and_session(token):
     except Exception as invalid_jwt:
         raise AccessError(description="Invalid JWT") from invalid_jwt
     if user_session["user_id"] in sessions:
-        if user_session["session_id"] not in sessions[user_session["user_id"]]:
+        time_and_id = (user_session["session_id"], user_session["time_created"])
+        if time_and_id not in sessions[user_session["user_id"]]:
             raise AccessError(description="Invalid session")
     else:
         raise AccessError(description="Invalid session")
