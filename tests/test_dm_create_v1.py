@@ -28,6 +28,12 @@ def user2():
 def dm_list(token):
     list_of_dicts = requests.get(f"{url}/dm/list/v1", params={"token" : token })
     return list_of_dicts.json()
+def dm_create(token, u_ids):
+    response = requests.post(f"{url}/dm/create/v1", json={"token" : token , "u_ids" : u_ids})
+    dm_id = response.json()
+    return dm_id
+
+#==tests==#
 
 def test_invlaid_user_ids(clear, user1):
     new_user_token = user1["token"]
@@ -41,8 +47,7 @@ def test_invlaid_token(clear):
 def test_one_created_dm(clear, user1):
     new_user_token = user1["token"]
 
-    response = requests.post(f"{url}/dm/create/v1", json={"token" : new_user_token, "u_ids" : []}) 
-    dm_id = response.json()
+    dm_id = dm_create(new_user_token,[])
 
     assert dm_id["dm_id"] == 1
 
@@ -50,9 +55,9 @@ def test_two_created_dm(clear, user1,user2):
     user1_token = user1["token"]
     user2_id = user2["auth_user_id"]
 
-    response = requests.post(f"{url}/dm/create/v1", json={"token" : user1_token, "u_ids" : []}) 
-    response = requests.post(f"{url}/dm/create/v1", json={"token" : user1_token, "u_ids" : [user2_id]}) 
-    dm_id = response.json()
+
+    dm_create(user1_token,[])
+    dm_id = dm_create(user1_token,[user2_id])
 
     assert dm_id["dm_id"] == 2
 
@@ -60,17 +65,17 @@ def test_two_identical_dms(clear, user1):
 
     new_user_token = user1["token"]
 
-    response = requests.post(f"{url}/dm/create/v1", json={"token" : new_user_token, "u_ids" : []}) 
-    response = requests.post(f"{url}/dm/create/v1", json={"token" : new_user_token, "u_ids" : []}) 
-    dm_id = response.json()
+    dm_create(new_user_token,[])
+    
+    dm_id = dm_create(new_user_token,[])
 
     assert dm_id["dm_id"] == 2
 
 def test_two_dms_with_dm_list(clear,user1):
     new_user_token = user1["token"]
 
-    response = requests.post(f"{url}/dm/create/v1", json={"token" : new_user_token, "u_ids" : []}) 
-    response = requests.post(f"{url}/dm/create/v1", json={"token" : new_user_token, "u_ids" : []}) 
+    dm_create(new_user_token,[])
+    dm_create(new_user_token,[])
 
     list_of_dicts = dm_list(new_user_token)
     expected_output = {"dms" : [{"dm_id" : 1, "name" : "fakerisafaker"},{"dm_id" : 2, "name" : "fakerisafaker"}]}
