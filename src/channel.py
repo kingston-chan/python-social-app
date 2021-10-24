@@ -327,6 +327,7 @@ def channel_addowner_v1(auth_user_id, channel_id, u_id):
     users = store['users']
     channels = store['channels']
 
+    # Checks if a user exists.
     user_exists = False
     for user in users:
         if u_id == user['id']:
@@ -346,7 +347,8 @@ def channel_addowner_v1(auth_user_id, channel_id, u_id):
     for channel in channels:
         if channel["id"] == channel_id:
             channel_exists = True
-            # channel["owner_members"] and channel["all_members"] are lists of user IDs.
+            # channel["owner_members"], channel["all_members"] and
+            # channel["owner_permissions"] are lists of user IDs.
             owner_ids = channel["owner_members"]
             all_members_ids = channel["all_members"]
             owner_perms_ids = channel["owner_permissions"]
@@ -363,12 +365,12 @@ def channel_addowner_v1(auth_user_id, channel_id, u_id):
     if u_id in owner_ids:
         raise InputError(description="User is already an owner of the channel")
 
-    for channel in channels:
-        if channel["id"] == channel_id:
-            channel["owner_members"].append(u_id)
-            if u_id not in channel["owner_permissions"]:
-                channel["owner_permissions"].append(u_id)
+    # Assigns the new owner's u_id to the owner_members list and the owner_permissions list.
+    owner_ids.append(u_id)
 
+    # Checks if they're a global owner.
+    if u_id not in owner_perms_ids:
+        owner_perms_ids.append(u_id)
 
     data_store.set(store)
 
@@ -440,6 +442,7 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
     owner_ids = None
     owner_perms_ids = None
 
+    # Checks if a channel exists
     channel_exists = False
     for channel in channels:
         if channel["id"] == channel_id:
@@ -450,6 +453,7 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
     if not channel_exists:
         raise InputError(description="Channel does not exist")
     
+    # Checks if a user exists
     user_exists = False
     user_permission = None
     for user in users:
@@ -470,11 +474,12 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
     if auth_user_id not in owner_ids and auth_user_id not in owner_perms_ids:
         raise AccessError(description="User is not an owner/does not have owner perms")
     
-    for channel in channels:
-        if channel["id"] == channel_id:
-            channel["owner_members"].remove(u_id)
-            if user_permission != 1:
-                channel["owner_permissions"].remove(u_id)
+    # Removes the owner's u_id from the owner_members list and the owner_permissions list.
+    owner_ids.remove(u_id)
+
+    # Checks to see if they're a global owner.
+    if user_permission != 1:
+        owner_perms_ids.remove(u_id)
     
     data_store.set(store)
 
