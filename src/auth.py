@@ -1,8 +1,7 @@
 from src.data_store import data_store
 from src.error import InputError
-import hashlib, jwt, re, time
-
-HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
+import hashlib, jwt, re, secrets
+from src import config
 
 def auth_login_v1(email, password):
     """
@@ -58,13 +57,13 @@ def auth_logout_v1(token):
     
     store = data_store.get()
     
-    token_dict = jwt.decode(token, HASHCODE, algorithms=['HS256'])
+    token_dict = jwt.decode(token, config.hashcode, algorithms=['HS256'])
 
     user_id = token_dict["user_id"]
     user_session = token_dict["session_id"]
-    time_created = token_dict["time_created"]
+    token_id = token_dict["token_id"]
     
-    store['sessions'][user_id].remove((user_session, time_created))
+    store['sessions'][user_id].remove((user_session, token_id))
     data_store.set(store)
     
     return {}
@@ -184,15 +183,15 @@ def create_session():
 def create_jwt(u_id):
     store = data_store.get()
     session_id = create_session()
-    time_created = int(time.time())
+    token_id = secrets.token_urlsafe()
     if u_id in store["sessions"]:
-        store["sessions"][u_id].append((session_id, time_created))
+        store["sessions"][u_id].append((session_id, token_id))
     else:
-        store["sessions"][u_id] = [(session_id, time_created)]
+        store["sessions"][u_id] = [(session_id, token_id)]
     data_store.set(store)
     payload = {
         'user_id': u_id,
         'session_id': session_id,
-        'time_created': time_created
+        'token_id': token_id
     }
-    return jwt.encode(payload, HASHCODE, algorithm='HS256')
+    return jwt.encode(payload, config.hashcode, algorithm='HS256')
