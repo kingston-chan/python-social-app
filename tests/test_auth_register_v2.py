@@ -1,7 +1,7 @@
-import pytest, jwt, time
+import jwt
 import tests.route_helpers as rh
+from src import config
 
-HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
 # Invalid input tests:
 
@@ -57,82 +57,68 @@ def test_successful_register():
 def test_register_valid_input():
     rh.clear()
     response = rh.auth_register("email@email.com", "password", "Julian", "Winzer")
-    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    token = jwt.decode(response_data["token"], config.hashcode, algorithms=['HS256'])
     assert token["user_id"] == 1
     assert token["session_id"] == 1
-    assert abs(token["time_created"] - time_created) < 2
 
 
 def test_register_valid_numbers():
     rh.clear()
     response = rh.auth_register("161998@439876.com", "2354335425", "24352345", "34553")
-    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    token = jwt.decode(response_data["token"], config.hashcode, algorithms=['HS256'])
     assert token["user_id"] == 1
     assert token["session_id"] == 1
-    assert abs(token["time_created"] - time_created) < 2
 
 def test_register_valid_symbols():
     rh.clear()
     response = rh.auth_register("email@email.com", "password", "Ju!@#$%^&*lian", "Winzer")
-    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    token = jwt.decode(response_data["token"], config.hashcode, algorithms=['HS256'])
     assert token["user_id"] == 1
     assert token["session_id"] == 1
-    assert abs(token["time_created"] - time_created) < 2
 
 def test_register_valid_spaces():
     rh.clear()
     response = rh.auth_register("email@email.com", "password", " J u l i a n ", " W i n z e r ")
-    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    token = jwt.decode(response_data["token"], config.hashcode, algorithms=['HS256'])
     assert token["user_id"] == 1
     assert token["session_id"] == 1
-    assert abs(token["time_created"] - time_created) < 2
 
 def test_register_valid_multiple_identical():
     rh.clear()
     response = rh.auth_register("email@email.com", "password", "Julian", "Winzer")
-    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    token = jwt.decode(response_data["token"], config.hashcode, algorithms=['HS256'])
     assert token["user_id"] == 1
     assert token["session_id"] == 1
-    assert abs(token["time_created"] - time_created) < 2
 
     response = rh.auth_register("email2@email.com", "password", "Julian", "Winzer")
-    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 2
-    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    token = jwt.decode(response_data["token"], config.hashcode, algorithms=['HS256'])
     assert token["user_id"] == 2
     assert token["session_id"] == 2
-    assert abs(token["time_created"] - time_created) < 2
 
 def test_register_valid_long_handle():
     rh.clear()
     response = rh.auth_register("email2@email.com", "password", "ThisHandleIsTooLong", "ThisHandleIsTooLong")
-    time_created = int(time.time())
     response_data = response.json()
 
     assert response_data["auth_user_id"] == 1
-    token = jwt.decode(response_data["token"], HASHCODE, algorithms=['HS256'])
+    token = jwt.decode(response_data["token"], config.hashcode, algorithms=['HS256'])
     assert token["user_id"] == 1
     assert token["session_id"] == 1
-    assert abs(token["time_created"] - time_created) < 2
