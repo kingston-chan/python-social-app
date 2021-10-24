@@ -44,10 +44,10 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
             valid_channel = 1
             #checks to see authorised member is sending channel invitation
             if auth_user_id not in channel['all_members']: 
-                raise AccessError("not authorised user")
+                raise AccessError(description="not authorised user")
             break
     if valid_channel == 0:
-        raise InputError("not valid channel ID")   
+        raise InputError(description="not valid channel ID")   
     #checks for valid user 
     for user in users:
         if u_id == user['id'] and user["email"] is not None and user["handle"] is not None:
@@ -55,10 +55,10 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
             break
     
     if valid_user == 0:
-        raise InputError("not valid user")
+        raise InputError(description="not valid user")
     #checks to see if member
     if u_id in channel['all_members']:
-        raise InputError("already member")
+        raise InputError(description="already member")
    
     channel['all_members'].append(u_id)
     
@@ -192,9 +192,9 @@ def channel_messages_v1(auth_user_id, channel_id, start):
 
     # If the channel_id or start value are invalid, then errors are raised.
     if channel_valid is False:
-        raise InputError("This channel is not valid.")
+        raise InputError(description="This channel is not valid.")
     if start_valid is False:
-        raise InputError("This start is not valid.")
+        raise InputError(description="This start is not valid.")
     
     # Checks if the authorised user is a member of the channel.
     member_valid = False
@@ -204,7 +204,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
 
     # If the user is not a member, then an error is raised.
     if member_valid is False:
-        raise AccessError('User is not authorised.')
+        raise AccessError(description='User is not authorised.')
 
     # The channel is scanned for its messages.
 
@@ -282,14 +282,14 @@ def channel_join_v1(auth_user_id, channel_id):
             break
         
     if not channel_exists:
-        raise InputError("Invalid Channel ID")
+        raise InputError(description="Invalid Channel ID")
     
     if auth_user_id in channel['all_members']:
-        raise InputError("Already a member of channel")
+        raise InputError(description="Already a member of channel")
 
     # Global members cannot join private channels
     if channel['is_public'] is False and user['permission'] == 2:
-        raise AccessError("Channel is private")
+        raise AccessError(description="Channel is private")
     
     # Give channel owner permissions to global owners
     if user['permission'] == 1:
@@ -408,10 +408,10 @@ def channel_leave_v1(auth_user_id, channel_id):
                     channel["owner_permissions"].remove(auth_user_id)
                 channel["all_members"].remove(auth_user_id)
             else:
-                raise AccessError("Authorised user is not member of the channel")
+                raise AccessError(description="Authorised user is not member of the channel")
             data_store.set(store)
             return {}
-    raise InputError("Invalid channel id")
+    raise InputError(description="Invalid channel id")
     
 def channel_removeowner_v1(auth_user_id, channel_id, u_id):
     """
