@@ -35,11 +35,11 @@ def dm_create_v1(auth_user_id, u_ids):
             if users == user["id"]:
                 i = True
                 if user["handle"] == None and user["email"] == None:
-                    raise InputError("Invalid users") 
+                    raise InputError(description="Invalid users") 
                 else:
                     name_list.append(user["handle"])
         if i == False:
-            raise InputError("Invalid users") 
+            raise InputError(description="Invalid users") 
 
     for user in store["users"]:
         if auth_user_id == user["id"]:
@@ -213,9 +213,9 @@ def dm_messages_v1(auth_user_id, dm_id, start):
 
     # If the dm_id or start value are invalid, then errors are raised.
     if dm_valid is False:
-        raise InputError("This DM is not valid.")
+        raise InputError(description="This DM is not valid.")
     if start_valid is False:
-        raise InputError("This start is not valid.")
+        raise InputError(description="This start is not valid.")
     
     # Checks if the authorised user is a member of the DM.
     member_valid = False
@@ -225,7 +225,7 @@ def dm_messages_v1(auth_user_id, dm_id, start):
 
     # If the user is not a member, then an error is raised.
     if member_valid is False:
-        raise AccessError('User is not authorised.')
+        raise AccessError(description='User is not authorised.')
 
     # The DM is scanned for its messages.
     filtered_dm_messages = []
@@ -309,11 +309,11 @@ def dm_remove_v1(auth_user_id, dm_id):
         if dms["dm_id"] == dm_id:
             i = True
             if dms["owner_of_dm"] != auth_user_id:
-                raise AccessError("Not owner of DM")
+                raise AccessError(description="Not owner of DM")
             else:
                 list_of_dms.remove(dms)
     if i == False:
-        raise InputError("DM does not exist")
+        raise InputError(description="DM does not exist")
     data_store.set(store)
     return {}
 
