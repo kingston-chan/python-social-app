@@ -1,36 +1,26 @@
-import requests
-import jwt
-from src.config import port
+import pytest
+import tests.route_helpers as rh
 
-BASE_URL = 'http://127.0.0.1:' + str(port)
+@pytest.fixture
+def clear_and_register():
+    rh.clear()
+    return rh.auth_register("email@email.com", "password", "Julian", "Winzer").json()["token"]
 
-HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
+def test_logout(clear_and_register):
+    token = rh.auth_login("email@email.com", "password").json()["token"]
+    assert rh.auth_logout(token).status_code == 200
 
-def test_logout():
-    requests.delete(f"{BASE_URL}/clear/v1")
-
-    user_data = {
-        "email": "email@email.com",
-        "password": "password",
-        "name_first": "Julian",
-        "name_last": "Winzer"
-    }
-
- 
-    requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response = requests.post(f"{BASE_URL}/auth/login/v2", json=user_data)
-    response_data = response.json()
-
-    
-
-    requests.post(f"{BASE_URL}/auth/logout/v1", json={"token": response_data["token"]})
-
-    assert response.status_code == 200
+def test_logout_invalidates_token(clear_and_register):
+    rh.auth_logout(clear_and_register)
+    assert rh.channels_create(clear_and_register, "name", True).status_code == 403
+    assert rh.dm_create(clear_and_register, []).status_code == 403
+    assert rh.user_profile_sethandle(clear_and_register, "newhandle").status_code == 403
+    assert rh.user_profile_setname(clear_and_register, "new", "name").status_code == 403
+    assert rh.user_profile_setemail(clear_and_register, "newemail@email.com").status_code == 403
 
 def test_invalid_token():
-    requests.delete(f"{BASE_URL}/clear/v1")
-    response = requests.post(f"{BASE_URL}/auth/logout/v1", json={"token": "invalid token"})
-    assert response.status_code == 403
+    rh.clear()
+    assert rh.auth_logout("invalid_token").status_code == 403
     
 
 
