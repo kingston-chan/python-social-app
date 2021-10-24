@@ -18,7 +18,6 @@ from src.message import message_send_v1, message_edit_v1, message_remove_v1, mes
 from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
 from src.dm import dm_details_v1
 
-HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
 def quit_gracefully(*args):
     '''For coverage'''
@@ -49,12 +48,12 @@ def check_valid_token_and_session(token):
     sessions = data_store.get()["sessions"]
     user_session = {}
     try:
-        user_session = jwt.decode(token, HASHCODE, algorithms=['HS256'])
+        user_session = jwt.decode(token, config.hashcode, algorithms=['HS256'])
     except Exception as invalid_jwt:
         raise AccessError(description="Invalid JWT") from invalid_jwt
     if user_session["user_id"] in sessions:
-        time_and_id = (user_session["session_id"], user_session["time_created"])
-        if time_and_id not in sessions[user_session["user_id"]]:
+        sess_tok_id = (user_session["session_id"], user_session["token_id"])
+        if sess_tok_id not in sessions[user_session["user_id"]]:
             raise AccessError(description="Invalid session")
     else:
         raise AccessError(description="Invalid session")
