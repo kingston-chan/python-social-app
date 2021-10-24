@@ -2,95 +2,74 @@ import json
 import requests
 import pytest
 from src.config import url
+import tests.route_helpers as rh
 
 BASE_URL = url
 
 #400 is input error
 #403 is access error
 
-def test_removing_one_dm():
-    requests.delete(f"{url}/clear/v1")
+#==Fixtures==#
+@pytest.fixture
+def clear():
+    rh.clear()
+@pytest.fixture
+def user1():
+    response = rh.auth_register("fakeguy@gmail.com","fake12345","faker", "is_a_faker")
+    return response.json()
+@pytest.fixture
+def user2():   
+    response = rh.auth_register("fakeguy1@gmail.com","fake123451","faker", "is_a_faker1")
+    return response.json()
 
-    new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
+#==tests==#
+def test_removing_one_dm(clear,user1):
+    new_user_token = user1["token"]
 
-    response = requests.post(f"{url}/auth/register/v2", json=new_user) 
-    response_data = response.json()
-    new_user_token = response_data["token"]
+    dm_id = rh.dm_create(new_user_token, [])
 
-    response = requests.post(f"{url}/dm/create/v1", json={"token" : new_user_token, "u_ids" : []}) 
-    dm_id = response.json()["dm_id"]
+    rh.dm_remove(new_user_token,dm_id.json()["dm_id"]) 
 
-    response = requests.delete(f"{url}/dm/remove/v1", json={"token" : new_user_token , "dm_id" : dm_id})
-    output = response.json()
-
-    output = requests.get(f"{url}/dm/list/v1", params={"token" : new_user_token })
-
+    output = rh.dm_list(new_user_token)
 
     expected_output = []
 
 
     assert expected_output == output.json()["dms"]
 
-def test_invalid_dm_id():
-    requests.delete(f"{url}/clear/v1")
+def test_invalid_dm_id(clear,user1):
+    new_user_token = user1["token"]
 
-    new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
-
-    response = requests.post(f"{url}/auth/register/v2", json=new_user) 
-    response_data = response.json()
-    new_user_token = response_data["token"]
-
-    response = requests.delete(f"{url}/dm/remove/v1", json={"token" : new_user_token , "dm_id" : 1})
-
+    response = rh.dm_remove(new_user_token,1) 
     assert response.status_code == 400 
 
-def test_invlaid_token():
-    requests.delete(f"{url}/clear/v1")
-    response = requests.delete(f"{url}/dm/remove/v1", json={"token" : 1 , "dm_id" : 1})
+def test_invlaid_token(clear):
+    response = rh.dm_remove(1,1) 
     assert response.status_code == 403 
 
 
-def test_not_auth_user():
-    requests.delete(f"{url}/clear/v1")
+def test_not_auth_user(clear,user1,user2):
+    user1_token = user1["token"]
 
-    user1 = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
-    user2 = {"email" : "fakeguy1@gmail.com" , "password": "fake123456","name_first" : "faker", "name_last" : "is_a_faker1" }
+    user2_token = user2["token"]
+    user2_id = user2["auth_user_id"]
 
-    response = requests.post(f"{url}/auth/register/v2", json=user1) 
-    response_data = response.json()
-    user1_token = response_data["token"]
-
-    response = requests.post(f"{url}/auth/register/v2", json=user2) 
-    response_data = response.json()
-    user2_token = response_data["token"]
-    user2_id = response_data["auth_user_id"]
-
-    response = requests.post(f"{url}/dm/create/v1", json={"token" : user1_token, "u_ids" : [user2_id]}) 
-    dm_id = response.json()["dm_id"]
-    response = requests.delete(f"{url}/dm/remove/v1", json={"token" : user2_token, "dm_id" : dm_id})
+    dm_id = rh.dm_create(user1_token, [user2_id]).json()
+    
+    response = rh.dm_remove(user2_token, dm_id["dm_id"])
     assert response.status_code == 403 
 
-def test_removing_one_dm_with_two_created():
-    requests.delete(f"{url}/clear/v1")
+def test_removing_one_dm_with_two_created(clear,user1,user2):
+    user1_token = user1["token"]
 
-    user1 = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
-    user2 = {"email" : "fakeguy1@gmail.com" , "password": "fake123456","name_first" : "faker", "name_last" : "is_a_faker1" }
+    user2_id = user2["auth_user_id"]
 
-    response = requests.post(f"{url}/auth/register/v2", json=user1) 
-    response_data = response.json()
-    user1_token = response_data["token"]
-
-    response = requests.post(f"{url}/auth/register/v2", json=user2) 
-    response_data = response.json()
-    user2_id = response_data["auth_user_id"]
-
-    response = requests.post(f"{url}/dm/create/v1", json={"token" : user1_token, "u_ids" : []}) 
-    response = requests.post(f"{url}/dm/create/v1", json={"token" : user1_token, "u_ids" : [user2_id]}) 
+    rh.dm_create(user1_token, [])
+    response = rh.dm_create(user1_token, [user2_id])
     dm_id = response.json()["dm_id"]
 
-    response = requests.delete(f"{url}/dm/remove/v1", json={"token" : user1_token, "dm_id" : dm_id})
-
-    response = requests.get(f"{url}/dm/list/v1", params={"token" : user1_token})
+    rh.dm_remove(user1_token,dm_id)
+    response = rh.dm_list(user1_token)
     output = response.json()
 
     expected_outcome = {"dms" : [{"dm_id" : 1 , "name" : "fakerisafaker"}]}

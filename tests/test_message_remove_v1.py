@@ -1,481 +1,347 @@
 import pytest
 import requests
-from requests.api import delete
 from src.config import url
 import time
 import json
+import tests.route_helpers as rh
 
 BASE_URL = url
-## =====[ test_message_delete_v1.py ]===== ##
+## =====[ test_message_remove_v1.py ]===== ##
 
 # ==== Fixtures ==== #
 @pytest.fixture
 def clear():
-    requests.delete(f"{BASE_URL}/clear/v1")
+    rh.clear()
 
 @pytest.fixture
 def user1():
-    user_dict = {
-        "email": "user1@email.com",
-        "password": "password",
-        "name_first": "user",
-        "name_last": "name"
-    }
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
-    return response.json()
+    return rh.auth_register("user1@email.com", "password", "user", "name").json()
 
 @pytest.fixture
 def user2():
-    user_dict = {
-        "email": "user2@email.com",
-        "password": "password",
-        "name_first": "user",
-        "name_last": "name"
-    }
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
-    return response.json()
+    return rh.auth_register("user2@email.com", "password", "user", "name").json()
 
 @pytest.fixture
 def user3():
-    user_dict = {
-        "email": "user3@email.com",
-        "password": "password",
-        "name_first": "user",
-        "name_last": "name"
-    }
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_dict)
-    return response.json()
-
-# ==== Helper functions ==== #
-def create_channel(token, name, is_public):
-    channel_info = {
-        "token": token, 
-        "name": name, 
-        "is_public": is_public
-    }
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_info)
-    response_data = response.json()
-    return int(response_data['channel_id'])
-
-def join_channel(token, channel_id):
-    channel_info = {
-        "token": token, 
-        "channel_id": channel_id,
-    }
-    return requests.post(f"{BASE_URL}/channel/join/v2", json=channel_info)
-
-def invite_member_to_channel(token, channel_id, u_id):
-    invite_info = {
-        'token': token,
-        'channel_id': channel_id,
-        'u_id': u_id,
-    }
-    return requests.post(f"{BASE_URL}/channel/invite/v2", json=invite_info)
-
-def send_message(token, channel_id, message):
-    message_dict = {
-        "token": token,
-        "channel_id": channel_id,
-        "message": message
-    }
-    return requests.post(f"{BASE_URL}/message/send/v1", json=message_dict)
-
-def edit_message(token, message_id, message):
-    message_dict = {
-        "token": token,
-        "message_id": message_id,
-        "message": message
-    }
-    return requests.put(f"{BASE_URL}/message/edit/v1", json=message_dict)
-
-def remove_message(token, message_id):
-    delete_dict = {
-        'token': token,
-        'message_id': message_id
-    }
-    return requests.delete(f"{BASE_URL}/message/remove/v1", json=delete_dict)
-
-def print_channel_messages(token, channel_id, start):
-    messages_info = {
-        "token": token,
-        "channel_id": channel_id,
-        "start": start 
-    }
-    return requests.get(f"{BASE_URL}/channel/messages/v2", params=messages_info)
-
-def leave_channel(token, channel_id):
-    leave_info = {
-        "token": token,
-        "channel_id": channel_id,
-    }
-    return requests.post(f"{BASE_URL}/channel/leave/v1", json=leave_info)
-
-def add_owner(token, channel_id, u_id):
-    add_info = {
-        "token": token,
-        "channel_id": channel_id,
-        "u_id": u_id
-    }
-    return requests.post(f"{BASE_URL}/channel/addowner/v1", json=add_info)
-
-def remove_owner(token, channel_id, u_id):
-    remove_info = {
-        "token": token,
-        "channel_id": channel_id,
-        "u_id": u_id
-    }
-    return requests.post(f"{BASE_URL}/channel/removeowner/v1", json=remove_info)
-
-def create_dm(token, u_ids):
-    dm_info = {
-        "token": token, 
-        "u_ids": u_ids
-    }
-    response = requests.post(f"{BASE_URL}/dm/create/v1", json=dm_info)
-    response_data = response.json()
-    return int(response_data['dm_id'])
-
-def send_dm_message(token, dm_id, message):
-    dm_message_dict = {
-        "token": token,
-        "dm_id": dm_id,
-        "message": message
-    }
-    return requests.post(f"{BASE_URL}/message/senddm/v1", json=dm_message_dict)
-
-def print_dm_messages(token, dm_id, start):
-    messages_info = {
-        "token": token,
-        "dm_id": dm_id,
-        "start": start 
-    }
-    return requests.get(f"{BASE_URL}/dm/messages/v1", params=messages_info)
-
-def remove_dm(token, dm_id):
-    remove_info = {
-        "token": token,
-        "dm_id": dm_id
-    }
-    return requests.delete(f"{url}/dm/remove/v1", json=remove_info)
-
+    return rh.auth_register("user3@email.com", "password", "user", "name").json()
 
 # ==== Tests - Errors ==== #
 ## Input Error - 400 ##
 def test_invalid_fake_message_id(clear, user1):
-    channel_id = create_channel(user1['token'], "chan_name", True)
+    channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
 
-    message_response = send_message(user1['token'], channel_id, "Hello")
+    message_response = rh.message_send(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
-    message_response = remove_message(user1['token'], response_data['message_id'] + 1)
+    message_response = rh.message_remove(user1['token'], response_data['message_id'] + 1)
     assert message_response.status_code == 400
 
 def test_invalid_fake_message_id_2(clear, user1, user2):
-    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
+    dm_id = rh.dm_create(user1['token'], [user2['auth_user_id']]).json()['dm_id']
 
-    message_response = send_dm_message(user1['token'], dm_id, "Hello")
+    message_response = rh.message_senddm(user1['token'], dm_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
-    message_response = remove_message(user1['token'], response_data['message_id'] + 1)
+    message_response = rh.message_remove(user1['token'], response_data['message_id'] + 1)
     assert message_response.status_code == 400
 
 def test_user_left_and_tries_to_remove(clear, user1, user2):
-    channel_id = create_channel(user1['token'], "chan_name", True)
-    join_channel(user2['token'], channel_id)
+    channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
+    rh.channel_join(user2['token'], channel_id)
 
-    message_response = send_message(user2['token'], channel_id, "Hello")
+    message_response = rh.message_send(user2['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    leave_channel(user2['token'], channel_id)
+    rh.channel_leave(user2['token'], channel_id)
 
-    message_response = remove_message(user2['token'], message_id)
+    message_response = rh.message_remove(user2['token'], message_id)
     assert message_response.status_code == 400
 
 def test_owner_left_and_tries_to_remove(clear, user1, user2):
-    channel_id = create_channel(user1['token'], "chan_name", True)
-    join_channel(user2['token'], channel_id)
+    channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
+    rh.channel_join(user2['token'], channel_id)
 
-    message_response = send_message(user1['token'], channel_id, "Hello")
+    message_response = rh.message_send(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    leave_channel(user1['token'], channel_id)
+    rh.channel_leave(user1['token'], channel_id)
 
-    message_response = remove_message(user1['token'], message_id)
+    message_response = rh.message_remove(user1['token'], message_id)
     assert message_response.status_code == 400
 
 def test_user_not_in_dm(clear, user1, user2, user3):
-    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
+    dm_id = rh.dm_create(user1['token'], [user2['auth_user_id']]).json()['dm_id']
 
-    message_response = send_dm_message(user2['token'], dm_id, "Hello")
+    message_response = rh.message_senddm(user2['token'], dm_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
-    message_response = remove_message(user3['token'], response_data['message_id'])
+    message_response = rh.message_remove(user3['token'], response_data['message_id'])
     assert message_response.status_code == 400
 
 def test_removed_dm(clear, user1, user2):
-    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
+    dm_id = rh.dm_create(user1['token'], [user2['auth_user_id']]).json()['dm_id']
 
-    message_response = send_dm_message(user2['token'], dm_id, "Hello")
+    message_response = rh.message_senddm(user2['token'], dm_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    remove_dm(user1['token'], dm_id)
+    rh.dm_remove(user1['token'], dm_id)
 
-    remove_response = remove_message(user2['token'], message_id)
+    remove_response = rh.message_remove(user2['token'], message_id)
     assert remove_response.status_code == 400  
 
 ## Access Error - 403 ##
 def test_unauthorised_user(clear, user1, user2, user3):
-    channel_id = create_channel(user1['token'], "chan_name", True)
-    join_channel(user2['token'], channel_id)
-    join_channel(user3['token'], channel_id)
+    channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
+    rh.channel_join(user2['token'], channel_id)
+    rh.channel_join(user3['token'], channel_id)
 
-    message_response = send_message(user2['token'], channel_id, "Hello")
+    message_response = rh.message_send(user2['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
-    message_response = remove_message(user3['token'], response_data['message_id'])
+    message_response = rh.message_remove(user3['token'], response_data['message_id'])
     assert message_response.status_code == 403
 
 def test_user_not_owner(clear, user1, user2, user3):
-    channel_id = create_channel(user1['token'], "chan_name", True)
-    join_channel(user2['token'], channel_id)
-    join_channel(user3['token'], channel_id)
+    channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
+    rh.channel_join(user2['token'], channel_id)
+    rh.channel_join(user3['token'], channel_id)
 
-    message_response = send_message(user2['token'], channel_id, "Hello")
+    message_response = rh.message_send(user2['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
-    message_response = remove_message(user3['token'], response_data['message_id'])
+    message_response = rh.message_remove(user3['token'], response_data['message_id'])
     assert message_response.status_code == 403
 
 def test_user_not_owner_in_dm(clear, user1, user2, user3):
-    dm_id = create_dm(user1['token'], [user2['auth_user_id'], user3['auth_user_id']])
+    dm_id = rh.dm_create(user1['token'], [user2['auth_user_id'], user3['auth_user_id']]).json()['dm_id']
 
-    message_response = send_dm_message(user2['token'], dm_id, "Hello")
+    message_response = rh.message_senddm(user2['token'], dm_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
-    message_response = remove_message(user3['token'], response_data['message_id'])
+    message_response = rh.message_remove(user3['token'], response_data['message_id'])
     assert message_response.status_code == 403
 
 # ==== Tests - Valids ==== #
 def test_one_user_removes_one_message_in_one_channel(clear, user1):
-    channel_id = create_channel(user1['token'], "chan_name", True)
-    message_response = send_message(user1['token'], channel_id, "Hello")
+    channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
+    message_response = rh.message_send(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    message_response = remove_message(user1['token'], message_id)
+    message_response = rh.message_remove(user1['token'], message_id)
     assert message_response.status_code == 200
 
 def test_multiple_users_removes_multiple_messages_in_multiple_channels(clear, user1, user2):
-    channel_id1 = create_channel(user1['token'], "chan_name", True)
-    channel_id2 = create_channel(user1['token'], "chan_name2", True)
-    join_channel(user2['token'], channel_id1)
-    join_channel(user2['token'], channel_id2)
+    channel_id1 = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
+    channel_id2 = rh.channels_create(user1['token'], "chan_name2", True).json()['channel_id']
+    rh.channel_join(user2['token'], channel_id1)
+    rh.channel_join(user2['token'], channel_id2)
 
-    message_response = send_message(user1['token'], channel_id1, "One")
+    message_response = rh.message_send(user1['token'], channel_id1, "One")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id1 = response_data['message_id']
 
-    message_response = send_message(user1['token'], channel_id1, "Two")
+    message_response = rh.message_send(user1['token'], channel_id1, "Two")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 2
     message_id2 = response_data['message_id']
 
-    message_response = send_message(user2['token'], channel_id1, "Three")
+    message_response = rh.message_send(user2['token'], channel_id1, "Three")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 3
     message_id3 = response_data['message_id']
 
-    message_response = send_message(user2['token'], channel_id1, "Four")
+    message_response = rh.message_send(user2['token'], channel_id1, "Four")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 4
     message_id4 = response_data['message_id']
 
-    message_response = send_message(user1['token'], channel_id1, "Five")
+    message_response = rh.message_send(user1['token'], channel_id1, "Five")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 5
     message_id5 = response_data['message_id']
 
-    message_response = send_message(user1['token'], channel_id1, "Six")
+    message_response = rh.message_send(user1['token'], channel_id1, "Six")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 6
     message_id6 = response_data['message_id']
 
-    message_response = send_message(user2['token'], channel_id1, "Seven")
+    message_response = rh.message_send(user2['token'], channel_id1, "Seven")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 7
     message_id7 = response_data['message_id']
 
-    message_response = send_message(user2['token'], channel_id1, "Eight")
+    message_response = rh.message_send(user2['token'], channel_id1, "Eight")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 8
     message_id8 = response_data['message_id']
 
-    message_response = remove_message(user1['token'], message_id1)
+    message_response = rh.message_remove(user1['token'], message_id1)
     assert message_response.status_code == 200
 
-    message_response = remove_message(user1['token'], message_id2)
+    message_response = rh.message_remove(user1['token'], message_id2)
     assert message_response.status_code == 200
 
-    message_response = remove_message(user2['token'], message_id3)
+    message_response = rh.message_remove(user2['token'], message_id3)
     assert message_response.status_code == 200
 
-    message_response = remove_message(user2['token'], message_id4)
+    message_response = rh.message_remove(user2['token'], message_id4)
     assert message_response.status_code == 200
 
-    message_response = remove_message(user1['token'], message_id5)
+    message_response = rh.message_remove(user1['token'], message_id5)
     assert message_response.status_code == 200
 
-    message_response = remove_message(user1['token'], message_id6)
+    message_response = rh.message_remove(user1['token'], message_id6)
     assert message_response.status_code == 200
 
-    message_response = remove_message(user2['token'], message_id7)
+    message_response = rh.message_remove(user2['token'], message_id7)
     assert message_response.status_code == 200
 
-    message_response = remove_message(user2['token'], message_id8)
+    message_response = rh.message_remove(user2['token'], message_id8)
     assert message_response.status_code == 200
 
 def test_send_edit_remove_message(clear, user1):
-    channel_id = create_channel(user1['token'], "chan_name", True)
-    message_response = send_message(user1['token'], channel_id, "Hello")
+    channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
+    message_response = rh.message_send(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    message_response = edit_message(user1['token'], message_id, "Hey there")
+    message_response = rh.message_edit(user1['token'], message_id, "Hey there")
     assert message_response.status_code == 200
 
-    message_response = remove_message(user1['token'], message_id)
+    message_response = rh.message_remove(user1['token'], message_id)
     assert message_response.status_code == 200
 
 def test_owner_removes_another_users_message(clear, user1, user2):
-    channel_id = create_channel(user1['token'], "chan_name", True)
-    join_channel(user2['token'], channel_id)
+    channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
+    rh.channel_join(user2['token'], channel_id)
 
-    message_response = send_message(user2['token'], channel_id, "Hello")
+    message_response = rh.message_send(user2['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    message_response = remove_message(user1['token'], message_id)
+    message_response = rh.message_remove(user1['token'], message_id)
     assert message_response.status_code == 200
 
 def test_global_owner_removes_another_users_message(clear, user1, user2, user3):
-    channel_id = create_channel(user2['token'], "chan_name", True)
-    join_channel(user3['token'], channel_id)
-    join_channel(user1['token'], channel_id)
+    channel_id = rh.channels_create(user2['token'], "chan_name", True).json()['channel_id']
+    rh.channel_join(user3['token'], channel_id)
+    rh.channel_join(user1['token'], channel_id)
 
-    message_response = send_message(user3['token'], channel_id, "Hello")
+    message_response = rh.message_send(user3['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    message_response = remove_message(user1['token'], message_id)
+    message_response = rh.message_remove(user1['token'], message_id)
     assert message_response.status_code == 200
 
 def test_one_user_removes_one_message_in_private_channel(clear, user1):
-    channel_id = create_channel(user1['token'], "chan_name", False)
-    message_response = send_message(user1['token'], channel_id, "Hello")
+    channel_id = rh.channels_create(user1['token'], "chan_name", False).json()['channel_id']
+    message_response = rh.message_send(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    message_response = remove_message(user1['token'], message_id)
+    message_response = rh.message_remove(user1['token'], message_id)
     assert message_response.status_code == 200
 
 def test_one_user_removes_one_message_in_private_and_public_channel(clear, user1):
-    channel_id1 = create_channel(user1['token'], "chan_name", True)
-    channel_id2 = create_channel(user1['token'], "chan_name2", False)
+    channel_id1 = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
+    channel_id2 = rh.channels_create(user1['token'], "chan_name2", False).json()['channel_id']
 
-    message_response = send_message(user1['token'], channel_id1, "Hello")
+    message_response = rh.message_send(user1['token'], channel_id1, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id1 = response_data['message_id']
 
-    message_response = send_message(user1['token'], channel_id2, "Hello")
+    message_response = rh.message_send(user1['token'], channel_id2, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 2
     message_id2 = response_data['message_id']
 
-    message_response = remove_message(user1['token'], message_id1)
+    message_response = rh.message_remove(user1['token'], message_id1)
     assert message_response.status_code == 200
-    message_response = remove_message(user1['token'], message_id2)
+    message_response = rh.message_remove(user1['token'], message_id2)
     assert message_response.status_code == 200
 
 def test_one_user_invited_removes_one_messages_in_private_channel(clear, user1, user2):
-    channel_id = create_channel(user1['token'], "chan_name2", False)
-    invite_member_to_channel(user1['token'], channel_id, user2['auth_user_id'])
+    channel_id = rh.channels_create(user1['token'], "chan_name2", False).json()['channel_id']
+    rh.channel_invite(user1['token'], channel_id, user2['auth_user_id'])
 
-    message_response = send_message(user2['token'], channel_id, "Hello")
+    message_response = rh.message_send(user2['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    message_response = remove_message(user1['token'], message_id)
+    message_response = rh.message_remove(user1['token'], message_id)
     assert message_response.status_code == 200
 
 def test_user_becomes_owner_removes(clear, user1, user2):
-    channel_id = create_channel(user1['token'], "chan_name2", True)
-    join_channel(user2['token'], channel_id)
+    channel_id = rh.channels_create(user1['token'], "chan_name2", True).json()['channel_id']
+    rh.channel_join(user2['token'], channel_id)
 
-    message_response = send_message(user1['token'], channel_id, "Hello")
+    message_response = rh.message_send(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    add_owner(user1['token'], channel_id, user2['auth_user_id'])
+    rh.channel_addowner(user1['token'], channel_id, user2['auth_user_id'])
 
-    message_response = remove_message(user2['token'], message_id)
+    message_response = rh.message_remove(user2['token'], message_id)
     assert message_response.status_code == 200
 
 def test_channel_messages_interaction(clear, user1):
-    channel_id = create_channel(user1['token'], "chan_name", True)
-    message_response = send_message(user1['token'], channel_id, "Hello")
+    channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
+    message_response = rh.message_send(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    messages_response = print_channel_messages(user1['token'], channel_id, 0)
+    messages_response = rh.channel_messages(user1['token'], channel_id, 0)
     response_data = messages_response.json()
     expected_result = {
         "messages": [
@@ -491,10 +357,10 @@ def test_channel_messages_interaction(clear, user1):
     }
     assert response_data == expected_result
 
-    message_response = remove_message(user1['token'], message_id)
+    message_response = rh.message_remove(user1['token'], message_id)
     assert message_response.status_code == 200
 
-    messages_response = print_channel_messages(user1['token'], channel_id, 0)
+    messages_response = rh.channel_messages(user1['token'], channel_id, 0)
     response_data = messages_response.json()
     expected_result = {
         "messages": [],
@@ -504,22 +370,22 @@ def test_channel_messages_interaction(clear, user1):
     assert response_data == expected_result
 
 def test_channel_messages_interaction2(clear, user1):
-    channel_id = create_channel(user1['token'], "chan_name", True)
-    message_response = send_message(user1['token'], channel_id, "Hello")
+    channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
+    message_response = rh.message_send(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id1 = response_data['message_id']
     time_created1 = int(time.time())
 
-    message_response = send_message(user1['token'], channel_id, "Hello")
+    message_response = rh.message_send(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 2
     message_id2 = response_data['message_id']
     time_created2 = int(time.time())
 
-    messages_response = print_channel_messages(user1['token'], channel_id, 0)
+    messages_response = rh.channel_messages(user1['token'], channel_id, 0)
     response_data = messages_response.json()
     expected_result = {
         "messages": [
@@ -547,10 +413,10 @@ def test_channel_messages_interaction2(clear, user1):
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-    message_response = remove_message(user1['token'], message_id2)
+    message_response = rh.message_remove(user1['token'], message_id2)
     assert message_response.status_code == 200
 
-    messages_response = print_channel_messages(user1['token'], channel_id, 0)
+    messages_response = rh.channel_messages(user1['token'], channel_id, 0)
     response_data = messages_response.json()
     expected_result = {
         "messages": [
@@ -573,10 +439,10 @@ def test_channel_messages_interaction2(clear, user1):
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-    message_response = remove_message(user1['token'], message_id1)
+    message_response = rh.message_remove(user1['token'], message_id1)
     assert message_response.status_code == 200
 
-    messages_response = print_channel_messages(user1['token'], channel_id, 0)
+    messages_response = rh.channel_messages(user1['token'], channel_id, 0)
     response_data = messages_response.json()
     expected_result = {
         "messages": [],
@@ -587,14 +453,14 @@ def test_channel_messages_interaction2(clear, user1):
     assert response_data == expected_result
 
 def test_one_user_removes_one_message_in_one_dm(clear, user1, user2):
-    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
-    message_response = send_dm_message(user1['token'], dm_id, "Hello")
+    dm_id = rh.dm_create(user1['token'], [user2['auth_user_id']]).json()['dm_id']
+    message_response = rh.message_senddm(user1['token'], dm_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    dm_messages = print_dm_messages(user1['token'], dm_id, 0)
+    dm_messages = rh.dm_messages(user1['token'], dm_id, 0)
     response_data = dm_messages.json()
     expected_result = {
         "messages": [
@@ -616,10 +482,10 @@ def test_one_user_removes_one_message_in_one_dm(clear, user1, user2):
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-    message_response = remove_message(user1['token'], message_id)
+    message_response = rh.message_remove(user1['token'], message_id)
     assert message_response.status_code == 200
 
-    dm_messages = print_dm_messages(user1['token'], dm_id, 0)
+    dm_messages = rh.dm_messages(user1['token'], dm_id, 0)
     response_data = dm_messages.json()
     expected_result = {
         "messages": [],
@@ -630,14 +496,14 @@ def test_one_user_removes_one_message_in_one_dm(clear, user1, user2):
 
 def test_one_user_removes_in_channel_and_dm(clear, user1, user2, user3):
     # Edits in channel
-    channel_id = create_channel(user1['token'], "chan_name", True)
-    message_response = send_message(user1['token'], channel_id, "Hello")
+    channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
+    message_response = rh.message_send(user1['token'], channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
     message_id = response_data['message_id']
 
-    messages = print_channel_messages(user1['token'], channel_id, 0)
+    messages = rh.channel_messages(user1['token'], channel_id, 0)
     response_data = messages.json()
     expected_result = {
         "messages": [
@@ -659,10 +525,10 @@ def test_one_user_removes_in_channel_and_dm(clear, user1, user2, user3):
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-    message = remove_message(user1['token'], message_id)
+    message = rh.message_remove(user1['token'], message_id)
     assert message.status_code == 200
 
-    messages = print_channel_messages(user1['token'], channel_id, 0)
+    messages = rh.channel_messages(user1['token'], channel_id, 0)
     response_data = messages.json()
     expected_result = {
         "messages": [],
@@ -672,19 +538,19 @@ def test_one_user_removes_in_channel_and_dm(clear, user1, user2, user3):
     assert expected_result == response_data
 
     # Creates a middle DM
-    dm_id = create_dm(user1['token'], [user2['auth_user_id']])
-    dm_message = send_dm_message(user1['token'], dm_id, "Hello")
+    dm_id = rh.dm_create(user1['token'], [user2['auth_user_id']]).json()['dm_id']
+    dm_message = rh.message_senddm(user1['token'], dm_id, "Hello")
     message_id = dm_message.json()['message_id']
     assert message_id == 2
     assert dm_message.status_code == 200
 
     # Creates a DM and edits a sent message in it
-    dm_id = create_dm(user1['token'], [user3['auth_user_id']])
-    dm_message = send_dm_message(user3['token'], dm_id, "Hello")
+    dm_id = rh.dm_create(user1['token'], [user3['auth_user_id']]).json()['dm_id']
+    dm_message = rh.message_senddm(user3['token'], dm_id, "Hello")
     message_id = dm_message.json()['message_id']
     assert message_id == 3
     assert dm_message.status_code == 200
-    dm_messages = print_dm_messages(user1['token'], dm_id, 0)
+    dm_messages = rh.dm_messages(user1['token'], dm_id, 0)
     response_data = dm_messages.json()
     expected_result = {
         "messages": [
@@ -706,10 +572,10 @@ def test_one_user_removes_in_channel_and_dm(clear, user1, user2, user3):
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-    dm_message = remove_message(user1['token'], message_id)
+    dm_message = rh.message_remove(user1['token'], message_id)
     assert dm_message.status_code == 200
 
-    dm_messages = print_dm_messages(user1['token'], dm_id, 0)
+    dm_messages = rh.dm_messages(user1['token'], dm_id, 0)
     response_data = dm_messages.json()
     expected_result = {
         "messages": [],
