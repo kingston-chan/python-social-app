@@ -140,4 +140,14 @@ def test_removeowner_global_owner(clear, first_user_data, second_user_data):
 
     response = rh.channel_removeowner(second_user_data["token"], channel_1, first_user_data["auth_user_id"])
 
-    assert response.status_code == 400
+    assert response.status_code == 403
+
+def test_removeowner_cannot_remove_owner(clear, first_user_data, second_user_data):
+
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
+    response_data = response.json()
+    channel_1 = response_data["channel_id"]
+
+    response = rh.channel_removeowner(second_user_data["token"], channel_1, first_user_data["auth_user_id"])
+
+    assert response.status_code == 403
