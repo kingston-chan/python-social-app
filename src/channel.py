@@ -465,14 +465,14 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
     if not user_exists:
         raise InputError(description="User is not authorised.")
 
+    if auth_user_id not in owner_ids and auth_user_id not in owner_perms_ids:
+        raise AccessError(description="User is not an owner/does not have owner perms")
+
     if u_id not in owner_ids and u_id not in owner_perms_ids:
         raise InputError(description="User is not an owner/does not have owner perms")
     
     if u_id in owner_ids and len(owner_ids) == 1:
         raise InputError(description="User is currently the only owner of the channel")
-
-    if auth_user_id not in owner_ids and auth_user_id not in owner_perms_ids:
-        raise AccessError(description="User is not an owner/does not have owner perms")
     
     # Removes the owner's u_id from the owner_members list and the owner_permissions list.
     owner_ids.remove(u_id)
