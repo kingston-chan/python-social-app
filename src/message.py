@@ -165,6 +165,7 @@ def message_edit_v1(auth_user_id, message_id, message):
         # Else edit message in located channel
         else:
             selected_message['message'] = message
+            
 
     # Else message should be in DM
     else: 
@@ -397,15 +398,18 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     
     og_message_id_exists = False
     og_message = None
+    og_shared_message = None
     for channel_message in channel_messages:
         if og_message_id == channel_message["message_id"]:
             og_message_id_exists = True
             og_message = channel_message["message"]
+            og_shared_message = channel_message["shared_message"]
     
     for dm_message in dm_messages:
         if og_message_id == dm_message["message_id"]:
             og_message_id_exists = True
             og_message = dm_message["message"]
+            og_shared_message = dm_message["shared_message"]
     
     if not og_message_id_exists:
         raise InputError(description="Invalid message ID")
@@ -417,9 +421,14 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     
     store["message_id_gen"] += 1
 
-    shared_message = "\n\n" + "\"\"\"\n" + og_message + "\n\"\"\""
+    shared_message = None
+    if og_shared_message == None:
+        shared_message = "\n\n" + "\"\"\"\n" + og_message + "\n\"\"\""
+    else:
+        shared_message =  "\n\n" + "\"\"\"\n" + og_message + og_shared_message + "\n\"\"\""
 
     if channel_or_dm == 0:
+        print(og_shared_message)
         new_message = {
             'message_id': store['message_id_gen'],
             'u_id': auth_user_id,

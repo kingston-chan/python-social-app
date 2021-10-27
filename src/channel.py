@@ -229,8 +229,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
             "time_created": selected_message['time_created']
         }
         if selected_message["shared_message"] != None:
-            message = selected_message["message"] + selected_message["shared_message"]
-            message_dict["message"] = message
+            message_dict["message"] = selected_message["message"] + selected_message["shared_message"]
             
         selected_messages.append(message_dict)
         index += 1
