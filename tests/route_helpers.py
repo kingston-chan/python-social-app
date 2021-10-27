@@ -311,6 +311,16 @@ def message_senddm(token, dm_id, message):
     }
     return requests.post(f"{url}/message/senddm/v1", json=info)
 
+def message_share(token, og_message_id, message, channel_id, dm_id):
+    info = {
+        "token": token,
+        "og_message_id": og_message_id,
+        "message": message,
+        "channel_id": channel_id,
+        "dm_id": dm_id
+    }
+    return requests.post(f"{url}/message/share/v1", json=info)
+
 # ==== DM ==== #
 
 def dm_create(token, u_ids):
