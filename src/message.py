@@ -428,7 +428,6 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
         shared_message =  "\n\n" + "\"\"\"\n" + og_message + og_shared_message + "\n\"\"\""
 
     if channel_or_dm == 0:
-        print(og_shared_message)
         new_message = {
             'message_id': store['message_id_gen'],
             'u_id': auth_user_id,
