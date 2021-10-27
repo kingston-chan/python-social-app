@@ -355,3 +355,94 @@ def message_senddm_v1(auth_user_id, dm_id, message):
     return {
         'message_id': new_dm_message['message_id']
     }
+
+def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
+    store = data_store.get()
+    channels = store["channels"]
+    dms = store["dms"]
+    channel_messages = store["channel_messages"]
+    dm_messages = store["dm_messages"]
+
+    members = None
+    channel_or_dm = None
+    if channel_id != -1 and dm_id == -1:
+        channel_or_dm = 0
+        channel_exists = False
+        for channel in channels:
+            if channel_id == channel["id"]:
+                members = channel["all_members"]
+                channel_exists = True
+
+        if not channel_exists:
+            raise InputError(description="Channel does not exist")
+
+    elif channel_id == -1 and dm_id != -1:
+        channel_or_dm = 1
+        dm_exists = False
+        for dm in dms:
+            if dm_id == dm["dm_id"]:
+                members = dm["members"]
+                dm_exists = True
+    
+        if not dm_exists:
+            raise InputError(description="DM does not exist")
+
+    else:
+        raise InputError(description="Neither channel_id nor dm_id are -1")
+
+    if auth_user_id not in members:
+        raise AccessError(description="The authorised user has not joined the channel/DM they are trying to share the message to")
+    
+    og_message_id_exists = False
+    og_message = None
+    for channel_message in channel_messages:
+        if og_message_id == channel_message["message_id"]:
+            og_message_id_exists = True
+            og_message = channel_message["message"]
+    
+    for dm_message in dm_messages:
+        if og_message_id == dm_message["message_id"]:
+            og_message_id_exists = True
+            og_message = dm_message["message"]
+    
+    if not og_message_id_exists:
+        raise InputError(description="Invalid message ID")
+    
+    if len(message) > 1000:
+        raise InputError(description="Message is too long")
+    elif message == None:
+        message = ""
+    
+    shared_message_id = store["message_id_gen"] + 1
+
+    final_message = message + "\n\n" + "\"\"\"\n" + og_message + "\n\"\"\""
+
+    if channel_or_dm == 0:
+        new_message = {
+            'message_id': store['message_id_gen'],
+            'u_id': auth_user_id,
+            'channel_id': channel_id,
+            'message': final_message,
+            'time_created': int(time.time()),    
+        }
+        channel_messages.append(new_message)
+
+    elif channel_or_dm == 1:
+        new_message = {
+            'message_id': store['message_id_gen'],
+            'u_id': auth_user_id,
+            'dm_id': dm_id,
+            'message': final_message,
+            'time_created': int(time.time()),    
+        }
+        dm_messages.append(new_message)
+
+    data_store.set(store)
+    
+    return {
+        "shared_message_id": shared_message_id
+    }
+    
+
+
+    
