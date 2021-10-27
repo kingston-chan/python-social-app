@@ -367,6 +367,7 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     dm_messages = store["dm_messages"]
 
     members = None
+    # 0 = Channel, 1 = DM
     channel_or_dm = None
     if channel_id != -1 and dm_id == -1:
         channel_or_dm = 0
@@ -427,26 +428,20 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     else:
         shared_message =  "\n\n" + "\"\"\"\n" + og_message + og_shared_message + "\n\"\"\""
 
+    new_message = {
+        'message_id': store['message_id_gen'],
+        'u_id': auth_user_id,
+        'message': message,
+        'shared_message': shared_message,
+        'time_created': int(time.time()),    
+    }
+
     if channel_or_dm == 0:
-        new_message = {
-            'message_id': store['message_id_gen'],
-            'u_id': auth_user_id,
-            'channel_id': channel_id,
-            'message': message,
-            'shared_message': shared_message,
-            'time_created': int(time.time()),    
-        }
+        new_message["channel_id"] = channel_id
         channel_messages.append(new_message)
 
     elif channel_or_dm == 1:
-        new_message = {
-            'message_id': store['message_id_gen'],
-            'u_id': auth_user_id,
-            'dm_id': dm_id,
-            'message': message,
-            'shared_message': shared_message,
-            'time_created': int(time.time()),    
-        }
+        new_message["dm_id"] = dm_id
         dm_messages.append(new_message)
 
     data_store.set(store)
