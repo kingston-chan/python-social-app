@@ -8,6 +8,9 @@ from src.error import InputError, AccessError
 from src.data_store import data_store
 import time
 
+IS_CHANNEL = 0
+IS_DM = 1
+
 def message_send_v1(auth_user_id, channel_id, message):
     """
     Send a message from the authorised user to the channel specified by channel_id.
@@ -367,10 +370,9 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     dm_messages = store["dm_messages"]
 
     members = None
-    # 0 = Channel, 1 = DM
     channel_or_dm = None
     if channel_id != -1 and dm_id == -1:
-        channel_or_dm = 0
+        channel_or_dm = IS_CHANNEL
         channel_exists = False
         for channel in channels:
             if channel_id == channel["id"]:
@@ -381,7 +383,7 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
             raise InputError(description="Channel does not exist")
 
     elif channel_id == -1 and dm_id != -1:
-        channel_or_dm = 1
+        channel_or_dm = IS_DM
         dm_exists = False
         for dm in dms:
             if dm_id == dm["dm_id"]:
@@ -436,11 +438,11 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
         'time_created': int(time.time()),    
     }
 
-    if channel_or_dm == 0:
+    if channel_or_dm == IS_CHANNEL:
         new_message["channel_id"] = channel_id
         channel_messages.append(new_message)
 
-    elif channel_or_dm == 1:
+    elif channel_or_dm == IS_DM:
         new_message["dm_id"] = dm_id
         dm_messages.append(new_message)
 
