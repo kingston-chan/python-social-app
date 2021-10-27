@@ -72,6 +72,7 @@ def message_send_v1(auth_user_id, channel_id, message):
         'u_id': auth_user_id,
         'channel_id': channel_id,
         'message': message,
+        'shared_message': None,
         'time_created': int(time.time()),
     }
     messages.append(new_message)
@@ -346,6 +347,7 @@ def message_senddm_v1(auth_user_id, dm_id, message):
         'u_id': auth_user_id,
         'dm_id': dm_id,
         'message': message,
+        'shared_message': None,
         'time_created': int(time.time()),
     }
     dm_messages.append(new_dm_message)
@@ -413,16 +415,17 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     elif message == None:
         message = ""
     
-    shared_message_id = store["message_id_gen"] + 1
+    store["message_id_gen"] += 1
 
-    final_message = message + "\n\n" + "\"\"\"\n" + og_message + "\n\"\"\""
+    shared_message = "\n\n" + "\"\"\"\n" + og_message + "\n\"\"\""
 
     if channel_or_dm == 0:
         new_message = {
             'message_id': store['message_id_gen'],
             'u_id': auth_user_id,
             'channel_id': channel_id,
-            'message': final_message,
+            'message': message,
+            'shared_message': shared_message,
             'time_created': int(time.time()),    
         }
         channel_messages.append(new_message)
@@ -432,15 +435,16 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
             'message_id': store['message_id_gen'],
             'u_id': auth_user_id,
             'dm_id': dm_id,
-            'message': final_message,
+            'message': message,
+            'shared_message': shared_message,
             'time_created': int(time.time()),    
         }
         dm_messages.append(new_message)
 
     data_store.set(store)
-    
+
     return {
-        "shared_message_id": shared_message_id
+        "shared_message_id": store['message_id_gen']
     }
     
 
