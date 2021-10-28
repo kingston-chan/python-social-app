@@ -23,7 +23,7 @@ def third_user_data():
 
 def test_message_sendlater_member_not_apart_of_channel(clear, first_user_data, second_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
-    channel_1 = response.json["channel_id"]
+    channel_1 = response.json()["channel_id"]
 
     response = rh.message_sendlater(second_user_data["token"], channel_1, "Hello", int(time.time()) + 5)
 
@@ -31,7 +31,7 @@ def test_message_sendlater_member_not_apart_of_channel(clear, first_user_data, s
 
 def test_message_sendlater_unauthorised_user(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
-    channel_1 = response.json["channel_id"]
+    channel_1 = response.json()["channel_id"]
 
     fake_user_token = "foajsfsaf"
 
@@ -50,7 +50,7 @@ def test_message_sendlater_invalid_channel_id(clear, first_user_data):
 
 def test_message_sendlater_too_long_message(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
-    channel_1 = response.json["channel_id"]
+    channel_1 = response.json()["channel_id"]
 
     long_message = "F"*1001
 
@@ -60,10 +60,24 @@ def test_message_sendlater_too_long_message(clear, first_user_data):
 
 def test_message_sendlater_time_in_the_past(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
-    channel_1 = response.json["channel_id"]
+    channel_1 = response.json()["channel_id"]
 
     time_in_the_past = int(time.time()) - 30
 
     response = rh.message_sendlater(first_user_data["token"], channel_1, "Hello", time_in_the_past)
 
     assert response.status_code == 400
+
+def test_message_sendlater_valid(clear, first_user_data):
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
+    channel_1 = response.json()["channel_id"]
+
+    response = rh.message_sendlater(first_user_data["token"], channel_1, "Hello", int(time.time()) + 5)
+
+    assert response.status_code == 200
+
+    response = rh.channel_messages(first_user_data["token"], channel_1, 0)
+    response_data = response.json()
+    message = response_data["messages"][0]["message"]
+
+    assert message == "Hello"

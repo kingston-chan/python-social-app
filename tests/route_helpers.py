@@ -311,6 +311,15 @@ def message_senddm(token, dm_id, message):
     }
     return requests.post(f"{url}/message/senddm/v1", json=info)
 
+def message_sendlater(token, channel_id, message, time_sent):
+    info = {
+        "token": token,
+        "channel_id": channel_id,
+        "message": message,
+        "time_sent": time_sent
+    }
+    return requests.post(f"{url}/message/sendlater/v1", json=info)
+
 # ==== DM ==== #
 
 def dm_create(token, u_ids):
