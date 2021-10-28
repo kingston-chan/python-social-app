@@ -375,7 +375,6 @@ def message_sendlaterdm_threading(auth_user_id, dm_id, message, time_sent):
     
     data_store.set(store)
 
-
 def message_sendlaterdm_v1(auth_user_id, dm_id, message, time_sent):
     store = data_store.get()
     dms = store['dms']
@@ -414,4 +413,3 @@ def message_sendlaterdm_v1(auth_user_id, dm_id, message, time_sent):
             message_id = dm_message["message_id"]
 
     return message_id
-
