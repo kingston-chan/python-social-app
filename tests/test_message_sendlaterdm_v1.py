@@ -40,7 +40,7 @@ def test_message_sendlaterdm_unauthorised_token(clear, first_user_data):
     assert response.status_code == 403
 
 def test_message_sendlaterdm_invalid_dm_id(clear, first_user_data):
-    rh.dm_create(first_user_data["token"])
+    rh.dm_create(first_user_data["token"], [])
 
     fake_dm_id = 9999
 
@@ -49,17 +49,17 @@ def test_message_sendlaterdm_invalid_dm_id(clear, first_user_data):
     assert response.status_code == 400
 
 def test_message_sendlaterdm_message_too_long(clear, first_user_data):
-    response = rh.dm_create(first_user_data["token"])
+    response = rh.dm_create(first_user_data["token"], [])
     dm_id = response.json()["dm_id"]
 
-    long_message = "F"*1000
+    long_message = "F"*1001
 
     response = rh.message_sendlaterdm(first_user_data["token"], dm_id, long_message, time.time() + 5)
 
     assert response.status_code == 400
 
 def test_message_sendlaterdm_time_in_the_past(clear, first_user_data):
-    response = rh.dm_create(first_user_data["token"])
+    response = rh.dm_create(first_user_data["token"], [])
     dm_id = response.json()["dm_id"]
 
     fake_time = time.time() - 300
@@ -69,7 +69,7 @@ def test_message_sendlaterdm_time_in_the_past(clear, first_user_data):
     assert response.status_code == 400
 
 def test_message_sendlaterdm_valid(clear, first_user_data):
-    response = rh.dm_create(first_user_data["token"])
+    response = rh.dm_create(first_user_data["token"], [])
     dm_id = response.json()["dm_id"]
 
     response = rh.message_sendlaterdm(first_user_data["token"], dm_id, "Hello", time.time() + 5)
@@ -80,7 +80,7 @@ def test_message_sendlaterdm_valid(clear, first_user_data):
     messages = response.json()["messages"][0]["message"]
 
     assert messages == "Hello"
-    
+
 
 
 
