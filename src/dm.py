@@ -248,9 +248,6 @@ def dm_messages_v1(auth_user_id, dm_id, start):
             "message": selected_dm_message['message'],
             "time_created": selected_dm_message['time_created']
         }
-        if selected_dm_message["shared_message"] != None:
-            dm_message_dict["message"] = selected_dm_message["message"] + selected_dm_message["shared_message"]
-    
         selected_dm_messages.append(dm_message_dict)
         index += 1
         counter += 1
