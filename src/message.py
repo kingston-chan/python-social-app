@@ -369,7 +369,7 @@ def message_sendlater_threading(auth_user_id, channel_id, message, time_sent, me
         'time_created': time_sent,   
     }
 
-    channel_messages.append(new_message)    
+    channel_messages.append(new_message)
 
     data_store.set(store)
 
@@ -378,7 +378,7 @@ def message_sendlater_v1(auth_user_id, channel_id, message, time_sent):
     channels = store['channels']
 
     time_now = time.time()
-    time_difference = int(time_sent - time_now) - 30
+    time_difference = int(time_sent - time_now)
 
     member_ids = None
     channel_exist = False
