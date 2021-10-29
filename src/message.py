@@ -361,8 +361,6 @@ def message_sendlater_threading(auth_user_id, channel_id, message, time_sent):
     store = data_store.get()
     channel_messages = store['channel_messages']
 
-    store['message_id_gen'] += 1
-
     new_message = {
         'message_id': store['message_id_gen'],
         'u_id': auth_user_id,
@@ -372,14 +370,12 @@ def message_sendlater_threading(auth_user_id, channel_id, message, time_sent):
     }
 
     channel_messages.append(new_message)    
-    
-    data_store.set(store)
 
+    data_store.set(store)
 
 def message_sendlater_v1(auth_user_id, channel_id, message, time_sent):
     store = data_store.get()
     channels = store['channels']
-    channel_messages = store['channel_messages']
 
     member_ids = None
     channel_exist = False
@@ -402,17 +398,13 @@ def message_sendlater_v1(auth_user_id, channel_id, message, time_sent):
     if time_difference < 0:
         raise InputError(description="Time set is in the past")
     
+    store['message_id_gen'] += 1
+    data_store.set(store)
+
     x = threading.Timer(time_difference, message_sendlater_threading, args=(auth_user_id, channel_id, message, time_sent))
 
     x.start()
 
-    x.join()
-
-    message_id = None
-    for channel_message in channel_messages:
-        if channel_message["u_id"] == auth_user_id and channel_message["channel_id"] == channel_id and channel_message["message"] == message and channel_message["time_created"] == int(time_sent):
-            message_id = channel_message["message_id"]
-
-    return message_id
-
-
+    return {
+        "message_id": store['message_id_gen'],
+    }
