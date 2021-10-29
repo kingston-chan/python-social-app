@@ -76,6 +76,8 @@ def test_message_sendlaterdm_valid(clear, first_user_data):
 
     assert response.status_code == 200
 
+    time.sleep(8)
+
     response = rh.dm_messages(first_user_data["token"], dm_id, 0)
     messages = response.json()["messages"][0]["message"]
 

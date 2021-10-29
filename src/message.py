@@ -357,14 +357,12 @@ def message_senddm_v1(auth_user_id, dm_id, message):
         'message_id': new_dm_message['message_id']
     }
 
-def message_sendlaterdm_threading(auth_user_id, dm_id, message, time_sent):
+def message_sendlaterdm_threading(auth_user_id, dm_id, message, time_sent, message_id):
     store = data_store.get()
     dm_messages = store['dm_messages']
 
-    store['message_id_gen'] += 1
-
     new_message = {
-        'message_id': store['message_id_gen'],
+        'message_id': message_id,
         'u_id': auth_user_id,
         'dm_id': dm_id,
         'message': message,
@@ -378,7 +376,9 @@ def message_sendlaterdm_threading(auth_user_id, dm_id, message, time_sent):
 def message_sendlaterdm_v1(auth_user_id, dm_id, message, time_sent):
     store = data_store.get()
     dms = store['dms']
-    dm_messages = store['dm_messages']
+    
+    time_now = time.time()
+    time_difference = int(time_sent - time_now)
 
     member_ids = None
     dm_exist = False
@@ -396,20 +396,15 @@ def message_sendlaterdm_v1(auth_user_id, dm_id, message, time_sent):
     if len(message) > 1000:
         raise InputError(description="Message is too long")
     
-    time_difference = int(time_sent - time.time())
-    
     if time_difference < 0:
         raise InputError(description="Time set is in the past")
     
-    x = threading.Timer(time_difference, message_sendlaterdm_threading, args=(auth_user_id, dm_id, message, time_sent))
+    store['message_id_gen'] += 1
+
+    x = threading.Timer(time_difference, message_sendlaterdm_threading, args=(auth_user_id, dm_id, message, time_sent, store['message_id_gen']))
 
     x.start()
 
-    x.join()
-
-    message_id = None
-    for dm_message in dm_messages:
-        if dm_message["u_id"] == auth_user_id and dm_message["dm_id"] == dm_id and dm_message["message"] == message and dm_message["time_created"] == int(time_sent):
-            message_id = dm_message["message_id"]
-
-    return message_id
+    return {
+        "message_id": store['message_id_gen']
+    }
