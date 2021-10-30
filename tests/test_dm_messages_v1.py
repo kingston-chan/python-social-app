@@ -42,7 +42,9 @@ def send_mass_dm_messages(user, messages_total, dm_id):
             "message_id":  message_id,
             "u_id": user['auth_user_id'],
             "message": "hello",
-            "time_created": current_time
+            "time_created": current_time,
+            "reacts": {},
+            "is_pinned": False
         }
         message_list.insert(0, message_dict)
         loop += 1
@@ -58,7 +60,9 @@ def make_mass_expected_results(start, end, messages_total, message_list):
             "message_id": selected_message['message_id'],
             "u_id": selected_message['u_id'],
             "message": selected_message['message'],
-            "time_created": selected_message['time_created']
+            "time_created": selected_message['time_created'],
+            "reacts": selected_message['reacts'],
+            "is_pinned": selected_message['is_pinned']
         }
         selected_messages.append(message_dict)
         index += 1
@@ -186,6 +190,7 @@ def test_start_0_total_1(clear, user1, user2):
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+        assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
 
 def test_start_0_total_50(clear, user1, user2):
     dm_id = rh.dm_create(user1['token'], [user2['auth_user_id']]).json()['dm_id']
@@ -204,7 +209,7 @@ def test_start_0_total_50(clear, user1, user2):
         assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
-        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+        assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
 
 def test_start_0_total_55(clear, user1, user2):
     dm_id = rh.dm_create(user1['token'], [user2['auth_user_id']]).json()['dm_id']
@@ -224,6 +229,7 @@ def test_start_0_total_55(clear, user1, user2):
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+        assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
 
 def test_start_2_total_3(clear, user1, user2):
     dm_id = rh.dm_create(user1['token'], [user2['auth_user_id']]).json()['dm_id']
@@ -243,6 +249,7 @@ def test_start_2_total_3(clear, user1, user2):
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+        assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
 
 def test_start_100_total_150(clear, user1, user2):
     dm_id = rh.dm_create(user1['token'], [user2['auth_user_id']]).json()['dm_id']
@@ -262,6 +269,7 @@ def test_start_100_total_150(clear, user1, user2):
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+        assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
 
 def test_start_60_total_110(clear, user1, user2):
     dm_id = rh.dm_create(user1['token'], [user2['auth_user_id']]).json()['dm_id']
@@ -281,3 +289,4 @@ def test_start_60_total_110(clear, user1, user2):
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+        assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
