@@ -51,17 +51,17 @@ def message_send_v1(auth_user_id, channel_id, message):
 
     # If channel not found, InputError
     if not valid_channel:
-        raise InputError("This channel is not valid.")
+        raise InputError(description="This channel is not valid.")
     # If message too short/long, InputError
     elif not valid_message:
         if len(message) < 1:
-            raise InputError("This message is too short.")
+            raise InputError(description="This message is too short.")
         else:
-            raise InputError("This message is too long.")
+            raise InputError(description="This message is too long.")
     
     # If user not in channel, InputError
     if auth_user_id not in selected_channel['all_members']:
-        raise AccessError("This user is not a member of this channel.")
+        raise AccessError(description="This user is not a member of this channel.")
 
     # Increment message_id_gen
     store['message_id_gen'] += 1
@@ -142,10 +142,10 @@ def message_edit_v1(auth_user_id, message_id, message):
 
     # If message not found, InputError
     if not valid_message_id:
-        raise InputError("This message id is not valid.")
+        raise InputError(description="This message id is not valid.")
     # If message too long, InputError
     elif not valid_message:
-        raise InputError("This message is too long.")
+        raise InputError(description="This message is too long.")
 
     # If message in channel
     if in_channel:
@@ -155,10 +155,10 @@ def message_edit_v1(auth_user_id, message_id, message):
                 selected_channel = channel
         # If user not in channel, InputError
         if auth_user_id not in selected_channel['all_members']:
-            raise InputError("This user is not a member of this channel.")
+            raise InputError(description="This user is not a member of this channel.")
         # If user not in message and not an owner, AccessError
         elif auth_user_id is not selected_message['u_id'] and auth_user_id not in selected_channel['owner_permissions']:
-            raise AccessError("This user is not allowed to edit this message.")
+            raise AccessError(description="This user is not allowed to edit this message.")
         
         # If message is empty, remove new message in located channel
         if message == "":
@@ -175,13 +175,13 @@ def message_edit_v1(auth_user_id, message_id, message):
                 selected_dm = dm
         # If DM is deleted/invalid, Input Error
         if selected_dm == {}:
-            raise InputError("This DM is invalid.")
+            raise InputError(description="This DM is invalid.")
         # If user not in DM, InputError
         if auth_user_id not in dm['members']:
-            raise InputError("This user is not a member of this DM.")
+            raise InputError(description="This user is not a member of this DM.")
         # If user not in DM and not an owner, AccessError
         elif auth_user_id is not selected_message['u_id'] and auth_user_id is not selected_dm['owner_of_dm']:
-            raise AccessError("This user is not allowed to edit this DM message.")
+            raise AccessError(description="This user is not allowed to edit this DM message.")
         
         # If message is empty, remove new message in located DM
         if message == "":
@@ -245,7 +245,7 @@ def message_remove_v1(auth_user_id, message_id):
     
     # If message not found, InputError
     if not valid_message_id:
-        raise InputError("This message id is not valid.")
+        raise InputError(description="This message id is not valid.")
 
     # If message in channel
     if in_channel:
@@ -255,10 +255,10 @@ def message_remove_v1(auth_user_id, message_id):
                 selected_channel = channel
         # If user not in channel, InputError
         if auth_user_id not in selected_channel['all_members']:
-            raise InputError("This user is not a member of this channel.")
+            raise InputError(description="This user is not a member of this channel.")
         # If user not in message and not an owner, AccessError
         elif auth_user_id is not selected_message['u_id'] and auth_user_id not in selected_channel['owner_permissions']:
-            raise AccessError("This user is not allowed to edit this message.")
+            raise AccessError(description="This user is not allowed to edit this message.")
         # Remove located message in located channel
         channel_messages.remove(selected_message)
 
@@ -270,13 +270,13 @@ def message_remove_v1(auth_user_id, message_id):
                 selected_dm = dm
         # If DM is deleted/invalid, Input Error
         if selected_dm == {}:
-            raise InputError("This DM is invalid.")
+            raise InputError(description="This DM is invalid.")
         # If user not in DM, InputError
         if auth_user_id not in selected_dm['members']:
-            raise InputError("This user is not a member of this DM.")
+            raise InputError(description="This user is not a member of this DM.")
         # If user not in DM and not an owner, AccessError
         elif auth_user_id is not selected_message['u_id'] and auth_user_id is not selected_dm['owner_of_dm']:
-            raise AccessError("This user is not allowed to edit this DM message.")
+            raise AccessError(description="This user is not allowed to edit this DM message.")
         # Remove located message in located DM
         dm_messages.remove(selected_message)
 
@@ -327,17 +327,17 @@ def message_senddm_v1(auth_user_id, dm_id, message):
 
     # If DM not found, InputError
     if not valid_dm:
-        raise InputError("This DM is not valid.")
+        raise InputError(description="This DM is not valid.")
     # If message too short/long, InputError
     elif not valid_message:
         if len(message) < 1:
-            raise InputError("This message is too short.")
+            raise InputError(description="This message is too short.")
         else:
-            raise InputError("This message is too long.")
+            raise InputError(description="This message is too long.")
 
     # If user not in DM, InputError
     if auth_user_id not in selected_dm['members']:
-        raise AccessError("This user is not a member of this DM.")
+        raise AccessError(description="This user is not a member of this DM.")
 
     # Increment message_id_gen
     store['message_id_gen'] += 1
