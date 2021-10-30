@@ -5,7 +5,7 @@ import tests.route_helpers as rh
 BASE_URL = url
 
 def test_invalid_token():
-    return None
+    assert 
 def test_unauthorised_token_for_dm():
     return None
 def test_unauthorised_token_for_channel():
