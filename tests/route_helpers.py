@@ -311,6 +311,13 @@ def message_senddm(token, dm_id, message):
     }
     return requests.post(f"{url}/message/senddm/v1", json=info)
 
+def message_pin(token, message_id):
+    info = {
+        'token': token,
+        'message_id': message_id
+    }
+    return requests.post(f"{url}/message/pin/v1", json=info)
+
 # ==== DM ==== #
 
 def dm_create(token, u_ids):
@@ -382,7 +389,6 @@ def dm_leave(token, dm_id):
         Returns the response of the dm/leave/v1 request which contains json {}
     """
     return requests.post(f"{url}/dm/leave/v1", json={ "token": token, "dm_id": dm_id })
-
 
 def dm_messages(token, dm_id, start):
     """
