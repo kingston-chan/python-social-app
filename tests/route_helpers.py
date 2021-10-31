@@ -61,6 +61,13 @@ def auth_passwordreset_request(email):
     }
     return requests.post(f"{url}/auth/passwordreset/reset/v1", json=info)
 
+def auth_passwordreset_reset(reset_code, new_password):
+    info = {
+        "reset_code": reset_code,
+        "new_password": new_password
+    }
+    return requests.post(f"{url}/auth/passwordreset/reset/v1", json=info)
+
 # ==== Channel ==== #
 
 def channels_create(token, name, is_public):
