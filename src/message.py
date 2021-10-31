@@ -417,10 +417,10 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     if not og_message_id_exists:
         raise InputError(description="Invalid message ID")
     
-    if len(message) > 1000:
-        raise InputError(description="Message is too long")
-    elif message == None:
+    if message == None:
         message = ""
+    elif len(message) > 1000:
+        raise InputError(description="Message is too long")
     
     store["message_id_gen"] += 1
 
@@ -439,7 +439,7 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
         new_message["channel_id"] = channel_id
         channel_messages.append(new_message)
 
-    elif channel_or_dm == IS_DM:
+    else: # IS_DM
         new_message["dm_id"] = dm_id
         dm_messages.append(new_message)
 
