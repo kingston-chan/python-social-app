@@ -371,6 +371,8 @@ def message_sendlaterdm_threading(auth_user_id, dm_id, message, time_sent, messa
         'dm_id': dm_id,
         'message': message,
         'time_created': time_sent,   
+        'reacts': [],
+        'is_pinned': False,
     }
 
     dm_messages.append(new_message)    
