@@ -237,7 +237,7 @@ def message_senddm():
 def message_pin():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
-    new_dm_message = message_pin_v1(user_id, data["message_id"])
+    message_pin_v1(user_id, data["message_id"])
     save()
     return dumps({})
 
