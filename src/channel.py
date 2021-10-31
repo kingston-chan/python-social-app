@@ -221,14 +221,7 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     counter = 0
     selected_messages = []
     while index < length and counter < 50:
-        selected_message = selected_channel_messages[index]
-        message_dict = {
-            "message_id": selected_message['message_id'],
-            "u_id": selected_message['u_id'],
-            "message": selected_message['message'],
-            "time_created": selected_message['time_created']
-        }
-        selected_messages.append(message_dict)
+        selected_messages.append(selected_channel_messages[index])
         index += 1
         counter += 1
 
