@@ -359,3 +359,96 @@ def message_senddm_v1(auth_user_id, dm_id, message):
     return {
         'message_id': new_dm_message['message_id']
     }
+
+def message_pin_v1(auth_user_id, message_id):
+    """
+    Given a message, update its text with new text. 
+    If new text is blank, the message is deleted.
+
+    Arguments: 
+        auth_user_id (integer) - id of user removing the message
+        message_id (integer) - id of the message is being deleted
+
+    Exceptions:
+        InputError - Occurs when given:
+                        - message_id does not refer to a valid message within 
+                          a channel/DM that the authorised user has joined
+        AccessError - Occurs when message_id refers to a valid message in a 
+                      joined channel/DM and none of the following are true:
+                        - the message was sent by the authorised user making this request
+                        - the authorised user has owner permissions in the channel/DM
+
+    Return Value:
+        Returns an empty dictionary
+
+    """
+    # Get variables from store
+    store = data_store.get()
+    channels = store["channels"]
+    dms = store["dms"]
+    channel_messages = store["channel_messages"]
+    dm_messages = store["dm_messages"]
+
+    # Initialise new variables
+    selected_message = {}
+    selected_channel = {}
+    selected_dm = {}
+    valid_message_id = False
+    in_channel = False
+
+    # Locate message in channels
+    for target_message in channel_messages:
+        if int(target_message['message_id']) == int(message_id):
+            valid_message_id = True
+            selected_message = target_message
+            in_channel = True
+
+    # Locate message in DMs
+    for target_message in dm_messages:
+        if int(target_message['message_id']) == int(message_id):
+            valid_message_id = True
+            selected_message = target_message
+    
+    # If message not found, InputError
+    if not valid_message_id:
+        raise InputError(description="This message id is not valid.")
+    
+    if selected_message['is_pinned']:
+        raise InputError(description="This message id is already pinned.")
+
+    # If message in channel
+    if in_channel:
+        # Locate channel
+        for channel in channels:
+            if int(channel['id']) == int(selected_message['channel_id']):
+                selected_channel = channel
+        # If user not in channel, InputError
+        if auth_user_id not in selected_channel['all_members']:
+            raise InputError(description="This user is not a member of this channel.")
+        # If user not in message and not an owner, AccessError
+        elif auth_user_id not in selected_channel['owner_permissions']:
+            raise AccessError(description="This user is not allowed to edit this message.")
+        # Pin located message in located channel
+        selected_message['is_pinned'] = True
+
+    # Else message should be in DM
+    else:
+        # Locate DM
+        for dm in dms:
+            if int(dm['dm_id']) == int(selected_message['dm_id']):
+                selected_dm = dm
+        # If DM is deleted/invalid, Input Error
+        if selected_dm == {}:
+            raise InputError(description="This DM is invalid.")
+        # If user not in DM, InputError
+        if auth_user_id not in selected_dm['members']:
+            raise InputError(description="This user is not a member of this DM.")
+        # If user not in DM and not an owner, AccessError
+        elif auth_user_id is not selected_dm['owner_of_dm']:
+            raise AccessError(description="This user is not allowed to edit this DM message.")
+        # Pin located message in located channel
+        selected_message['is_pinned'] = True
+
+    # Store data into data_store and return empty dictionary
+    data_store.set(store)
+    return {}
