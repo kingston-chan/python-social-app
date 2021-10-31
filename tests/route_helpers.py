@@ -644,7 +644,7 @@ def standup_active(token, channel_id):
     }
     return requests.get(f"{url}/standup/active/v1", params=info)
 
-def standup_start(token, channel_id, message):
+def standup_send(token, channel_id, message):
     info = {
         "token": token,
         "channel_id": channel_id,
