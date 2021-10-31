@@ -370,7 +370,9 @@ def message_sendlater_threading(auth_user_id, channel_id, message, time_sent, me
         'u_id': auth_user_id,
         'channel_id': channel_id,
         'message': message,
-        'time_created': time_sent,   
+        'time_created': time_sent,
+        'reacts': [],
+        'is_pinned': False,   
     }
 
     channel_messages.append(new_message)
