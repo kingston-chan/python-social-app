@@ -34,7 +34,7 @@ def send_mass_messages(user, messages_total, channel_id):
             "u_id": user['auth_user_id'],
             "message": "hello",
             "time_created": current_time,
-            "reacts": {},
+            "reacts": [],
             "is_pinned": False,
         }
         message_list.insert(0, message_dict)

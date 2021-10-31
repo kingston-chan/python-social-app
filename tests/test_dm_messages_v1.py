@@ -43,7 +43,7 @@ def send_mass_dm_messages(user, messages_total, dm_id):
             "u_id": user['auth_user_id'],
             "message": "hello",
             "time_created": current_time,
-            "reacts": {},
+            "reacts": [],
             "is_pinned": False
         }
         message_list.insert(0, message_dict)
