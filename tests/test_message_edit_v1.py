@@ -360,7 +360,7 @@ def test_channel_messages_interaction(clear, user1):
                 "u_id": user1['auth_user_id'],
                 "message": "Hello",
                 "time_created": int(time.time()),
-                "reacts": {},
+                "reacts": [],
                 "is_pinned": False,
             }
         ],
@@ -427,16 +427,16 @@ def test_channel_messages_interaction2(clear, user1):
                 "u_id": user1['auth_user_id'],
                 "message": "Hello",
                 "time_created": time_created2,
-                "reacts": {},
-                "is_pinned": False
+                "reacts": [],
+                "is_pinned": False,
             }, 
             {
                 "message_id": 1,
                 "u_id": user1['auth_user_id'],
                 "message": "Hello",
                 "time_created": time_created1,
-                "reacts": {},
-                "is_pinned": False
+                "reacts": [],
+                "is_pinned": False,
             }
         ],
         "start": 0,
@@ -464,7 +464,7 @@ def test_channel_messages_interaction2(clear, user1):
                 "u_id": user1['auth_user_id'],
                 "message": "Woah",
                 "time_created": time_created2,
-                "reacts": {},
+                "reacts": [],
                 "is_pinned": False,
             }, 
             {
@@ -472,7 +472,7 @@ def test_channel_messages_interaction2(clear, user1):
                 "u_id": user1['auth_user_id'],
                 "message": "Hello",
                 "time_created": time_created1,
-                "reacts": {},
+                "reacts": [],
                 "is_pinned": False    
             }
         ],
@@ -502,7 +502,7 @@ def test_channel_messages_interaction2(clear, user1):
                 "u_id": user1['auth_user_id'],
                 "message": "Woah",
                 "time_created": time_created2,
-                "reacts": {},
+                "reacts": [],
                 "is_pinned": False,
             }, 
             {
@@ -510,7 +510,7 @@ def test_channel_messages_interaction2(clear, user1):
                 "u_id": user1['auth_user_id'],
                 "message": "Jeez",
                 "time_created": time_created1,
-                "reacts": {},
+                "reacts": [],
                 "is_pinned": False,
 
             }

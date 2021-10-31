@@ -73,7 +73,7 @@ def message_send_v1(auth_user_id, channel_id, message):
         'channel_id': channel_id,
         'message': message,
         'time_created': int(time.time()),
-        'reacts': {},
+        'reacts': [],
         'is_pinned': False
     }
     messages.append(new_message)
@@ -349,7 +349,7 @@ def message_senddm_v1(auth_user_id, dm_id, message):
         'dm_id': dm_id,
         'message': message,
         'time_created': int(time.time()),
-        'reacts': {},
+        'reacts': [],
         'is_pinned': False,
     }
     dm_messages.append(new_dm_message)
