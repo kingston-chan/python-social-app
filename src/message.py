@@ -431,6 +431,8 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
         'u_id': auth_user_id,
         'message': shared_message,
         'time_created': int(time.time()),    
+        'reacts': [],
+        'is_pinned': False,
     }
 
     if channel_or_dm == IS_CHANNEL:
