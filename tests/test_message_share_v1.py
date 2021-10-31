@@ -27,7 +27,7 @@ def test_message_share_member_not_in_channel(clear, first_user_data, second_user
     response = rh.message_send(first_user_data["token"], channel_1, "hello")
     message_id = response.json()["message_id"]
 
-    response = rh.message_share(second_user_data["token"], message_id, None, channel_1, -1)
+    response = rh.message_share(second_user_data["token"], message_id, "", channel_1, -1)
     
     assert response.status_code == 403
 
@@ -38,7 +38,7 @@ def test_message_share_member_not_in_dm(clear, first_user_data, second_user_data
     response = rh.message_senddm(first_user_data["token"], dm_id, "hello")
     message_id = response.json()["message_id"]
 
-    response = rh.message_share(second_user_data["token"], message_id, None, -1, dm_id)
+    response = rh.message_share(second_user_data["token"], message_id, "", -1, dm_id)
 
     assert response.status_code == 403
 
@@ -51,7 +51,7 @@ def test_message_share_invalid_channel_id(clear, first_user_data):
 
     fake_channel_id = 9999
 
-    response = rh.message_share(first_user_data["token"], message_id, None, fake_channel_id, -1)
+    response = rh.message_share(first_user_data["token"], message_id, "", fake_channel_id, -1)
 
     assert response.status_code == 400
 
@@ -64,7 +64,7 @@ def test_message_share_invalid_dm_id(clear, first_user_data):
 
     fake_dm_id = 9999
 
-    response = rh.message_share(first_user_data["token"], message_id, None, -1, fake_dm_id)
+    response = rh.message_share(first_user_data["token"], message_id, "", -1, fake_dm_id)
 
     assert response.status_code == 400
 
@@ -78,7 +78,7 @@ def test_message_share_channel_id_and_dm_id_arent_negative_1(clear, first_user_d
     response = rh.message_send(first_user_data["token"], channel_1, "hello")
     message_id = response.json()["message_id"]
 
-    response = rh.message_share(first_user_data["token"], message_id, None, channel_1, dm_id)
+    response = rh.message_share(first_user_data["token"], message_id, "", channel_1, dm_id)
 
     assert response.status_code == 400
 
@@ -90,7 +90,7 @@ def test_message_share_channel_og_message_id_not_valid(clear, first_user_data):
 
     fake_message_id = 9999
 
-    response = rh.message_share(first_user_data["token"], fake_message_id, None, channel_1, -1)
+    response = rh.message_share(first_user_data["token"], fake_message_id, "", channel_1, -1)
 
     assert response.status_code == 400
 
@@ -102,7 +102,7 @@ def test_message_share_dm_og_message_id_not_valid(clear, first_user_data):
 
     fake_message_id = 9999
 
-    response = rh.message_share(first_user_data["token"], fake_message_id, None, -1, dm_id)
+    response = rh.message_share(first_user_data["token"], fake_message_id, "", -1, dm_id)
 
     assert response.status_code == 400
 
@@ -128,7 +128,7 @@ def test_message_share_unauthorised_user(clear, first_user_data):
 
     fake_user_token = "faopsfkas"
 
-    response = rh.message_share(fake_user_token, message_id, None, channel_1, -1)
+    response = rh.message_share(fake_user_token, message_id, "", channel_1, -1)
 
     assert response.status_code == 403
 
@@ -153,7 +153,7 @@ def test_message_share_empty_message(clear, first_user_data):
     response = rh.message_send(first_user_data["token"], channel_1, "hello")
     message_id = response.json()["message_id"]
 
-    response = rh.message_share(first_user_data["token"], message_id, None, channel_1, -1)
+    response = rh.message_share(first_user_data["token"], message_id, "", channel_1, -1)
 
     assert response.status_code == 200
 
