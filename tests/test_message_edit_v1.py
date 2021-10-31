@@ -359,7 +359,9 @@ def test_channel_messages_interaction(clear, user1):
                 "message_id": 1,
                 "u_id": user1['auth_user_id'],
                 "message": "Hello",
-                "time_created": int(time.time()) 
+                "time_created": int(time.time()),
+                "reacts": [],
+                "is_pinned": False,
             }
         ],
         "start": 0,
@@ -372,6 +374,8 @@ def test_channel_messages_interaction(clear, user1):
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+        assert response_data['messages'][x]['reacts'] == expected_result['messages'][x]['reacts']
+        assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
 
     message_response = rh.message_edit(user1['token'], message_id, "Hello again.")
     assert message_response.status_code == 200
@@ -422,13 +426,17 @@ def test_channel_messages_interaction2(clear, user1):
                 "message_id": 2,
                 "u_id": user1['auth_user_id'],
                 "message": "Hello",
-                "time_created": time_created2
+                "time_created": time_created2,
+                "reacts": [],
+                "is_pinned": False,
             }, 
             {
                 "message_id": 1,
                 "u_id": user1['auth_user_id'],
                 "message": "Hello",
-                "time_created": time_created1    
+                "time_created": time_created1,
+                "reacts": [],
+                "is_pinned": False,
             }
         ],
         "start": 0,
@@ -441,6 +449,8 @@ def test_channel_messages_interaction2(clear, user1):
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+        assert response_data['messages'][x]['reacts'] == expected_result['messages'][x]['reacts']
+        assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
 
     message_response = rh.message_edit(user1['token'], message_id2, "Woah")
     assert message_response.status_code == 200
@@ -453,13 +463,17 @@ def test_channel_messages_interaction2(clear, user1):
                 "message_id": 2,
                 "u_id": user1['auth_user_id'],
                 "message": "Woah",
-                "time_created": time_created2
+                "time_created": time_created2,
+                "reacts": [],
+                "is_pinned": False,
             }, 
             {
                 "message_id": 1,
                 "u_id": user1['auth_user_id'],
                 "message": "Hello",
-                "time_created": time_created1    
+                "time_created": time_created1,
+                "reacts": [],
+                "is_pinned": False    
             }
         ],
         "start": 0,
@@ -473,6 +487,8 @@ def test_channel_messages_interaction2(clear, user1):
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+        assert response_data['messages'][x]['reacts'] == expected_result['messages'][x]['reacts']
+        assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
 
     message_response = rh.message_edit(user1['token'], message_id1, "Jeez")
     assert message_response.status_code == 200
@@ -485,13 +501,18 @@ def test_channel_messages_interaction2(clear, user1):
                 "message_id": 2,
                 "u_id": user1['auth_user_id'],
                 "message": "Woah",
-                "time_created": time_created2
+                "time_created": time_created2,
+                "reacts": [],
+                "is_pinned": False,
             }, 
             {
                 "message_id": 1,
                 "u_id": user1['auth_user_id'],
                 "message": "Jeez",
-                "time_created": time_created1    
+                "time_created": time_created1,
+                "reacts": [],
+                "is_pinned": False,
+
             }
         ],
         "start": 0,
@@ -505,6 +526,8 @@ def test_channel_messages_interaction2(clear, user1):
         assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
+        assert response_data['messages'][x]['reacts'] == expected_result['messages'][x]['reacts']
+        assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
 
 def test_one_user_edits_one_message_in_dm(clear, user1, user2):
     dm_id = rh.dm_create(user1['token'], [user2['auth_user_id']]).json()['dm_id']
