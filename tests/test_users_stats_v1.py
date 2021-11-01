@@ -21,9 +21,9 @@ def test_first_user_registers(clear_and_register):
 
     # test time stamp does not change if nothing changes i.e. no new channels, dms, messages
     workspace_2 = rh.users_stats(clear_and_register).json()["workspace_stats"]
-    assert len(workspace_1["channels_exist"]) == 1
-    assert len(workspace_1["dms_exist"]) == 1
-    assert len(workspace_1["messages_exist"]) == 1
+    assert len(workspace_2["channels_exist"]) == 1
+    assert len(workspace_2["dms_exist"]) == 1
+    assert len(workspace_2["messages_exist"]) == 1
 
 # Metrics for channels and dms work
 def test_first_user_join_channel_dm(clear_and_register):
