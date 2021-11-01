@@ -454,7 +454,6 @@ def dm_leave(token, dm_id):
     """
     return requests.post(f"{url}/dm/leave/v1", json={ "token": token, "dm_id": dm_id })
 
-
 def dm_messages(token, dm_id, start):
     """
     Given a DM with ID dm_id that the authorised user is a member of, return up to 50 messages between index "start" 
