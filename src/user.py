@@ -10,7 +10,7 @@ Functions to:
 from src.data_store import data_store
 from src.channel import assign_user_info
 from src.error import InputError
-import re
+import re, time
 
 def list_all_users():
     """
@@ -154,6 +154,73 @@ def user_profile_sethandle_v1(auth_user_id, handle_str):
         raise InputError(description="invalid string")
     return{}
 
+def users_stats_v1():
+    """
+    Updates the required statistics about the use of UNSW Streams.
+
+    Arguments:
+        None
+
+    Exceptions:
+        None
+    
+    Return Value
+        None
+    """
+    store = data_store.get()
+    # No one is registered with streams yet
+    if len(store["users"]) == 0:
+        return
+
+    num_users_in_channel_dm = 0
+    # Find the number of users that are in at least 1 channel or dm
+    for user in store["users"]:
+        user_channels = len(list(filter(lambda channel: (user["id"] in channel["all_members"]), store["channels"])))
+        user_dms = len(list(filter(lambda dm: (user["id"] in dm["members"]), store["dms"])))
+        if user_channels or user_dms:
+            num_users_in_channel_dm += 1
+
+    # Find the number of valid users, i.e. non-deleted users
+    valid_users = len(list(filter(lambda user: (user["email"] and user["handle"]), store["users"])))
+    # Utilization rate: if no valid users, 0 else defined by num_users_in_channel_dm divided by valid_users
+    store["metrics"]["utilization_rate"] = num_users_in_channel_dm/valid_users
+
+    # Checks if each metric has at least 1 entry
+    if store["metrics"]["channels_exist"] or store["metrics"]["dms_exist"] or store["metrics"]["messages_exist"]:
+        # Number of channels changed
+        if store["metrics"]["channels_exist"][-1]["num_channels_exist"] != len(store["channels"]):
+            store["metrics"]["channels_exist"].append({
+                "num_channels_exist": len(store["channels"]),
+                "time_stamp": time.time()
+            })
+        # Number of dms changed
+        if store["metrics"]["dms_exist"][-1]["num_dms_exist"] != len(store["dms"]):
+            store["metrics"]["dms_exist"].append({
+                "num_dms_exist": len(store["dms"]),
+                "time_stamp": time.time()
+            })
+        # Number of messages changed
+        if store["metrics"]["messages_exist"][-1]["num_messages_exist"] != (len(store["channel_messages"]) + len(store["dm_messages"])):
+            store["metrics"]["messages_exist"].append({
+                "num_messages_exist": len(store["channel_messages"]) + len(store["dm_messages"]),
+                "time_stamp": time.time()
+            })
+    else:
+        # First user registered, no registered use
+        store["metrics"]["channels_exist"].append({
+            "num_channels_exist": 0,
+            "time_stamp": time.time()
+        })
+        store["metrics"]["dms_exist"].append({
+            "num_dms_exist": 0,
+            "time_stamp": time.time()
+        })
+        store["metrics"]["messages_exist"].append({
+            "num_messages_exist": 0,
+            "time_stamp": time.time()
+        })
+    
+    data_store.set(store)
 
 def dict_search(item, users, item_name):
     for u in users:
