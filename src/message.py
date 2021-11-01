@@ -362,21 +362,21 @@ def message_senddm_v1(auth_user_id, dm_id, message):
 
 def message_pin_v1(auth_user_id, message_id):
     """
-    Given a message, update its text with new text. 
-    If new text is blank, the message is deleted.
+    Given a message within a channel or DM, mark it as "pinned".
 
     Arguments: 
-        auth_user_id (integer) - id of user removing the message
-        message_id (integer) - id of the message is being deleted
+        auth_user_id (integer) - id of user pinning the message
+        message_id (integer) - id of the message is being pinned
 
     Exceptions:
         InputError - Occurs when given:
                         - message_id does not refer to a valid message within 
                           a channel/DM that the authorised user has joined
-        AccessError - Occurs when message_id refers to a valid message in a 
-                      joined channel/DM and none of the following are true:
-                        - the message was sent by the authorised user making this request
-                        - the authorised user has owner permissions in the channel/DM
+                        - the message is already pinned
+        AccessError - Occurs when:
+                        - message_id refers to a valid message in a joined 
+                          channel/DM and the authorised user does not have owner 
+                          permissions in the channel/DM.
 
     Return Value:
         Returns an empty dictionary
@@ -446,7 +446,7 @@ def message_pin_v1(auth_user_id, message_id):
         # If user not in DM and not an owner, AccessError
         elif auth_user_id is not selected_dm['owner_of_dm']:
             raise AccessError(description="This user is not allowed to edit this DM message.")
-        # Pin located message in located channel
+        # Pin located message in located DM
         selected_message['is_pinned'] = True
 
     # Store data into data_store and return empty dictionary
