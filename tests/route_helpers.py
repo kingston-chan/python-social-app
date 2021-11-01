@@ -363,7 +363,7 @@ def message_unpin(token, message_id):
         "message_id": message_id
     }
     return requests.post(f"{url}/message/unpin", json=info)
-
+    
 def message_sendlater(token, channel_id, message, time_sent):
     info = {
         "token": token,
@@ -371,7 +371,7 @@ def message_sendlater(token, channel_id, message, time_sent):
         "message": message,
         "time_sent": time_sent
     }
-    return requests.post(f"{url}/message/sendlater", json=info)
+    return requests.post(f"{url}/message/sendlater/v1", json=info)
 
 def message_sendlaterdm(token, dm_id, message, time_sent):
     info = {
