@@ -7,6 +7,10 @@ Functions to:
 from src.error import InputError, AccessError
 from src.data_store import data_store
 import time
+import threading
+
+IS_CHANNEL = 0
+IS_DM = 1
 
 def message_send_v1(auth_user_id, channel_id, message):
     """
@@ -166,6 +170,7 @@ def message_edit_v1(auth_user_id, message_id, message):
         # Else edit message in located channel
         else:
             selected_message['message'] = message
+            
 
     # Else message should be in DM
     else: 
@@ -384,11 +389,11 @@ def message_pin_v1(auth_user_id, message_id):
     """
     # Get variables from store
     store = data_store.get()
-    channels = store["channels"]
-    dms = store["dms"]
-    channel_messages = store["channel_messages"]
-    dm_messages = store["dm_messages"]
-
+    channels = store['channels']
+    dms = store['dms']
+    channel_messages = store['channel_messages']
+    dm_messages = store['dm_messages']
+    
     # Initialise new variables
     selected_message = {}
     selected_channel = {}
@@ -452,3 +457,192 @@ def message_pin_v1(auth_user_id, message_id):
     # Store data into data_store and return empty dictionary
     data_store.set(store)
     return {}
+
+def message_sendlaterdm_threading(auth_user_id, dm_id, message, time_sent, message_id):
+    store = data_store.get()
+    dm_messages = store['dm_messages']
+
+    new_message = {
+        "message_id": message_id,
+        "u_id": auth_user_id,
+        'dm_id': dm_id,
+        'message': message,
+        'time_created': time_sent,   
+        'reacts': [],
+        'is_pinned': False,
+    }
+
+    dm_messages.append(new_message)    
+    
+    data_store.set(store)
+
+def message_sendlaterdm_v1(auth_user_id, dm_id, message, time_sent):
+    store = data_store.get()
+    dms = store['dms']
+    
+    time_now = time.time()
+    time_difference = int(time_sent - time_now)
+
+    member_ids = None
+    dm_exist = False
+    for dm in dms:
+        if dm["dm_id"] == dm_id:
+            dm_exist = True
+            member_ids = dm["members"]
+        
+    if not dm_exist:
+        raise InputError(description="dm doesn't exist")
+
+    if auth_user_id not in member_ids:
+        raise AccessError(description="User is not apart of the dm")
+    
+    if len(message) > 1000:
+        raise InputError(description="Message is too long")
+    
+    if time_difference < 0:
+        raise InputError(description="Time set is in the past")
+    
+    store['message_id_gen'] += 1
+
+    x = threading.Timer(time_difference, message_sendlaterdm_threading, args=(auth_user_id, dm_id, message, time_sent, store['message_id_gen']))
+
+    x.start()
+
+    return {
+        "message_id": store['message_id_gen']
+    }
+
+def message_sendlater_threading(auth_user_id, channel_id, message, time_sent, message_id):
+    store = data_store.get()
+    channel_messages = store['channel_messages']
+
+    new_message = {
+        'message_id': message_id,
+        'u_id': auth_user_id,
+        'channel_id': channel_id,
+        'message': message,
+        'time_created': time_sent,
+        'reacts': [],
+        'is_pinned': False,   
+    }
+
+    channel_messages.append(new_message)
+
+    data_store.set(store)
+
+def message_sendlater_v1(auth_user_id, channel_id, message, time_sent):
+    store = data_store.get()
+    channels = store['channels']
+    
+    time_now = time.time()
+    time_difference = int(time_sent - time_now)
+
+    channel_exist = False
+    for channel in channels:
+        if channel["id"] == channel_id:
+            channel_exist = True
+            member_ids = channel["all_members"]
+        
+    if not channel_exist:
+        raise InputError(description="Channel doesn't exist")
+
+    if auth_user_id not in member_ids:
+        raise AccessError(description="User is not apart of the channel")
+
+    if time_difference < 0:
+        raise InputError(description="Time set is in the past")
+    
+    if len(message) > 1000:
+        raise InputError(description="Message is too long")
+ 
+    store['message_id_gen'] += 1
+
+    x = threading.Timer(time_difference, message_sendlater_threading, args=(auth_user_id, channel_id, message, time_sent, store['message_id_gen']))
+
+    x.start()
+
+    return {
+        "message_id": store["message_id_gen"]
+    }
+
+def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
+    store = data_store.get()
+    channels = store["channels"]
+    dms = store["dms"]
+    channel_messages = store["channel_messages"]
+    dm_messages = store["dm_messages"]
+    members = None
+    channel_or_dm = None
+    if channel_id != -1 and dm_id == -1:
+        channel_or_dm = IS_CHANNEL
+        channel_exists = False
+        for channel in channels:
+            if channel_id == channel["id"]:
+                members = channel["all_members"]
+                channel_exists = True
+
+        if not channel_exists:
+            raise InputError(description="Channel does not exist")
+
+    elif channel_id == -1 and dm_id != -1:
+        channel_or_dm = IS_DM
+        dm_exists = False
+        for dm in dms:
+            if dm_id == dm["dm_id"]:
+                members = dm["members"]
+                dm_exists = True
+    
+        if not dm_exists:
+            raise InputError(description="DM does not exist")
+
+    else:
+        raise InputError(description="Neither channel_id nor dm_id are -1")
+
+    if auth_user_id not in members:
+        raise AccessError(description="The authorised user has not joined the channel/DM they are trying to share the message to")
+    
+    og_message_id_exists = False
+    og_message = None
+    for channel_message in channel_messages:
+        if og_message_id == channel_message["message_id"]:
+            og_message_id_exists = True
+            og_message = channel_message["message"]
+    
+    for dm_message in dm_messages:
+        if og_message_id == dm_message["message_id"]:
+            og_message_id_exists = True
+            og_message = dm_message["message"]
+
+    
+    if not og_message_id_exists:
+        raise InputError(description="Invalid message ID")
+    
+    if len(message) > 1000:
+        raise InputError(description="Message is too long")
+
+    store["message_id_gen"] += 1
+
+    shared_message = message + "\n\n" + "\"\"\"\n" + og_message + "\n\"\"\""
+
+    new_message = {
+        'message_id': store['message_id_gen'],
+        'u_id': auth_user_id,
+        'message': shared_message,
+        'time_created': int(time.time()),    
+        'reacts': [],
+        'is_pinned': False,
+    }
+
+    if channel_or_dm == IS_CHANNEL:
+        new_message["channel_id"] = channel_id
+        channel_messages.append(new_message)
+
+    else: # IS_DM
+        new_message["dm_id"] = dm_id
+        dm_messages.append(new_message)
+
+    data_store.set(store)
+
+    return {
+        "shared_message_id": store['message_id_gen']
+    }
