@@ -376,11 +376,11 @@ def message_sendlater(token, channel_id, message, time_sent):
 def message_sendlaterdm(token, dm_id, message, time_sent):
     info = {
         "token": token,
-        "channel_id": dm_id,
+        "dm_id": dm_id,
         "message": message,
         "time_sent": time_sent
     }
-    return requests.post(f"{url}/message/sendlaterdm", json=info)
+    return requests.post(f"{url}/message/sendlaterdm/v1", json=info)
 
 # ==== DM ==== #
 

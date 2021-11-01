@@ -365,6 +365,60 @@ def message_senddm_v1(auth_user_id, dm_id, message):
         'message_id': new_dm_message['message_id']
     }
 
+def message_sendlaterdm_threading(auth_user_id, dm_id, message, time_sent, message_id):
+    store = data_store.get()
+    dm_messages = store['dm_messages']
+
+    new_message = {
+        "message_id": message_id,
+        "u_id": auth_user_id,
+        'dm_id': dm_id,
+        'message': message,
+        'time_created': time_sent,   
+        'reacts': [],
+        'is_pinned': False,
+    }
+
+    dm_messages.append(new_message)    
+    
+    data_store.set(store)
+
+def message_sendlaterdm_v1(auth_user_id, dm_id, message, time_sent):
+    store = data_store.get()
+    dms = store['dms']
+    
+    time_now = time.time()
+    time_difference = int(time_sent - time_now)
+
+    member_ids = None
+    dm_exist = False
+    for dm in dms:
+        if dm["dm_id"] == dm_id:
+            dm_exist = True
+            member_ids = dm["members"]
+        
+    if not dm_exist:
+        raise InputError(description="dm doesn't exist")
+
+    if auth_user_id not in member_ids:
+        raise AccessError(description="User is not apart of the dm")
+    
+    if len(message) > 1000:
+        raise InputError(description="Message is too long")
+    
+    if time_difference < 0:
+        raise InputError(description="Time set is in the past")
+    
+    store['message_id_gen'] += 1
+
+    x = threading.Timer(time_difference, message_sendlaterdm_threading, args=(auth_user_id, dm_id, message, time_sent, store['message_id_gen']))
+
+    x.start()
+
+    return {
+        "message_id": store['message_id_gen']
+    }
+
 def message_sendlater_threading(auth_user_id, channel_id, message, time_sent, message_id):
     store = data_store.get()
     channel_messages = store['channel_messages']
@@ -386,11 +440,10 @@ def message_sendlater_threading(auth_user_id, channel_id, message, time_sent, me
 def message_sendlater_v1(auth_user_id, channel_id, message, time_sent):
     store = data_store.get()
     channels = store['channels']
-
+    
     time_now = time.time()
     time_difference = int(time_sent - time_now)
 
-    member_ids = None
     channel_exist = False
     for channel in channels:
         if channel["id"] == channel_id:
@@ -416,7 +469,7 @@ def message_sendlater_v1(auth_user_id, channel_id, message, time_sent):
     x.start()
 
     return {
-        "message_id": store['message_id_gen'],
+        "message_id": store["message_id_gen"]
     }
 
 def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
@@ -501,5 +554,3 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     return {
         "shared_message_id": store['message_id_gen']
     }
-    
-
