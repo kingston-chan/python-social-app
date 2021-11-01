@@ -374,7 +374,7 @@ def message_pin_v1(auth_user_id, message_id):
         message_id (integer) - id of the message is being pinned
 
     Exceptions:
-        InputError - Occurs when given:
+        InputError - Occurs when any of:
                         - message_id does not refer to a valid message within 
                           a channel/DM that the authorised user has joined
                         - the message is already pinned
@@ -460,21 +460,21 @@ def message_pin_v1(auth_user_id, message_id):
 
 def message_unpin_v1(auth_user_id, message_id):
     """
-    Given a message within a channel or DM, mark it as "pinned".
+    Given a message within a channel or DM, remove its mark as pinned.
 
     Arguments: 
-        auth_user_id (integer) - id of user pinning the message
-        message_id (integer) - id of the message is being pinned
+        auth_user_id (integer) - id of user unpinning the message
+        message_id (integer) - id of the message is being unpinned
 
     Exceptions:
-        InputError - Occurs when given:
-                        - message_id does not refer to a valid message within 
-                          a channel/DM that the authorised user has joined
-                        - the message is already pinned
+        InputError - Occurs when any of:
+                        - message_id is not a valid message within a channel or 
+                          DM that the authorised user has joined
+                        - the message is not already pinned
         AccessError - Occurs when:
                         - message_id refers to a valid message in a joined 
-                          channel/DM and the authorised user does not have owner 
-                          permissions in the channel/DM.
+                          channel/DM and the authorised user does not have 
+                          owner permissions in the channel/DM.
 
     Return Value:
         Returns an empty dictionary
