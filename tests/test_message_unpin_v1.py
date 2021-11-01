@@ -32,25 +32,27 @@ def create_channel_send_message_and_pin_message(token, invites=None):
     if invites != None:
         for invite in invites:
             rh.channel_invite(token, channel_id, invite)
-    message_response = rh.message_send(user1['token'], channel_id, "Hello")
+    message_response = rh.message_send(token, channel_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
-    message_response = rh.message_pin(user1['token'], response_data['message_id'])
+    message_response = rh.message_pin(token, response_data['message_id'])
     assert message_response.status_code == 200
 
     return response_data['message_id']
 
 def create_dm_send_message_and_pin_message(token, users=[]):
     dm_id = rh.dm_create(token, users).json()['dm_id']
-    message_response = rh.message_senddm(user1['token'], dm_id, "Hello")
+    message_response = rh.message_senddm(token, dm_id, "Hello")
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
 
-    message_response = rh.message_pin(user1['token'], response_data['message_id'])
+    message_response = rh.message_pin(token, response_data['message_id'])
     assert message_response.status_code == 200
+
+    return response_data['message_id']
 
 # ==== Tests - Errors ==== #
 ## Input Error - 400 ##
@@ -183,8 +185,16 @@ def test_pin_in_dm_and_in_channel(clear, user1, user2):
     message_response = rh.message_unpin(user1['token'], message_id)
     assert message_response.status_code == 200
 
-    message_id = create_dm_send_message_and_pin_message(user1['token'], [user2['auth_user_id']])
-    message_response = rh.message_unpin(user1['token'], message_id)
+    dm_id = rh.dm_create(user1['token'], [user2['auth_user_id']]).json()['dm_id']
+    message_response = rh.message_senddm(user1['token'], dm_id, "Hello")
+    response_data = message_response.json()
+    assert message_response.status_code == 200
+    assert response_data['message_id'] == 2
+
+    message_response = rh.message_pin(user1['token'], response_data['message_id'])
+    assert message_response.status_code == 200
+
+    message_response = rh.message_unpin(user1['token'], response_data['message_id'])
     assert message_response.status_code == 200
 
 def channel_messages_interaction(clear, user1):
