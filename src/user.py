@@ -168,9 +168,6 @@ def users_stats_v1():
         None
     """
     store = data_store.get()
-    # No one is registered with streams yet
-    if len(store["users"]) == 0:
-        return
 
     num_users_in_channel_dm = 0
     # Find the number of users that are in at least 1 channel or dm
