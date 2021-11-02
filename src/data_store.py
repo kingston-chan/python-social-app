@@ -35,6 +35,7 @@ initial_object = {
     'sessions': {},
     'message_id_gen': 0,
     'session_count': 0,
+    'password_reset_codes': {}
 }
 ## YOU SHOULD MODIFY THIS OBJECT ABOVE
 
