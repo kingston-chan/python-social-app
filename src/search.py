@@ -25,12 +25,9 @@ def search_v1(auth_user_id, query):
         raise InputError(description="Invalid query length")
     
     store = data_store.get()
-    # Get all channels and dms user is a part of
-    users_channels = list(filter(lambda channel: (auth_user_id in channel["all_members"]), store["channels"]))
-    users_dms = list(filter(lambda dm: (auth_user_id in dm["members"]), store["dms"]))
     # Get list of all the channel and dm ids the user is a part of
-    users_channels_id = [channel["id"] for channel in users_channels]
-    users_dms_id = [dm["dm_id"] for dm in users_dms]
+    users_channels_id = [channel["id"] for channel in store["channels"] if auth_user_id in channel["all_members"]]
+    users_dms_id = [dm["dm_id"] for dm in store["dms"] if auth_user_id in dm["members"]]
 
     messages_with_query = []
     # Check channel messages that contain query
