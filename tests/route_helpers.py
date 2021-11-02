@@ -55,6 +55,19 @@ def auth_logout(token):
 
     return requests.post(f"{url}/auth/logout/v1", json={ "token": token })   
 
+def auth_passwordreset_request(email):
+    info = {
+        "email": email
+    }
+    return requests.post(f"{url}/auth/passwordreset/reset/v1", json=info)
+
+def auth_passwordreset_reset(reset_code, new_password):
+    info = {
+        "reset_code": reset_code,
+        "new_password": new_password
+    }
+    return requests.post(f"{url}/auth/passwordreset/reset/v1", json=info)
+
 # ==== Channel ==== #
 
 def channels_create(token, name, is_public):
@@ -311,6 +324,64 @@ def message_senddm(token, dm_id, message):
     }
     return requests.post(f"{url}/message/senddm/v1", json=info)
 
+def message_share(token, og_message_id, message, channel_id, dm_id):
+    info = {
+        "token": token,
+        "og_message_id": og_message_id,
+        "message": message,
+        "channel_id": channel_id,
+        "dm_id": dm_id
+    }
+    return requests.post(f"{url}/message/share/v1", json=info)
+
+def message_react(token, message_id, react_id):
+    info = {
+        "token": token,
+        "message_id": message_id,
+        "react_id": react_id
+    }
+    return requests.post(f"{url}/message/react/v1", json=info)
+
+def message_unreact(token, message_id, react_id):
+    info = {
+        "token": token,
+        "message_id": message_id,
+        "react_id": react_id
+    }
+    return requests.post(f"{url}/message/unreact/v1", json=info)
+
+def message_pin(token, message_id):
+    info = {
+        "token": token,
+        "message_id": message_id
+    }
+    return requests.post(f"{url}/message/pin/v1", json=info)
+
+def message_unpin(token, message_id):
+    info = {
+        "token": token,
+        "message_id": message_id
+    }
+    return requests.post(f"{url}/message/unpin/v1", json=info)
+    
+def message_sendlater(token, channel_id, message, time_sent):
+    info = {
+        "token": token,
+        "channel_id": channel_id,
+        "message": message,
+        "time_sent": time_sent
+    }
+    return requests.post(f"{url}/message/sendlater/v1", json=info)
+
+def message_sendlaterdm(token, dm_id, message, time_sent):
+    info = {
+        "token": token,
+        "dm_id": dm_id,
+        "message": message,
+        "time_sent": time_sent
+    }
+    return requests.post(f"{url}/message/sendlaterdm/v1", json=info)
+
 # ==== DM ==== #
 
 def dm_create(token, u_ids):
@@ -382,7 +453,6 @@ def dm_leave(token, dm_id):
         Returns the response of the dm/leave/v1 request which contains json {}
     """
     return requests.post(f"{url}/dm/leave/v1", json={ "token": token, "dm_id": dm_id })
-
 
 def dm_messages(token, dm_id, start):
     """
@@ -473,6 +543,29 @@ def user_profile_sethandle(token, handle_str):
     """
     return requests.put(f"{url}/user/profile/sethandle/v1", json={ "token": token, "handle_str": handle_str })
 
+def user_profile_uploadphoto(token, img_url, x_start, y_start, x_end, y_end):
+    info = {
+        "token": token,
+        "img_url": img_url,
+        "x_start": x_start,
+        "y_start": y_start,
+        "x_end": x_end,
+        "y_end": y_end
+    }
+    return requests.post(f"{url}/user/profile/uploadphoto/v1", json=info)
+
+def user_stats(token):
+    info = {
+        "token": token
+    }
+    return requests.get(f"{url}/user/stats/v1", params=info)
+
+def users_stats(token):
+    info = {
+        "token": token
+    }
+    return requests.get(f"{url}/users/stats/v1", params=info)
+
 # ==== Admin ==== #
 
 def admin_user_remove(token, u_id):
@@ -522,3 +615,45 @@ def clear():
         None
     """
     requests.delete(f"{url}/clear/v1")
+
+# ==== Notifications ==== #
+
+def notifications_get(token):
+    info = {
+        "token": token
+    }
+    return requests.get(f"{url}/notifications/get/v1", params=info)
+
+# ==== Search ==== #
+
+def search(token, query_str):
+    info = {
+        "token": token,
+        "query_str": query_str
+    }
+    return requests.get(f"{url}/search/v1", params=info)
+
+# ==== Standup ==== #
+
+def standup_start(token, channel_id, length):
+    info = {
+        "token": token,
+        "channel_id": channel_id,
+        "length": length
+    }
+    return requests.post(f"{url}/standup/start/v1", json=info)
+
+def standup_active(token, channel_id):
+    info = {
+        "token": token,
+        "channel_id": channel_id,
+    }
+    return requests.get(f"{url}/standup/active/v1", params=info)
+
+def standup_send(token, channel_id, message):
+    info = {
+        "token": token,
+        "channel_id": channel_id,
+        "message": message
+    }
+    return requests.post(f"{url}/standup/send/v1", json=info)

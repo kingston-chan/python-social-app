@@ -241,14 +241,7 @@ def dm_messages_v1(auth_user_id, dm_id, start):
     counter = 0
     selected_dm_messages = []
     while index < length and counter < 50:
-        selected_dm_message = filtered_dm_messages[index]
-        dm_message_dict = {
-            "message_id": selected_dm_message['message_id'],
-            "u_id": selected_dm_message['u_id'],
-            "message": selected_dm_message['message'],
-            "time_created": selected_dm_message['time_created']
-        }
-        selected_dm_messages.append(dm_message_dict)
+        selected_dm_messages.append(filtered_dm_messages[index])
         index += 1
         counter += 1
 
@@ -312,6 +305,9 @@ def dm_remove_v1(auth_user_id, dm_id):
                 raise AccessError(description="Not owner of DM")
             else:
                 list_of_dms.remove(dms)
+                for dm_msg in store["dm_messages"]:
+                    if dm_msg["dm_id"] == dm_id:
+                        store["dm_messages"].remove(dm_msg)
     if i == False:
         raise InputError(description="DM does not exist")
     data_store.set(store)
