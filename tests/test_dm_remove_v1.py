@@ -75,3 +75,18 @@ def test_removing_one_dm_with_two_created(clear,user1,user2):
     expected_outcome = {"dms" : [{"dm_id" : 1 , "name" : "fakerisafaker"}]}
 
     assert expected_outcome == output
+
+def test_dms_msgs_are_also_removed(clear, user1):
+    dm1_id = rh.dm_create(user1["token"], []).json()["dm_id"]
+    dm2_id = rh.dm_create(user1["token"], []).json()["dm_id"]
+
+    msg_1 = rh.message_senddm(user1["token"], dm1_id, "hello").json()["message_id"]
+    msg_2 = rh.message_senddm(user1["token"], dm2_id, "hello").json()["message_id"]
+
+    rh.dm_remove(user1["token"], dm2_id)
+
+    assert rh.message_edit(user1["token"], msg_2, "bye").status_code == 400
+    assert rh.message_remove(user1["token"], msg_2).status_code == 400
+    assert rh.message_remove(user1["token"], msg_1).status_code == 200
+
+    
