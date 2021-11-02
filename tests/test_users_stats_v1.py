@@ -108,17 +108,55 @@ def test_num_dms_messages_decrease(clear_and_register):
     assert workspace["dms_exist"][-1]["num_dms_exist"] == 0
     assert workspace["messages_exist"][-1]["num_messages_exist"] == 1
 
-# Utilization does not go down if user is removed
+# Utilization increases if removed user is not in a dm/channel
 def test_utilization_stays_same(clear_and_register):
-    channel_id = rh.channels_create(clear_and_register, "channel", True).json()["channel_id"]
+    rh.channels_create(clear_and_register, "channel", True)
+    uid2 = rh.auth_register("random2@gmail.com", "123abc!@#", "Bob", "Smith").json()["auth_user_id"]
+
+    assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 0.5
+
+    rh.admin_user_remove(clear_and_register, uid2)
+
+    assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 1
+
+# Utilization rate changes when users leave channels/dms and join/get invited channels
+def test_utilization_change_when_leaving_channel_dm(clear_and_register):
     user2 = rh.auth_register("random2@gmail.com", "123abc!@#", "Bob", "Smith").json()
-    rh.channel_join(user2["token"], channel_id)
+    channel = rh.channels_create(clear_and_register, "channel", True).json()["channel_id"]
+    assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 0.5
 
+    # Test dm leave
+    dm = rh.dm_create(clear_and_register, [user2["auth_user_id"]]).json()["dm_id"]
     assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 1
 
-    rh.admin_user_remove(clear_and_register, user2["auth_user_id"])
+    rh.dm_leave(user2["token"], dm)
+    assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 0.5
 
+    # Test channel invite/leave/join
+    rh.channel_invite(clear_and_register, channel, user2["auth_user_id"])
     assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 1
+
+    rh.channel_leave(user2["token"], channel)
+    assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 0.5
+
+    rh.channel_join(user2["token"], channel)
+    assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 1
+
+# Workspace changes only when messages are sent
+def test_workspace_stats_with_delayed_messages(clear_and_register):
+    channel_id = rh.channels_create(clear_and_register, "channel", True).json()["channel_id"]
+    dm_id = rh.dm_create(clear_and_register, []).json()["dm_id"]
+
+    # Send a message in the dm and channel in three seconds
+    rh.message_sendlater(clear_and_register, channel_id, "hello", int(time.time()) + 3)
+    rh.message_sendlaterdm(clear_and_register, dm_id, "hello", int(time.time()) + 4)
+
+    assert len(rh.users_stats(clear_and_register).json()["workspace_stats"]["messages_exist"]) == 1
+    assert rh.users_stats(clear_and_register).json()["workspace_stats"]["messages_exist"][-1]["num_messages_exist"] == 0
+
+    time.sleep(4)
+    assert len(rh.users_stats(clear_and_register).json()["workspace_stats"]["messages_exist"]) == 3
+    assert rh.users_stats(clear_and_register).json()["workspace_stats"]["messages_exist"][-1]["num_messages_exist"] == 2
 
 # Invalid inputs
 
