@@ -340,7 +340,7 @@ def message_react(token, message_id, react_id):
         "message_id": message_id,
         "react_id": react_id
     }
-    return requests.post(f"{url}/message/react", json=info)
+    return requests.post(f"{url}/message/react/v1", json=info)
 
 def message_unreact(token, message_id, react_id):
     info = {
@@ -348,21 +348,21 @@ def message_unreact(token, message_id, react_id):
         "message_id": message_id,
         "react_id": react_id
     }
-    return requests.post(f"{url}/message/unreact", json=info)
+    return requests.post(f"{url}/message/unreact/v1", json=info)
 
 def message_pin(token, message_id):
     info = {
         "token": token,
         "message_id": message_id
     }
-    return requests.post(f"{url}/message/pin", json=info)
+    return requests.post(f"{url}/message/pin/v1", json=info)
 
 def message_unpin(token, message_id):
     info = {
         "token": token,
         "message_id": message_id
     }
-    return requests.post(f"{url}/message/unpin", json=info)
+    return requests.post(f"{url}/message/unpin/v1", json=info)
     
 def message_sendlater(token, channel_id, message, time_sent):
     info = {
@@ -453,7 +453,6 @@ def dm_leave(token, dm_id):
         Returns the response of the dm/leave/v1 request which contains json {}
     """
     return requests.post(f"{url}/dm/leave/v1", json={ "token": token, "dm_id": dm_id })
-
 
 def dm_messages(token, dm_id, start):
     """
@@ -632,7 +631,7 @@ def search(token, query_str):
         "token": token,
         "query_str": query_str
     }
-    return requests.get(f"{url}/search", params=info)
+    return requests.get(f"{url}/search/v1", params=info)
 
 # ==== Standup ==== #
 
