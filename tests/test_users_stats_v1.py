@@ -108,14 +108,26 @@ def test_num_dms_messages_decrease(clear_and_register):
     assert workspace["dms_exist"][-1]["num_dms_exist"] == 0
     assert workspace["messages_exist"][-1]["num_messages_exist"] == 1
 
+# Utilization does not go down if user is removed
+def test_utilization_stays_same(clear_and_register):
+    channel_id = rh.channels_create(clear_and_register, "channel", True).json()["channel_id"]
+    user2 = rh.auth_register("random2@gmail.com", "123abc!@#", "Bob", "Smith").json()
+    rh.channel_join(user2["token"], channel_id)
+
+    assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 1
+
+    rh.admin_user_remove(clear_and_register, user2["auth_user_id"])
+
+    assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 1
+
 # Invalid inputs
 
-# # Invalid token
-# def test_invalid_token(clear_and_register):
-#     assert rh.users_stats(clear_and_register + 'invalidtoken').status_code == 403
+# Invalid token
+def test_invalid_token(clear_and_register):
+    assert rh.users_stats(clear_and_register + 'invalidtoken').status_code == 403
 
-# # Invalid session
-# def test_invalid_session(clear_and_register):
-#     rh.auth_logout(clear_and_register)
-#     assert rh.users_stats(clear_and_register).status_code == 403
+# Invalid session
+def test_invalid_session(clear_and_register):
+    rh.auth_logout(clear_and_register)
+    assert rh.users_stats(clear_and_register).status_code == 403
 
