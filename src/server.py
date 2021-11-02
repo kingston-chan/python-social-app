@@ -118,6 +118,7 @@ def auth_passwordreset_request():
         msg = Message('Password reset for Streams', sender='h13b.eagle.streams@gmail.com', recipients=[email])
         msg.body = f"Code for password reset for Streams: {code}"
         mail.send(msg)
+    save()
     return dumps({})
 
 #====== channels.py =====#
