@@ -305,6 +305,9 @@ def dm_remove_v1(auth_user_id, dm_id):
                 raise AccessError(description="Not owner of DM")
             else:
                 list_of_dms.remove(dms)
+                for dm_msg in store["dm_messages"]:
+                    if dm_msg["dm_id"] == dm_id:
+                        store["dm_messages"].remove(dm_msg)
     if i == False:
         raise InputError(description="DM does not exist")
     data_store.set(store)
