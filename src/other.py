@@ -1,4 +1,5 @@
 from src.data_store import data_store
+import json
 
 def clear_v1():
     store = data_store.get()
@@ -16,3 +17,8 @@ def clear_v1():
     store['metrics']['messages_exist'].clear()
     store['metrics']['utilization_rate'] = 0
     data_store.set(store)
+
+def save():
+    store = data_store.get()
+    with open("datastore.json", "w") as FILE:
+        json.dump(store, FILE)
