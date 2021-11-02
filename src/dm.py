@@ -1,7 +1,5 @@
 from src.error import InputError, AccessError
 from src.data_store import data_store
-from time import sleep
-
 from src.user import users_stats_v1
 
 def assign_user_info(user_data_placeholder):
