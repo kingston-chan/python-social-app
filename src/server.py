@@ -422,13 +422,6 @@ def admin_userpermission_change():
     save()
     return dumps({})
 
-#===== notifications.py =====#
-
-# notifications/get/v1
-# @APP.route("/notifications/get/v1", methods=["GET"])
-# def notifications_get_v1():
-#     return {}
-
 # clear/v1
 @APP.route("/clear/v1", methods=['DELETE'])
 def clear():
