@@ -2,12 +2,13 @@ import signal
 from json import dumps
 from flask import Flask, request
 from flask_cors import CORS
+from flask_mail import Mail, Message
 from src.error import AccessError
 from src import config
 from src.channels import channels_create_v1, channels_list_v1
 from src.data_store import data_store
 import json
-from src.auth import auth_register_v1, auth_login_v1, auth_logout_v1
+from src.auth import auth_register_v1, auth_login_v1, auth_logout_v1, auth_passwordreset_request_v1
 import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
@@ -41,6 +42,13 @@ APP.register_error_handler(Exception, defaultHandler)
 
 
 #### NO NEED TO MODIFY ABOVE THIS POINT, EXCEPT IMPORTS
+APP.config['MAIL_SERVER']='smtp.gmail.com'
+APP.config['MAIL_PORT'] = 465
+APP.config['MAIL_USERNAME'] = 'h13b.eagle.streams@gmail.com'
+APP.config['MAIL_PASSWORD'] = 'h13beaglestreams'
+APP.config['MAIL_USE_TLS'] = False
+APP.config['MAIL_USE_SSL'] = True
+mail = Mail(APP)
 
 def check_valid_token_and_session(token):
     """Helper function to check if token is valid and session is valid"""
@@ -99,6 +107,17 @@ def auth_logout():
     check_valid_token_and_session(info["token"])
     auth_logout_v1(info["token"])
     save()
+    return dumps({})
+
+# auth/passwordreset/request/v1
+@APP.route("/auth/passwordreset/request/v1", methods=["POST"])
+def auth_passwordreset_request():
+    email = request.get_json()["email"]
+    code = auth_passwordreset_request_v1(email)
+    if code:
+        msg = Message('Password reset for Streams', sender='h13b.eagle.streams@gmail.com', recipients=[email])
+        msg.body = f"Code for password reset for Streams: {code}"
+        mail.send(msg)
     return dumps({})
 
 #====== channels.py =====#
