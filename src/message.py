@@ -6,6 +6,7 @@ Functions to:
 """
 from src.error import InputError, AccessError
 from src.data_store import data_store
+from src.user import users_stats_v1
 import time
 import threading
 
@@ -465,6 +466,8 @@ def message_sendlaterdm_threading(auth_user_id, dm_id, message, time_sent, messa
 
     dm_messages.append(new_message)    
     
+    users_stats_v1()
+
     data_store.set(store)
 
 def message_sendlaterdm_v1(auth_user_id, dm_id, message, time_sent):
@@ -518,6 +521,8 @@ def message_sendlater_threading(auth_user_id, channel_id, message, time_sent, me
     }
 
     channel_messages.append(new_message)
+
+    users_stats_v1()
 
     data_store.set(store)
 
