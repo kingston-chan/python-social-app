@@ -1,44 +1,30 @@
-import requests
+
 import pytest
 from src.config import url
+import tests.route_helpers as rh
 
 BASE_URL = url
 
-def test_listall_private_channels():
-    requests.delete(f"{BASE_URL}/clear/v1")
+@pytest.fixture
+def clear():
+    rh.clear()
 
-    user_data = {
-        "email": "keefe@gmail.com",
-        "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"
-    }
+@pytest.fixture
+def first_user_data():
+    response = rh.auth_register("keefe@gmail.com", "password", "keefe", "vuong")
+    return response.json()
 
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json()
-    user_token = response_data["token"]
+def test_listall_private_channels(clear, first_user_data):
 
-    channel_1_info = {
-        "token": user_token,
-        "name": "channel_1",
-        "is_public": False
-    }
-
-    channel_2_info = {
-        "token": user_token,
-        "name": "channel_2",
-        "is_public": False
-    }
-
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
+    response = rh.channels_create(first_user_data["token"], "channel_1", False)
     response_data = response.json()
     channel_1 = response_data["channel_id"]
 
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_2_info)
+    response = rh.channels_create(first_user_data["token"], "channel_2", False)
     response_data = response.json()
     channel_2 = response_data["channel_id"]
 
-    response = requests.get(f"{BASE_URL}/channels/listall/v2", params={"token": user_token})
+    response = rh.channels_listall(first_user_data["token"])
     response_data = response.json()
     
     expected_info = {
@@ -47,41 +33,17 @@ def test_listall_private_channels():
 
     assert response_data == expected_info
 
-def test_listall_public_channels():
-    requests.delete(f"{BASE_URL}/clear/v1")
+def test_listall_public_channels(clear, first_user_data):
 
-    user_data = {
-        "email": "keefe@gmail.com",
-        "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json()
-    user_token = response_data["token"]
-
-    channel_1_info = {
-        "token": user_token,
-        "name": "channel_1",
-        "is_public": True
-    }
-
-    channel_2_info = {
-        "token": user_token,
-        "name": "channel_2",
-        "is_public": True
-    }
-
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
     response_data = response.json()
     channel_1 = response_data["channel_id"]
 
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_2_info)
+    response = rh.channels_create(first_user_data["token"], "channel_2", True)
     response_data = response.json()
     channel_2 = response_data["channel_id"]
 
-    response = requests.get(f"{BASE_URL}/channels/listall/v2", params={"token": user_token})
+    response = rh.channels_listall(first_user_data["token"])
     response_data = response.json()
     
     expected_info = {
@@ -90,41 +52,17 @@ def test_listall_public_channels():
     
     assert response_data == expected_info
 
-def test_listall_private_and_public_channels():
-    requests.delete(f"{BASE_URL}/clear/v1")
+def test_listall_private_and_public_channels(clear, first_user_data):
 
-    user_data = {
-        "email": "keefe@gmail.com",
-        "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json()
-    user_token = response_data["token"]
-
-    channel_1_info = {
-        "token": user_token,
-        "name": "channel_1",
-        "is_public": True
-    }
-
-    channel_2_info = {
-        "token": user_token,
-        "name": "channel_2",
-        "is_public": False
-    }
-
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
+    response = rh.channels_create(first_user_data["token"], "channel_1", False)
     response_data = response.json()
     channel_1 = response_data["channel_id"]
 
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_2_info)
+    response = rh.channels_create(first_user_data["token"], "channel_2", True)
     response_data = response.json()
     channel_2 = response_data["channel_id"]
 
-    response = requests.get(f"{BASE_URL}/channels/listall/v2", params={"token": user_token})
+    response = rh.channels_listall(first_user_data["token"])
     response_data = response.json()
     
     expected_info = {
@@ -133,27 +71,11 @@ def test_listall_private_and_public_channels():
     
     assert response_data == expected_info
 
-def test_unauthorised_token():
-    requests.delete(f"{BASE_URL}/clear/v1")
+def test_unauthorised_token(clear, first_user_data):
 
-    user_data = {
-        "email": "keefe@gmail.com",
-        "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"
-    }
+    response = rh.channels_create(first_user_data["token"], "channel_1", False)
 
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=user_data)
-    response_data = response.json()
-    user_token = response_data["auth_user_id"]
+    fake_token = "asoifjafsa"
 
-    channel_1_info = {
-        "token": user_token,
-        "name": "channel_1",
-        "is_public": True
-    }
-
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
-
-    response = requests.get(f"{BASE_URL}/channels/listall/v2", params={"token": "oiasjfoaifj"})
+    response = rh.channels_listall(fake_token)
     assert response.status_code == 403

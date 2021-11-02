@@ -17,7 +17,6 @@ def channels_list_v1(auth_user_id):
 
     Exceptions:
         InputError - does not occur in this function
-        AccessError - occurs when given auth_user_id is invalid
 
     Return Value:
         Returns a dictionary containing 'channels' which is a list of channels
@@ -50,7 +49,6 @@ def channels_listall_v1(auth_user_id):
     
     Exceptions:
         InputError - Does not occur in this function
-        AccessError - Occurs when the user doesn't exist.
     
     Return Value:
         Returns a list of dictionaries containing:
@@ -87,7 +85,6 @@ def channels_create_v1(auth_user_id, name, is_public):
                         - name for channel is not between 1 and 20
                           characters inclusive
                         - channel name already exists (case sensitive)
-        AccessError - Occurs when auth_user_id is invalid
 
     Return Value:
         Return a dictionary containing the channel id on successful 
@@ -101,11 +98,11 @@ def channels_create_v1(auth_user_id, name, is_public):
     name = name.strip()
     # Checks if the length of the name is valid
     if len(name) > 20 or len(name) < 1:
-        raise InputError("Invalid channel name length")
+        raise InputError(description="Invalid channel name length")
     # Checks if given name is the same as an existing channel
     for channel in channels:
         if channel['name'].lower() == name.lower():
-            raise InputError("Channel name already exists")
+            raise InputError(description="Channel name already exists")
     # Create new channel with given information
     new_channel = {
         'name': name,

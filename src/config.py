@@ -1,3 +1,5 @@
-port = 3323
+port = 8080
 
 url = f"http://localhost:{port}/"
+
+hashcode = "Ub0Gup9sA4h8ZgjPv3RXVjLhe3TTZkY4z8Pvba3s2T0"

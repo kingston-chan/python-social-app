@@ -1,402 +1,153 @@
 import pytest
-import requests
 from src.config import url
+import tests.route_helpers as rh
 
 BASE_URL = url
 
-def test_removeowner_valid():
-    requests.delete(f"{BASE_URL}/clear/v1")
+@pytest.fixture
+def clear():
+    return rh.clear()
 
-    owner_data = {
-        "email": "keefe@gmail.com",
-        "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"        
-    }
+@pytest.fixture
+def first_user_data():
+    response = rh.auth_register("keefe@gmail.com", "password", "keefe", "vuong")
+    return response.json()
 
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
-    response_data = response.json()
-    owner_token = response_data["token"]
-    owner_u_id = response_data["auth_user_id"]
+@pytest.fixture
+def second_user_data():
+    response = rh.auth_register("eagle@gmail.com", "password", "team", "eagle")
+    return response.json()  
 
-    invited_member_data = {
-        "email": "eagle@gmail.com",
-        "password": "password",
-        "name_first": "team",
-        "name_last": "eagle"   
-    }
+@pytest.fixture
+def third_user_data():
+    response = rh.auth_register("butcher@gmail.com", "password", "knife", "butcher")
+    return response.json()
 
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=invited_member_data)
-    response_data = response.json()
-    invited_member_token = response_data["token"]
-    invited_member_u_id = response_data["auth_user_id"]
 
-    channel_1_info = {
-        "token": owner_token,
-        "name": "channel_1",
-        "is_public": True
-    }
+def test_removeowner_globalowner(clear, first_user_data, second_user_data):
 
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
     response_data = response.json()
     channel_1 = response_data["channel_id"]
 
-    join_info = {
-        "token": invited_member_token,
-        "channel_id": channel_1
-    }
+    response = rh.channel_join(second_user_data["token"], channel_1)
 
-    response = requests.post(f"{BASE_URL}/channel/join/v2", json=join_info)
+    response = rh.channel_addowner(first_user_data["token"], channel_1, second_user_data["auth_user_id"])
 
-    add_owner_info = {
-        "token": owner_token,
-        "channel_id": channel_1,
-        "u_id": invited_member_u_id
-    }
+    response = rh.channel_removeowner(first_user_data["token"], channel_1, first_user_data["auth_user_id"])
 
-    response = requests.post(f"{BASE_URL}/channel/addowner/v1", json=add_owner_info)
+    response = rh.channel_addowner(first_user_data["token"], channel_1, first_user_data["auth_user_id"])
 
-    remove_owner_info = {
-        "token": owner_token,
-        "channel_id": channel_1,
-        "u_id": invited_member_u_id
-    }
-
-    response = requests.post(f"{BASE_URL}/channel/removeowner/v1", json=remove_owner_info)
+    assert response.status_code == 200
     
-    channel_info = {
-        "token": invited_member_token,
-        "channel_id": channel_1
-    }
 
-    response = requests.get(f"{BASE_URL}/channel/details/v2", params=channel_info)
+def test_removeowner_valid(clear, first_user_data, second_user_data):
+
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
+    response_data = response.json()
+    channel_1 = response_data["channel_id"]
+
+    response = rh.channel_join(second_user_data["token"], channel_1)
+
+    response = rh.channel_addowner(first_user_data["token"], channel_1, second_user_data["auth_user_id"])
+
+    response = rh.channel_removeowner(first_user_data["token"], channel_1, second_user_data["auth_user_id"])
+
+    response = rh.channel_details(second_user_data["token"], channel_1)
     response_data = response.json()
 
-    assert response_data["owner_members"][0]["u_id"] == owner_u_id
+    assert response_data["owner_members"][0]["u_id"] == first_user_data["auth_user_id"]
 
-def test_removeowner_invalid_channel_id():
-    requests.delete(f"{BASE_URL}/clear/v1")
+def test_removeowner_invalid_channel_id(clear, first_user_data):
 
-    owner_data = {
-        "email": "keefe@gmail.com",
-        "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"        
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
-    response_data = response.json()
-    owner_token = response_data["token"]
-    owner_u_id = response_data["auth_user_id"]
-
-    channel_1_info = {
-        "token": owner_token,
-        "name": "channel_1",
-        "is_public": True
-    }
-
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
-    response_data = response.json()
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
 
     fake_channel_id = 9999
 
-    remove_owner_info = {
-        "token": owner_token,
-        "channel_id": fake_channel_id,
-        "u_id": owner_u_id
-    }
-
-    response = requests.post(f"{BASE_URL}/channel/removeowner/v1", json=remove_owner_info)
+    response = rh.channel_removeowner(first_user_data["token"], fake_channel_id, first_user_data["auth_user_id"])
     
     assert response.status_code == 400
 
-def tests_removeowner_no_more_owners():
-    requests.delete(f"{BASE_URL}/clear/v1")
+def tests_removeowner_no_more_owners(clear, first_user_data):
 
-    owner_data = {
-        "email": "keefe@gmail.com",
-        "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"        
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
-    response_data = response.json()
-    owner_token = response_data["token"]
-    owner_u_id = response_data["auth_user_id"]
-
-    channel_1_info = {
-        "token": owner_token,
-        "name": "channel_1",
-        "is_public": True
-    }
-
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
     response_data = response.json()
     channel_1 = response_data["channel_id"]
 
-    remove_owner_info = {
-        "token": owner_token,
-        "channel_id": channel_1,
-        "u_id": owner_u_id
-    }
-
-    response = requests.post(f"{BASE_URL}/channel/removeowner/v1", json=remove_owner_info)
+    response = rh.channel_removeowner(first_user_data["token"], channel_1, first_user_data["auth_user_id"])
     
     assert response.status_code == 400
 
-def test_removeowner_invalid_user_id():
-    requests.delete(f"{BASE_URL}/clear/v1")
+def test_removeowner_invalid_user_id(clear, first_user_data):
 
-    owner_data = {
-        "email": "keefe@gmail.com",
-        "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"        
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
-    response_data = response.json()
-    owner_token = response_data["token"]
-
-    channel_1_info = {
-        "token": owner_token,
-        "name": "channel_1",
-        "is_public": True
-    }
-
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
     response_data = response.json()
     channel_1 = response_data["channel_id"]
 
     fake_user_id = 9999
 
-    remove_owner_info = {
-        "token": owner_token,
-        "channel_id": channel_1,
-        "u_id": fake_user_id
-    }
-
-    response = requests.post(f"{BASE_URL}/channel/removeowner/v1", json=remove_owner_info)
+    response = rh.channel_removeowner(first_user_data["token"], channel_1, fake_user_id)
     
     assert response.status_code == 400
 
-def tests_removeowner_unauthorised_owner():
-    requests.delete(f"{BASE_URL}/clear/v1")
+def tests_removeowner_unauthorised_owner(clear, first_user_data, second_user_data, third_user_data):
 
-    owner_data = {
-        "email": "keefe@gmail.com",
-        "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"        
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
-    response_data = response.json()
-    owner_token = response_data["token"]
-    owner_u_id = response_data["auth_user_id"]
-
-    second_owner_data = {
-        "email": "butchere@gmail.com",
-        "password": "password",
-        "name_first": "knife",
-        "name_last": "butcher"     
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=second_owner_data)
-    response_data = response.json()
-    second_owner_token = response_data["token"]
-    second_owner_u_id = response_data["auth_user_id"]
-
-    invited_member_data = {
-        "email": "eagle@gmail.com",
-        "password": "password",
-        "name_first": "team",
-        "name_last": "eagle"   
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=invited_member_data)
-    response_data = response.json()
-    invited_member_token = response_data["token"]
-
-    channel_1_info = {
-        "token": owner_token,
-        "name": "channel_1",
-        "is_public": True
-    }
-
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
     response_data = response.json()
     channel_1 = response_data["channel_id"]
 
-    join_info = {
-        "token": second_owner_token,
-        "channel_id": channel_1
-    }
+    response = rh.channel_join(third_user_data["token"], channel_1)
 
-    response = requests.post(f"{BASE_URL}/channel/join/v2", json=join_info)
+    response = rh.channel_join(second_user_data["token"], channel_1)
 
-    join_info["token"] = invited_member_token
+    response = rh.channel_addowner(first_user_data["token"], channel_1, third_user_data["auth_user_id"])
 
-    response = requests.post(f"{BASE_URL}/channel/join/v2", json=join_info)
-
-    add_owner_info = {
-        "token": owner_token,
-        "channel_id": channel_1,
-        "u_id": second_owner_u_id
-    }
-
-    response = requests.post(f"{BASE_URL}/channel/addowner/v1", json=add_owner_info)
-
-    remove_owner_info = {
-        "token": invited_member_token,
-        "channel_id": channel_1,
-        "u_id": owner_u_id
-    }
-
-    response = requests.post(f"{BASE_URL}/channel/removeowner/v1", json=remove_owner_info)
+    response = rh.channel_removeowner(second_user_data["token"], channel_1, first_user_data["auth_user_id"])
     
     assert response.status_code == 403
 
-def tests_removeowner_thats_not_an_owner():
-    requests.delete(f"{BASE_URL}/clear/v1")
+def tests_removeowner_thats_not_an_owner(clear, first_user_data, second_user_data):
 
-    owner_data = {
-        "email": "keefe@gmail.com",
-        "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"        
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
-    response_data = response.json()
-    owner_token = response_data["token"]
-
-    invited_member_data = {
-        "email": "eagle@gmail.com",
-        "password": "password",
-        "name_first": "team",
-        "name_last": "eagle"   
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=invited_member_data)
-    response_data = response.json()
-    invited_member_token = response_data["token"]
-    invited_member_u_id = response_data["auth_user_id"]
-
-    channel_1_info = {
-        "token": owner_token,
-        "name": "channel_1",
-        "is_public": True
-    }
-
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
     response_data = response.json()
     channel_1 = response_data["channel_id"]
 
-    join_info = {
-        "token": invited_member_token,
-        "channel_id": channel_1
-    }
+    response = rh.channel_join(second_user_data["token"], channel_1)
 
-    response = requests.post(f"{BASE_URL}/channel/join/v2", json=join_info)
-
-    remove_owner_info = {
-        "token": owner_token,
-        "channel_id": channel_1,
-        "u_id": invited_member_u_id
-    }
-
-    response = requests.post(f"{BASE_URL}/channel/removeowner/v1", json=remove_owner_info)
+    response = rh.channel_removeowner(first_user_data["token"], channel_1, second_user_data["auth_user_id"])
     
     assert response.status_code == 400
 
-def test_removeowner_unauthorised_token():
-    requests.delete(f"{BASE_URL}/clear/v1")
+def test_removeowner_unauthorised_token(clear, first_user_data):
 
-    owner_data = {
-        "email": "keefe@gmail.com",
-        "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"        
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
-    response_data = response.json()
-    owner_token = response_data["token"]
-    owner_u_id = response_data["auth_user_id"]
-
-    channel_1_info = {
-        "token": owner_token,
-        "name": "channel_1",
-        "is_public": True
-    }
-
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
     response_data = response.json()
     channel_1 = response_data["channel_id"]
 
     fake_token = "aosfjaoifsjiasfoa"
 
-    remove_owner_info = {
-        "token": fake_token,
-        "channel_id": channel_1,
-        "u_id": owner_u_id
-    }
-
-    response = requests.post(f"{BASE_URL}/channel/removeowner/v1", json=remove_owner_info)
+    response = rh.channel_removeowner(fake_token, channel_1, first_user_data["auth_user_id"])
     
     assert response.status_code == 403
 
-def test_removeowner_global_owner():
-    requests.delete(f"{BASE_URL}/clear/v1")
+def test_removeowner_global_owner(clear, first_user_data, second_user_data):
 
-    invited_member_data = {
-        "email": "eagle@gmail.com",
-        "password": "password",
-        "name_first": "team",
-        "name_last": "eagle"   
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=invited_member_data)
-    response_data = response.json()
-    invited_member_token = response_data["token"]
-
-    owner_data = {
-        "email": "keefe@gmail.com",
-        "password": "password",
-        "name_first": "keefe",
-        "name_last": "vuong"        
-    }
-
-    response = requests.post(f"{BASE_URL}/auth/register/v2", json=owner_data)
-    response_data = response.json()
-    owner_token = response_data["token"]
-    owner_u_id = response_data["auth_user_id"]
-
-    channel_1_info = {
-        "token": owner_token,
-        "name": "channel_1",
-        "is_public": True
-    }
-
-    response = requests.post(f"{BASE_URL}/channels/create/v2", json=channel_1_info)
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
     response_data = response.json()
     channel_1 = response_data["channel_id"]
 
-    join_info = {
-        "token": invited_member_token,
-        "channel_id": channel_1
-    }
+    response = rh.channel_join(second_user_data["token"], channel_1)
 
-    response = requests.post(f"{BASE_URL}/channel/join/v2", json=join_info)
+    response = rh.channel_removeowner(second_user_data["token"], channel_1, first_user_data["auth_user_id"])
 
-    remove_owner_info = {
-        "token": invited_member_token,
-        "channel_id": channel_1,
-        "u_id": owner_u_id
-    }
+    assert response.status_code == 403
 
-    response = requests.post(f"{BASE_URL}/channel/removeowner/v1", json=remove_owner_info)
+def test_removeowner_non_member_cannot_remove_owner(clear, first_user_data, second_user_data):
 
-    assert response.status_code == 400
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
+    response_data = response.json()
+    channel_1 = response_data["channel_id"]
+
+    response = rh.channel_removeowner(second_user_data["token"], channel_1, first_user_data["auth_user_id"])
+
+    assert response.status_code == 403

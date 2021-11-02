@@ -1,10 +1,7 @@
 from src.data_store import data_store
 from src.error import InputError
-import hashlib
-import jwt
-import re
-
-HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
+import hashlib, jwt, re, secrets
+from src import config
 
 def auth_login_v1(email, password):
     """
@@ -33,7 +30,7 @@ def auth_login_v1(email, password):
     # when the email is correct determine if the password matches
     for u in users:
         if u['email'] == email and not u['password'] == hashed_password:
-            raise InputError('Password is incorrect')
+            raise InputError(description='Password is incorrect')
         elif u['email'] == email and u['password'] == hashed_password:
             return {
                 'auth_user_id': u['id'],
@@ -60,13 +57,13 @@ def auth_logout_v1(token):
     
     store = data_store.get()
     
-    token_dict = jwt.decode(token, HASHCODE, algorithms=['HS256'])
+    token_dict = jwt.decode(token, config.hashcode, algorithms=['HS256'])
 
     user_id = token_dict["user_id"]
     user_session = token_dict["session_id"]
-
+    token_id = token_dict["token_id"]
     
-    store['sessions'][user_id].remove(user_session)
+    store['sessions'][user_id].remove((user_session, token_id))
     data_store.set(store)
     
     return {}
@@ -114,7 +111,7 @@ def auth_register_v1(email, password, name_first, name_last):
         else: permission = 2
         
         if dict_search(email, users, 'email'):
-            raise InputError('Email is already being used by another user')
+            raise InputError(description='Email is already being used by another user')
             
 
         # create a handle for the user
@@ -153,15 +150,15 @@ def auth_register_v1(email, password, name_first, name_last):
         
     # when any of the inputs are invalid raise an input error
     elif len(password) < 6:
-        raise InputError('Password too short')
+        raise InputError(description='Password too short')
     
     elif not 1 <= len(name_first) <= 50:
-        raise InputError('First name too long or short')
+        raise InputError(description='First name too long or short')
     
     elif not 1 <= len(name_last) <= 50:
-        raise InputError('Last name too long or short')
+        raise InputError(description='Last name too long or short')
     else:
-        raise InputError('Email is an invalid format')
+        raise InputError(description='Email is an invalid format')
     
     return {
         'auth_user_id': u_id,
@@ -186,9 +183,15 @@ def create_session():
 def create_jwt(u_id):
     store = data_store.get()
     session_id = create_session()
+    token_id = secrets.token_urlsafe()
     if u_id in store["sessions"]:
-        store["sessions"][u_id].append(session_id)
+        store["sessions"][u_id].append((session_id, token_id))
     else:
-        store["sessions"][u_id] = [session_id]
+        store["sessions"][u_id] = [(session_id, token_id)]
     data_store.set(store)
-    return jwt.encode({'user_id': u_id, 'session_id': session_id}, HASHCODE, algorithm='HS256')
+    payload = {
+        'user_id': u_id,
+        'session_id': session_id,
+        'token_id': token_id
+    }
+    return jwt.encode(payload, config.hashcode, algorithm='HS256')

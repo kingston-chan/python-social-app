@@ -15,30 +15,29 @@ def change_removed_user_message(u_id, messages):
     return messages
 
 def check_valid_user_and_owner(auth_user_id, u_id, users, permission=None):
-    """Helper function to raise appropriate errors and return the user of u_id"""
+    """Helper function to raise appropriate errors"""
     auth_id_user = list(filter(lambda user: (user["id"] == auth_user_id), users))
     uid_user = list(filter(lambda user: (user["id"] == u_id), users))
     global_owners = list(filter(lambda user: (user["permission"] == 1), users))
 
     # uid is invalid
     if len(uid_user) != 1:
-        raise InputError("Invalid User")
+        raise InputError(description="Invalid User")
     # uid belongs to removed user
     if uid_user[0]["email"] is None and uid_user[0]["handle"] is None:
-        raise InputError("Removed User")
+        raise InputError(description="Removed User")
     # Auth user id is not a global owner
     if auth_id_user[0]["permission"] != 1:
-        raise AccessError("Authorised user is not a global owner")
+        raise AccessError(description="Authorised user is not a global owner")
 
     if permission:
         # U_id refers to a user who is the only global owner
         if uid_user[0]["permission"] == 1 and len(global_owners) == 1 and permission == 2:
-            raise InputError("Cannot demote only global owner")
+            raise InputError(description="Cannot demote only global owner")
     else:
         if uid_user[0]["permission"] == 1 and len(global_owners) == 1:
-            raise InputError("Cannot remove only global owner")
+            raise InputError(description="Cannot remove only global owner")
 
-    return uid_user
 
 def admin_userpermission_change_v1(auth_user_id, u_id, permission_id):
     """
@@ -64,18 +63,20 @@ def admin_userpermission_change_v1(auth_user_id, u_id, permission_id):
     store = data_store.get()
     
     # Exceptions
-    uid_user = check_valid_user_and_owner(auth_user_id, u_id, store["users"], permission_id)
+    check_valid_user_and_owner(auth_user_id, u_id, store["users"], permission_id)
     # Check for invalid permission id
     if permission_id not in [1,2]:
-        raise InputError("Invalid permission id")
+        raise InputError(description="Invalid permission id")
+
+    for user in store["users"]:
+        if u_id == user["id"]:
+            user["permission"] = permission_id
     
     if permission_id == 1:
-        uid_user[0]["permission"] = 1
         for channel in store["channels"]:
             if u_id in channel["all_members"] and u_id not in channel["owner_permissions"]:
-                channel["owner_permissions"].append(u_id) 
+                channel["owner_permissions"].append(u_id)
     else:
-        uid_user[0]["permission"] = 2
         for channel in store["channels"]:
             if u_id in channel["owner_permissions"] and u_id not in channel["owner_members"]:
                 channel["owner_permissions"].remove(u_id)

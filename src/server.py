@@ -1,14 +1,8 @@
-from os import error, name
-import sys
 import signal
 from json import dumps
 from flask import Flask, request
-from requests.models import DecodeError
-from requests.sessions import session
 from flask_cors import CORS
-from src import channel
-from src import user
-from src.error import InputError, AccessError
+from src.error import AccessError
 from src import config
 from src.channels import channels_create_v1, channels_list_v1
 from src.data_store import data_store
@@ -20,11 +14,9 @@ from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
 from src.dm import dm_details_v1, dm_create_v1, dm_leave_v1, dm_messages_v1, dm_list_v1, dm_remove_v1
 from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1, user_profile_sethandle_v1
-from src.message import message_send_v1, message_edit_v1, message_remove_v1, message_senddm_v1
+from src.message import message_send_v1, message_edit_v1, message_remove_v1, message_senddm_v1, message_share_v1, message_sendlater_v1, message_sendlaterdm_v1, message_pin_v1
 from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
-from src.dm import dm_details_v1
 
-HASHCODE = "LKJNJLKOIHBOJHGIUFUTYRDUTRDSRESYTRDYOJJHBIUYTF"
 
 def quit_gracefully(*args):
     '''For coverage'''
@@ -55,11 +47,15 @@ def check_valid_token_and_session(token):
     sessions = data_store.get()["sessions"]
     user_session = {}
     try:
-        user_session = jwt.decode(token, HASHCODE, algorithms=['HS256'])
+        user_session = jwt.decode(token, config.hashcode, algorithms=['HS256'])
     except Exception as invalid_jwt:
-        raise AccessError("Invalid JWT") from invalid_jwt
-    if not user_session["session_id"] in sessions[user_session["user_id"]]:
-        raise AccessError("Invalid session")
+        raise AccessError(description="Invalid JWT") from invalid_jwt
+    if user_session["user_id"] in sessions:
+        sess_tok_id = (user_session["session_id"], user_session["token_id"])
+        if sess_tok_id not in sessions[user_session["user_id"]]:
+            raise AccessError(description="Invalid session")
+    else:
+        raise AccessError(description="Invalid session")
     return user_session["user_id"]
 
 def save():
@@ -235,6 +231,39 @@ def message_senddm():
     new_dm_message = message_senddm_v1(user_id, data["dm_id"], data["message"])
     save()
     return dumps(new_dm_message)
+
+# message/senddm/v1
+@APP.route("/message/pin/v1", methods=['POST'])
+def message_pin():
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    message_pin_v1(user_id, data["message_id"])
+    save()
+    return dumps({})
+
+@APP.route("/message/sendlaterdm/v1", methods=['POST'])
+def message_sendlaterdm():
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    message_id = message_sendlaterdm_v1(user_id, data["dm_id"], data["message"], data["time_sent"])
+    save()
+    return dumps(message_id)
+
+@APP.route("/message/sendlater/v1", methods=['POST'])
+def message_sendlater():
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    message_id = message_sendlater_v1(user_id, data["channel_id"], data["message"], data["time_sent"])
+    save()
+    return dumps(message_id)
+
+@APP.route("/message/share/v1", methods=['POST'])
+def message_share():
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    shared_message_id = message_share_v1(user_id, data["og_message_id"], data["message"], data["channel_id"], data["dm_id"])
+    save()
+    return dumps(shared_message_id)
 
 #====== dm.py =====#
 
