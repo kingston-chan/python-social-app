@@ -168,9 +168,9 @@ def users_stats_v1():
         None
     """
     store = data_store.get()
-
-    num_users_in_channel_dm = 0
+    
     # Find the number of users that are in at least 1 channel or dm
+    num_users_in_channel_dm = 0
     for user in store["users"]:
         user_channels = len(list(filter(lambda channel: (user["id"] in channel["all_members"]), store["channels"])))
         user_dms = len(list(filter(lambda dm: (user["id"] in dm["members"]), store["dms"])))
@@ -196,8 +196,6 @@ def users_stats_v1():
         init_metrics("dms_exist", store)
         init_metrics("messages_exist", store)
 
-    
-    data_store.set(store)
 
 def metric_changed(metric, metric_num, store):
     """Helper function to check metric and append new timestamp if changed"""
@@ -206,6 +204,7 @@ def metric_changed(metric, metric_num, store):
             f"num_{metric}": metric_num,
             "time_stamp": int(time.time())
         })
+        data_store.set(store)
 
 def init_metrics(metric, store):
     """Helper function to initialise metrics"""
@@ -213,6 +212,8 @@ def init_metrics(metric, store):
         f"num_{metric}": 0,
         "time_stamp": int(time.time())
     })
+    data_store.set(store)
+
 
 def dict_search(item, users, item_name):
     for u in users:
