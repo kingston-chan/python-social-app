@@ -188,33 +188,33 @@ def users_stats_v1():
         if store["metrics"]["channels_exist"][-1]["num_channels_exist"] != len(store["channels"]):
             store["metrics"]["channels_exist"].append({
                 "num_channels_exist": len(store["channels"]),
-                "time_stamp": time.time()
+                "time_stamp": int(time.time())
             })
         # Number of dms changed
         if store["metrics"]["dms_exist"][-1]["num_dms_exist"] != len(store["dms"]):
             store["metrics"]["dms_exist"].append({
                 "num_dms_exist": len(store["dms"]),
-                "time_stamp": time.time()
+                "time_stamp": int(time.time())
             })
         # Number of messages changed
         if store["metrics"]["messages_exist"][-1]["num_messages_exist"] != (len(store["channel_messages"]) + len(store["dm_messages"])):
             store["metrics"]["messages_exist"].append({
                 "num_messages_exist": len(store["channel_messages"]) + len(store["dm_messages"]),
-                "time_stamp": time.time()
+                "time_stamp": int(time.time())
             })
     else:
         # First user registered, no registered use
         store["metrics"]["channels_exist"].append({
             "num_channels_exist": 0,
-            "time_stamp": time.time()
+            "time_stamp": int(time.time())
         })
         store["metrics"]["dms_exist"].append({
             "num_dms_exist": 0,
-            "time_stamp": time.time()
+            "time_stamp": int(time.time())
         })
         store["metrics"]["messages_exist"].append({
             "num_messages_exist": 0,
-            "time_stamp": time.time()
+            "time_stamp": int(time.time())
         })
     
     data_store.set(store)
