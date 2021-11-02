@@ -1,4 +1,4 @@
-import signal
+import signal, threading
 from json import dumps
 from flask import Flask, request
 from flask_cors import CORS
@@ -63,7 +63,14 @@ def check_valid_token_and_session(token):
     else:
         raise AccessError(description="Invalid session")
     return user_session["user_id"]
-    
+
+def check_metrics():
+    """Function to continously track workspace changes"""
+    t = threading.Timer(0, check_metrics)
+    t.setDaemon(True)
+    t.start()
+    users_stats_v1()
+
 data = {}
 
 try:
@@ -73,6 +80,8 @@ except Exception:
 
 if data:
     data_store.set(data)
+
+check_metrics()
 
 #====== auth.py =====#
 
@@ -89,7 +98,6 @@ def auth_login():
 def auth_register():
     info = request.get_json()
     user_info = auth_register_v1(info['email'], info['password'], info['name_first'], info['name_last'])
-    users_stats_v1()
     save()
     return dumps(user_info)
 
@@ -111,7 +119,6 @@ def channels_create():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     new_channel = channels_create_v1(user_id, data["name"], data["is_public"])
-    users_stats_v1()
     save()
     return dumps(new_channel)
 
@@ -149,7 +156,6 @@ def channel_join():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     channel_join_v1(user_id, data["channel_id"])
-    users_stats_v1()
     save()
     return dumps({})
 
@@ -159,7 +165,6 @@ def channel_invite():
     data = request.get_json() # { token, channel_id, u_id }
     user_info = check_valid_token_and_session(data["token"])
     channel_invite_v1(user_info, data["channel_id"], data["u_id"])
-    users_stats_v1()
     save()
     return dumps({})
 
@@ -178,7 +183,6 @@ def channel_leave():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     channel_leave_v1(user_id, data["channel_id"])
-    users_stats_v1()
     save()
     return dumps({})
 
@@ -208,7 +212,6 @@ def message_send():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     new_message = message_send_v1(user_id, data["channel_id"], data["message"])
-    users_stats_v1()
     save()
     return dumps(new_message)
 
@@ -218,7 +221,6 @@ def message_edit():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     message_edit_v1(user_id, data["message_id"], data["message"])
-    users_stats_v1()
     save()
     return dumps({})
 
@@ -228,7 +230,6 @@ def message_remove():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     message_remove_v1(user_id, data["message_id"])
-    users_stats_v1()
     save()
     return dumps({})
 
@@ -238,7 +239,6 @@ def message_senddm():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     new_dm_message = message_senddm_v1(user_id, data["dm_id"], data["message"])
-    users_stats_v1()
     save()
     return dumps(new_dm_message)
 
@@ -272,7 +272,6 @@ def message_share():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     shared_message_id = message_share_v1(user_id, data["og_message_id"], data["message"], data["channel_id"], data["dm_id"])
-    users_stats_v1()
     save()
     return dumps(shared_message_id)
 
@@ -286,7 +285,6 @@ def dm_create():
     user_lists = data["u_ids"]
     user_id = check_valid_token_and_session(user_token)
     dm_id = dm_create_v1(user_id, user_lists)
-    users_stats_v1()
     save()
     return dumps(dm_id)
                                                         
@@ -307,7 +305,6 @@ def dm_remove():
     #user_id for valid user 
     dm_id = data["dm_id"]
     dm_remove_v1(user_id, dm_id)
-    users_stats_v1()
     save()
     return dumps({})
 
@@ -326,7 +323,6 @@ def dm_leave():
     response = request.get_json()
     user_id = check_valid_token_and_session(response["token"])
     dm_leave_v1(user_id, response["dm_id"])
-    users_stats_v1()
     save()
     return dumps({})
 
@@ -405,7 +401,6 @@ def admin_user_remove():
     data = request.get_json()
     auth_user_id = check_valid_token_and_session(data["token"])
     admin_user_remove_v1(auth_user_id, data["u_id"])
-    users_stats_v1()
     save()
     return dumps({})
 
