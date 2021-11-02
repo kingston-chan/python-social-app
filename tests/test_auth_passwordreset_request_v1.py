@@ -1,4 +1,4 @@
-import route_helpers as rh
+import tests.route_helpers as rh
 
 def test_invalid_and_valid_email():
     rh.clear()
@@ -17,4 +17,9 @@ def test_passwordreset_request_logs_out_all_sessions():
     rh.auth_passwordreset_request("random@gmail.com")
 
     assert rh.channels_create(token, "channel", True).status_code == 403
-    
+
+def test_works():
+    rh.clear()
+    token = rh.auth_register("h13beaglestreamsuser@gmail.com", "123abc!@#", "John", "Smith").json()["token"]
+
+    rh.auth_passwordreset_request("h13beaglestreamsuser@gmail.com")
