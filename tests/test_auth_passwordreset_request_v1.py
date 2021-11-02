@@ -20,6 +20,6 @@ def test_passwordreset_request_logs_out_all_sessions():
 
 def test_works():
     rh.clear()
-    token = rh.auth_register("h13beaglestreamsuser@gmail.com", "123abc!@#", "John", "Smith").json()["token"]
+    rh.auth_register("h13beaglestreamsuser@gmail.com", "123abc!@#", "John", "Smith").json()["token"]
 
-    rh.auth_passwordreset_request("h13beaglestreamsuser@gmail.com")
+    assert rh.auth_passwordreset_request("h13beaglestreamsuser@gmail.com").status_code == 200
