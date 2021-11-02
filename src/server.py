@@ -16,6 +16,7 @@ from src.dm import dm_details_v1, dm_create_v1, dm_leave_v1, dm_messages_v1, dm_
 from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1, user_profile_sethandle_v1
 from src.message import message_send_v1, message_edit_v1, message_remove_v1, message_senddm_v1, message_share_v1, message_sendlater_v1, message_sendlaterdm_v1, message_pin_v1
 from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
+from src.search import search_v1
 
 
 def quit_gracefully(*args):
@@ -396,6 +397,15 @@ def admin_userpermission_change():
     admin_userpermission_change_v1(auth_user_id, data["u_id"], data["permission_id"])
     save()
     return dumps({})
+
+#===== search.py =====#
+@APP.route("/search/v1", methods=['GET'])
+def search():
+    auth_user_id = check_valid_token_and_session(request.args.get("token"))
+    messages = search_v1(auth_user_id, request.args.get("query_str"))
+    return dumps(messages)
+
+#===== other.py =====#
 
 # clear/v1
 @APP.route("/clear/v1", methods=['DELETE'])
