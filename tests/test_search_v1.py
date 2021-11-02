@@ -11,17 +11,24 @@ def clear_and_register():
 def test_correct_messages(clear_and_register):
     channel1 = rh.channels_create(clear_and_register, "channel1", True).json()["channel_id"]
     channel2 = rh.channels_create(clear_and_register, "channel2", True).json()["channel_id"]
+    channel3 = rh.channels_create(clear_and_register, "channel3", True).json()["channel_id"]
     dm1 = rh.dm_create(clear_and_register, []).json()["dm_id"]
     dm2 = rh.dm_create(clear_and_register, []).json()["dm_id"]
+    dm3 = rh.dm_create(clear_and_register, []).json()["dm_id"]
 
     msg_check1 = rh.message_send(clear_and_register, channel1, "hello channel1").json()["message_id"]
     rh.message_send(clear_and_register, channel1, "bye")
     msg_check2 = rh.message_send(clear_and_register, channel2, "channel2hello").json()["message_id"]
     rh.message_send(clear_and_register, channel2, "bye")
     msg_check3 = rh.message_senddm(clear_and_register, dm1, "hello dm1").json()["message_id"]
+    rh.message_send(clear_and_register, channel3, "hello")
     rh.message_senddm(clear_and_register, dm1, "bye")
     msg_check4 = rh.message_senddm(clear_and_register, dm2, "dm2hello").json()["message_id"]
     rh.message_senddm(clear_and_register, dm2, "bye")
+    rh.message_senddm(clear_and_register, dm3, "hello")
+
+    rh.channel_leave(clear_and_register, channel3)
+    rh.dm_leave(clear_and_register, dm3)
 
     messages = rh.search(clear_and_register, "hello").json()["messages"]
 
