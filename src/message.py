@@ -7,6 +7,7 @@ Functions to:
 from src.error import InputError, AccessError
 from src.data_store import data_store
 from src.user import users_stats_v1
+from src.other import save
 import time
 import threading
 
@@ -464,11 +465,10 @@ def message_sendlaterdm_threading(auth_user_id, dm_id, message, time_sent, messa
         'is_pinned': False,
     }
 
-    dm_messages.append(new_message)    
-    
+    dm_messages.append(new_message)
     users_stats_v1()
-
     data_store.set(store)
+    save()
 
 def message_sendlaterdm_v1(auth_user_id, dm_id, message, time_sent):
     store = data_store.get()
@@ -521,10 +521,9 @@ def message_sendlater_threading(auth_user_id, channel_id, message, time_sent, me
     }
 
     channel_messages.append(new_message)
-
     users_stats_v1()
-
     data_store.set(store)
+    save()
 
 def message_sendlater_v1(auth_user_id, channel_id, message, time_sent):
     store = data_store.get()
