@@ -31,28 +31,28 @@ def test_correct_messages(clear_and_register):
     
     assert messages[0]["message_id"] == msg_check1
     assert messages[0]["message"] == "hello channel1"
-    assert messages[0]["uid"] == uid
+    assert messages[0]["u_id"] == uid
     assert "time_created" in messages[0]
     assert "reacts" in messages[0]
     assert "is_pinned" in messages[0]
 
     assert messages[1]["message_id"] == msg_check2
     assert messages[1]["message"] == "channel2hello"
-    assert messages[1]["uid"] == uid
+    assert messages[1]["u_id"] == uid
     assert "time_created" in messages[1]
     assert "reacts" in messages[1]
     assert "is_pinned" in messages[1]
 
     assert messages[2]["message_id"] == msg_check3
     assert messages[2]["message"] == "hello dm1"
-    assert messages[2]["uid"] == uid
+    assert messages[2]["u_id"] == uid
     assert "time_created" in messages[2]
     assert "reacts" in messages[2]
     assert "is_pinned" in messages[2]
 
     assert messages[3]["message_id"] == msg_check4
     assert messages[3]["message"] == "dm2hello"
-    assert messages[3]["uid"] == uid
+    assert messages[3]["u_id"] == uid
     assert "time_created" in messages[3]
     assert "reacts" in messages[3]
     assert "is_pinned" in messages[3]
@@ -62,8 +62,8 @@ def test_sendlater_and_dm(clear_and_register):
     channel1 = rh.channels_create(clear_and_register, "channel1", True).json()["channel_id"]
     dm1 = rh.dm_create(clear_and_register, []).json()["dm_id"]
 
-    msg1 = rh.message_sendlater(clear_and_register, channel1, "hellohellohello", int(time.time()) + 2)
-    msg2 = rh.message_sendlaterdm(clear_and_register, dm1, "hellodm2hello", int(time.time()) + 2)
+    msg1 = rh.message_sendlater(clear_and_register, channel1, "hellohellohello", int(time.time()) + 2).json()["message_id"]
+    msg2 = rh.message_sendlaterdm(clear_and_register, dm1, "hellodm2hello", int(time.time()) + 2).json()["message_id"]
 
     assert len(rh.search(clear_and_register, "hello").json()["messages"]) == 0
 
@@ -88,7 +88,7 @@ def test_invalid_query_length(clear_and_register):
     rh.message_senddm(clear_and_register, dm1, "bye")
 
     assert rh.search(clear_and_register, "").status_code == 400
-    assert rh.search(clear_and_register, "a" * 1000).status_code == 400
+    assert rh.search(clear_and_register, "a" * 1001).status_code == 400
 
 
 # Invalid token
