@@ -94,7 +94,7 @@ def test_num_dms_messages_decrease(clear_and_register):
     rh.message_senddm(clear_and_register, dm_id, "hello")
     rh.message_senddm(clear_and_register, dm_id, "hello")
 
-    rh.message_send(clear_and_register, channel_id, "hello")
+    og_msg = rh.message_send(clear_and_register, channel_id, "hello").json()["message_id"]
     removing_message_id = rh.message_send(clear_and_register, channel_id, "hello").json()["message_id"]
 
     workspace = rh.users_stats(clear_and_register).json()["workspace_stats"]
@@ -103,10 +103,12 @@ def test_num_dms_messages_decrease(clear_and_register):
 
     rh.dm_remove(clear_and_register, dm_id)
     rh.message_remove(clear_and_register, removing_message_id)
+    rh.message_edit(clear_and_register, og_msg, "bye")
+    rh.message_share(clear_and_register, og_msg, "hello", channel_id, -1)
 
     workspace = rh.users_stats(clear_and_register).json()["workspace_stats"]
     assert workspace["dms_exist"][-1]["num_dms_exist"] == 0
-    assert workspace["messages_exist"][-1]["num_messages_exist"] == 1
+    assert workspace["messages_exist"][-1]["num_messages_exist"] == 2
 
 # Utilization increases if removed user is not in a dm/channel
 def test_utilization_stays_same(clear_and_register):
