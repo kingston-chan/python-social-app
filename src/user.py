@@ -183,41 +183,36 @@ def users_stats_v1():
     store["metrics"]["utilization_rate"] = num_users_in_channel_dm/valid_users
 
     # Checks if each metric has at least 1 entry
-    if store["metrics"]["channels_exist"] or store["metrics"]["dms_exist"] or store["metrics"]["messages_exist"]:
+    if store["metrics"]["channels_exist"] and store["metrics"]["dms_exist"] and store["metrics"]["messages_exist"]:
         # Number of channels changed
-        if store["metrics"]["channels_exist"][-1]["num_channels_exist"] != len(store["channels"]):
-            store["metrics"]["channels_exist"].append({
-                "num_channels_exist": len(store["channels"]),
-                "time_stamp": int(time.time())
-            })
+        metric_changed("channels_exist", len(store["channels"]), store)
         # Number of dms changed
-        if store["metrics"]["dms_exist"][-1]["num_dms_exist"] != len(store["dms"]):
-            store["metrics"]["dms_exist"].append({
-                "num_dms_exist": len(store["dms"]),
-                "time_stamp": int(time.time())
-            })
+        metric_changed("dms_exist", len(store["dms"]), store)
         # Number of messages changed
-        if store["metrics"]["messages_exist"][-1]["num_messages_exist"] != (len(store["channel_messages"]) + len(store["dm_messages"])):
-            store["metrics"]["messages_exist"].append({
-                "num_messages_exist": len(store["channel_messages"]) + len(store["dm_messages"]),
-                "time_stamp": int(time.time())
-            })
+        metric_changed("messages_exist", len(store["channel_messages"]) + len(store["dm_messages"]), store)
     else:
         # First user registered, no registered use
-        store["metrics"]["channels_exist"].append({
-            "num_channels_exist": 0,
-            "time_stamp": int(time.time())
-        })
-        store["metrics"]["dms_exist"].append({
-            "num_dms_exist": 0,
-            "time_stamp": int(time.time())
-        })
-        store["metrics"]["messages_exist"].append({
-            "num_messages_exist": 0,
-            "time_stamp": int(time.time())
-        })
+        init_metrics("channels_exist", store)
+        init_metrics("dms_exist", store)
+        init_metrics("messages_exist", store)
+
     
     data_store.set(store)
+
+def metric_changed(metric, metric_num, store):
+    """Helper function to check metric and append new timestamp if changed"""
+    if store["metrics"][metric][-1][f"num_{metric}"] != metric_num:
+        store["metrics"][metric].append({
+            f"num_{metric}": metric_num,
+            "time_stamp": int(time.time())
+        })
+
+def init_metrics(metric, store):
+    """Helper function to initialise metrics"""
+    store["metrics"][metric].append({
+        f"num_{metric}": 0,
+        "time_stamp": int(time.time())
+    })
 
 def dict_search(item, users, item_name):
     for u in users:
