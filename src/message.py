@@ -4,6 +4,7 @@ Functions to:
 - Given a message, update its text with new text.
 - Given a message_id for a message, remove the message from the channel/DM.
 """
+from src import auth, channel, user
 from src.error import InputError, AccessError
 from src.data_store import data_store
 import time
@@ -638,4 +639,53 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
         "shared_message_id": store['message_id_gen']
     }
 def message_react_v1(auth_user_id,message_id,react_id):
-    return None
+
+    dm_messages_list = data_store["dm_messages"]
+    channel_message_list = data_store["channel_messages"]
+    
+    checklist_1 = False
+    i = 0
+
+    select_channel = 0
+    select_dm = 0
+
+    for messages in dm_messages_list:
+        if message_id == messages["message_id"]:
+            checklist_1 = True
+            select_dm = messages["dm_id"]
+
+    for channel_messages in channel_message_list:
+        if message_id == channel_messages["message_id"]:
+            checklist_1 = True
+            select_channel = channel_messages["channel_id"]
+
+    if checklist_1 == False:
+        raise AccessError("Invalid Message ID")
+
+    for dms in data_store["dms"]:
+        if select_dm == dms["dm_id"]:
+            checklist_1 = True
+            break
+
+    for channels in data_store["channels"]:
+        if select_channel == channels["channel_id"]:
+            checklist_1 = True
+            break
+    
+    if checklist_1 == False:
+        raise InputError("Invalid Channel or DM")
+
+    if auth_user_id not in dms["members"] and auth_user_id not in channels["all_members"]:
+        raise InputError("Unauthorised User")
+
+    if react_id != 1:
+        raise InputError("Invalid react ID")
+    
+    reaction = {"react_id" : react_id}
+    
+    if select_dm == 0:
+        channel_messages["reacts"].append(reaction)
+    else:
+        messages["reacts"].append(reaction)
+
+    return {}

@@ -270,7 +270,7 @@ def message_share():
 def message_share():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
-    message_react_v1(user_id, data["message_id"], data["message_id"], data["react_id"])
+    message_react_v1(user_id, data["message_id"],data["react_id"])
     save()
     return dumps({})
 
