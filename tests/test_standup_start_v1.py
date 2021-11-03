@@ -66,7 +66,7 @@ def test_standup_start_valid(clear, first_user_data):
     current_time = time.time()
     
     assert response.status_code == 200
-    assert response.json()["time_finish"] == current_time + 5
+    assert response.json()["time_finish"] >= current_time + 3 and response.json()["time_finish"] <= current_time + 7
 
     
 
