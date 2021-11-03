@@ -165,6 +165,38 @@ def auth_register_v1(email, password, name_first, name_last):
         'token': create_jwt(u_id)
     }
 
+def auth_passwordreset_reset_v1(reset_code, password):
+    """
+    Given a valid reset code corresponding to valid email, reset email's password with
+    given password which is valid
+    
+    Arguments:
+        reset_code (string) - reset_code given by user
+        password (string) - password to change to given by user
+
+    Exceptions:
+        InputError - occurs if any of the following is satisfied:
+            - the reset code is invalid i.e. does not correspond to any password reset request
+            - the password is shorter than 6 characters
+
+    Return Value:
+        Returns empty dictionary on successful password reset
+    """
+    # Check given password is at least 6 characters
+    if len(password) < 6:
+        raise InputError(description="Password must be at least 6 characters")
+    store = data_store.get()
+    # Find email corresponding to reset code
+    email = [email for (email, code) in store["password_reset_codes"].items() if code == reset_code]
+    # Check if no email is found corresponding to given reset code
+    if not email:
+        raise InputError(description="Invalid code")
+    # Find user corresponding to email
+    for user in store["users"]:
+        if user["email"] == email[0]:
+            # Encrypt password
+            user["password"] = hashlib.sha256(password.encode()).hexdigest()
+    return {}
 
 # helper function to search the data store for duplicate items
 def dict_search(item, users, item_name):
