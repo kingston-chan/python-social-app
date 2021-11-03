@@ -54,7 +54,6 @@ def test_unauthorised_token_for_dm(clear,user1,user2):
 
     assert response.status_code == 400 
 
-    return None
 def test_unauthorised_token_for_channel():
     return None 
 def test_invalid_react_id():
