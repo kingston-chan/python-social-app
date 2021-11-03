@@ -34,12 +34,16 @@ def dm_create(token, u_ids):
     response = requests.post(f"{url}/dm/create/v1", json={"token" : token , "u_ids" : u_ids})
     dm_id = response.json()
     return dm_id
+def channel_create_public(user):
+    response = requests.post(f"{url}/channel/create/v1", json={"token" : user["token"]})
+    channel_id = response.json()
+    return channel_id
 
 #==tests==#
 
 def test_invalid_token(clear):
     response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : 0, "message_id": 'a', "react_id" : 'a'})
-    assert response.status_code == 400 
+    assert response.status_code == 403
 
 def test_unauthorised_token_for_dm(clear,user1,user2):
     new_user_token = user1["token"]
@@ -54,14 +58,48 @@ def test_unauthorised_token_for_dm(clear,user1,user2):
 
     assert response.status_code == 400 
 
-def test_unauthorised_token_for_channel():
-    return None 
-def test_invalid_react_id():
-    return None
+def test_unauthorised_token_for_channel(clear,user1,user2):
+    
+    unauth_token = user2["token"]
+
+    channel_id = channel_create_public(user1)
+
+    dm_messages_dict = {"token": user1['token'], "channel_id": channel_id, "start": 0, "react_id": 1 }
+    message_id = requests.get(f"{BASE_URL}/channel/messages/v2", params=dm_messages_dict)
+
+    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : unauth_token, "message_id": message_id, "react_id" : 2})
+
+    assert response.status_code == 400 
+
+def test_invalid_react_id(clear,user1):
+        
+    auth_token = user1["token"]
+
+    channel_id = channel_create_public(user1)
+
+    dm_messages_dict = {"token": user1['token'], "channel_id": channel_id, "start": 0, "react_id": 1 }
+    message_id = requests.get(f"{BASE_URL}/channel/messages/v2", params=dm_messages_dict)
+
+    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : auth_token, "message_id": message_id, "react_id" : 2})
+
+    assert response.status_code == 400 
+
 def test_invalid_message_id():
-    return None 
+            
+    auth_token = user1["token"]
+
+    channel_id = channel_create_public(user1)
+
+    dm_messages_dict = {"token": user1['token'], "channel_id": channel_id, "start": 0, "react_id": 1 }
+    message_id = requests.get(f"{BASE_URL}/channel/messages/v2", params=dm_messages_dict)
+
+    message_id = message_id + 1
+    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : auth_token, "message_id": message_id, "react_id" : 2})
+
+    assert response.status_code == 400 
+'''
 def test_seccessful_case_dm_react():
     return None 
 def test_seccessful_case_channel_react():
     return None 
- 
+'''
