@@ -1,6 +1,7 @@
 import json
 import requests
 import pytest
+from src import message
 from src.config import url
 import tests.route_helpers as rh
 
@@ -26,21 +27,16 @@ def user2():
     return response.json()
 
 #==Helper Functions==#
-
-def dm_list(token):
-    list_of_dicts = requests.get(f"{url}/dm/list/v1", params={"token" : token })
-    return list_of_dicts.json()
 def dm_create(token, u_ids):
     response = requests.post(f"{url}/dm/create/v1", json={"token" : token , "u_ids" : u_ids})
     dm_id = response.json()
-    return dm_id
-def channel_create_public(user):
-    response = requests.post(f"{url}/channel/create/v1", json={"token" : user["token"]})
+    return dm_id["dm_id"]
+def channel_create_public(token):
+    response = requests.post(f"{url}/channels/create/v2", json={"token" : token , "name" : "fake_guys_channel" , "is_public": True })
     channel_id = response.json()
-    return channel_id
+    return channel_id["channel_id"]
 
 #==tests==#
-
 def test_invalid_token(clear):
     response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : 0, "message_id": 'a', "react_id" : 'a'})
     assert response.status_code == 403
@@ -52,7 +48,8 @@ def test_unauthorised_token_for_dm(clear,user1,user2):
     dm_create(new_user_token,[])
 
     dm_messages_dict = {"token": user1['token'], "dm_id": 1, "message": "This assignment is too long"}
-    message_id = requests.post(f"{BASE_URL}/message/senddm/v1", json=dm_messages_dict)
+    response = requests.post(f"{BASE_URL}/message/senddm/v1", json=dm_messages_dict)
+    message_id = response.json()["message_id"]
 
     response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : unauth_token, "message_id": message_id, "react_id" : 2})
 
@@ -62,10 +59,11 @@ def test_unauthorised_token_for_channel(clear,user1,user2):
     
     unauth_token = user2["token"]
 
-    channel_id = channel_create_public(user1)
+    channel_id = channel_create_public(user1["token"])
 
     channel_messages_dict = {"token": user1['token'], "channel_id": channel_id, "message": "This assignment is too long"}
-    message_id = requests.post(f"{BASE_URL}/message/send/v1", json=channel_messages_dict)
+    response = requests.post(f"{BASE_URL}/message/send/v1", json=channel_messages_dict)
+    message_id = response.json()["message_id"]
 
     response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : unauth_token, "message_id": message_id, "react_id" : 1})
 
@@ -75,11 +73,12 @@ def test_invalid_react_id(clear,user1):
         
     auth_token = user1["token"]
 
-    channel_id = channel_create_public(user1)
+    channel_id = channel_create_public(user1["token"])
 
     channel_messages_dict = {"token": user1['token'], "channel_id": channel_id, "message": "This assignment is too long"}
 
-    message_id = requests.post(f"{BASE_URL}/message/send/v1", json=channel_messages_dict)
+    response = requests.post(f"{BASE_URL}/message/send/v1", json=channel_messages_dict)
+    message_id = response.json()["message_id"]
 
     response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : auth_token, "message_id": message_id, "react_id" : 2})
 
@@ -89,15 +88,16 @@ def test_invalid_message_id(clear,user1):
             
     auth_token = user1["token"]
 
-    channel_id = channel_create_public(user1)
+    channel_id = channel_create_public(user1["token"])
 
     channel_messages_dict = {"token": user1['token'], "channel_id": channel_id, "message": "This assignment is too long"}
-    response = requests.get(f"{BASE_URL}/messages/send/v2", json=channel_messages_dict)
-    message_id = response.json()["message_id"] + 1
+    #response = requests.post(f"{BASE_URL}/message/send/v1", json=channel_messages_dict)
+    #message_id = response.json()["message_id"] 
     
-    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : auth_token, "message_id": message_id, "react_id" : 1})
+    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : auth_token, "message_id": 'a', "react_id" : 1})
 
     assert response.status_code == 400 
+
 '''
 def test_seccessful_case_dm_react():
     return None 
