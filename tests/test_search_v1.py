@@ -6,34 +6,51 @@ def clear_and_register():
     rh.clear()
     return rh.auth_register("random@gmail.com", "123abc!@#", "John", "Smith").json()['token']
 
+@pytest.fixture()
+def channel_one(clear_and_register):
+    return rh.channels_create(clear_and_register, "channel1", True).json()["channel_id"]
+
+@pytest.fixture()
+def channel_two(clear_and_register):
+    return rh.channels_create(clear_and_register, "channel2", True).json()["channel_id"]
+
+@pytest.fixture()
+def channel_three(clear_and_register):
+    return rh.channels_create(clear_and_register, "channel3", True).json()["channel_id"]
+
+@pytest.fixture()
+def dm_one(clear_and_register):
+    return rh.dm_create(clear_and_register, []).json()["dm_id"]
+
+@pytest.fixture()
+def dm_two(clear_and_register):
+    return rh.dm_create(clear_and_register, []).json()["dm_id"]
+
+@pytest.fixture()
+def dm_three(clear_and_register):
+    return rh.dm_create(clear_and_register, []).json()["dm_id"]
+
 # Valid inputs
 
-def test_correct_messages(clear_and_register):
-    channel1 = rh.channels_create(clear_and_register, "channel1", True).json()["channel_id"]
-    channel2 = rh.channels_create(clear_and_register, "channel2", True).json()["channel_id"]
-    channel3 = rh.channels_create(clear_and_register, "channel3", True).json()["channel_id"]
-    dm1 = rh.dm_create(clear_and_register, []).json()["dm_id"]
-    dm2 = rh.dm_create(clear_and_register, []).json()["dm_id"]
-    dm3 = rh.dm_create(clear_and_register, []).json()["dm_id"]
+def test_correct_messages(clear_and_register, channel_one, channel_two, channel_three, dm_one, dm_two, dm_three):
+    msg_check1 = rh.message_send(clear_and_register, channel_one, "hello channel1").json()["message_id"]
+    rh.message_send(clear_and_register, channel_one, "bye")
+    msg_check2 = rh.message_send(clear_and_register, channel_two, "channel2hello").json()["message_id"]
+    rh.message_send(clear_and_register, channel_two, "bye")
+    msg_check3 = rh.message_senddm(clear_and_register, dm_one, "hello dm1").json()["message_id"]
+    rh.message_send(clear_and_register, channel_three, "hello")
+    rh.message_senddm(clear_and_register, dm_one, "bye")
+    msg_check4 = rh.message_senddm(clear_and_register, dm_two, "dm2hello").json()["message_id"]
+    rh.message_senddm(clear_and_register, dm_two, "bye")
+    rh.message_senddm(clear_and_register, dm_three, "hello")
 
-    msg_check1 = rh.message_send(clear_and_register, channel1, "hello channel1").json()["message_id"]
-    rh.message_send(clear_and_register, channel1, "bye")
-    msg_check2 = rh.message_send(clear_and_register, channel2, "channel2hello").json()["message_id"]
-    rh.message_send(clear_and_register, channel2, "bye")
-    msg_check3 = rh.message_senddm(clear_and_register, dm1, "hello dm1").json()["message_id"]
-    rh.message_send(clear_and_register, channel3, "hello")
-    rh.message_senddm(clear_and_register, dm1, "bye")
-    msg_check4 = rh.message_senddm(clear_and_register, dm2, "dm2hello").json()["message_id"]
-    rh.message_senddm(clear_and_register, dm2, "bye")
-    rh.message_senddm(clear_and_register, dm3, "hello")
-
-    rh.channel_leave(clear_and_register, channel3)
-    rh.dm_leave(clear_and_register, dm3)
+    rh.channel_leave(clear_and_register, channel_three)
+    rh.dm_leave(clear_and_register, dm_three)
 
     messages = rh.search(clear_and_register, "hello").json()["messages"]
-
     uid = rh.auth_login("random@gmail.com", "123abc!@#").json()["auth_user_id"]
 
+    # Should not include messages that user is not in, therefore exclude "hello" message in dm3 and channel3
     assert len(messages) == 4
     
     assert messages[0]["message_id"] == msg_check1
@@ -65,12 +82,10 @@ def test_correct_messages(clear_and_register):
     assert "is_pinned" in messages[3]
 
 # Search for not yet sent messages produces no results
-def test_sendlater_and_dm(clear_and_register):
-    channel1 = rh.channels_create(clear_and_register, "channel1", True).json()["channel_id"]
-    dm1 = rh.dm_create(clear_and_register, []).json()["dm_id"]
+def test_sendlater_and_dm(clear_and_register, channel_one, dm_one):
 
-    msg1 = rh.message_sendlater(clear_and_register, channel1, "hellohellohello", int(time.time()) + 2).json()["message_id"]
-    msg2 = rh.message_sendlaterdm(clear_and_register, dm1, "hellodm2hello", int(time.time()) + 2).json()["message_id"]
+    msg1 = rh.message_sendlater(clear_and_register, channel_one, "hellohellohello", int(time.time()) + 2).json()["message_id"]
+    msg2 = rh.message_sendlaterdm(clear_and_register, dm_one, "hellodm2hello", int(time.time()) + 2).json()["message_id"]
 
     assert len(rh.search(clear_and_register, "hello").json()["messages"]) == 0
 
@@ -88,11 +103,9 @@ def test_sendlater_and_dm(clear_and_register):
 # Invalid inputs
 
 # Invalid query length
-def test_invalid_query_length(clear_and_register):
-    channel1 = rh.channels_create(clear_and_register, "channel1", True).json()["channel_id"]
-    dm1 = rh.dm_create(clear_and_register, []).json()["dm_id"]
-    rh.message_send(clear_and_register, channel1, "bye")
-    rh.message_senddm(clear_and_register, dm1, "bye")
+def test_invalid_query_length(clear_and_register, channel_one, dm_one):
+    rh.message_send(clear_and_register, channel_one, "bye")
+    rh.message_senddm(clear_and_register, dm_one, "bye")
 
     assert rh.search(clear_and_register, "").status_code == 400
     assert rh.search(clear_and_register, "a" * 1001).status_code == 400
