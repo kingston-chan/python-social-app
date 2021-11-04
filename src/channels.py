@@ -110,7 +110,9 @@ def channels_create_v1(auth_user_id, name, is_public):
         'owner_members': [],
         'owner_permissions': [],
         'all_members': [],
-        'is_public': is_public
+        'is_public': is_public,
+        'standup': {'active': False, 'auth_user_id': None, 'time_finish': None},
+        'standup_queue': []
     }
 
     # Add the creator of the channel to the list
