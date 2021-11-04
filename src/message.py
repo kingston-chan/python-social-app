@@ -653,11 +653,13 @@ def message_react_v1(auth_user_id,message_id,react_id):
         if message_id == messages["message_id"]:
             checklist_1 = True
             select_dm = messages["dm_id"]
+            break
 
     for channel_messages in channel_message_list:
         if message_id == channel_messages["message_id"]:
             checklist_1 = True
             select_channel = channel_messages["channel_id"]
+            break
 
     if checklist_1 == False:
         raise AccessError("Invalid Message ID")
