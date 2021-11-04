@@ -639,53 +639,53 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
         "shared_message_id": store['message_id_gen']
     }
 def message_react_v1(auth_user_id,message_id,react_id):
-
-    dm_messages_list = data_store["dm_messages"]
-    channel_message_list = data_store["channel_messages"]
     
+    store = data_store.get()
+
     checklist_1 = False
-    i = 0
+    select_channel = {}
+    select_channel["all_members"] = [0]
+    select_dm = {}
+    select_dm["members"] = [0]
 
-    select_channel = 0
-    select_dm = 0
-
-    for messages in dm_messages_list:
+    for messages in store["dm_messages"]:
         if message_id == messages["message_id"]:
             checklist_1 = True
             select_dm = messages["dm_id"]
             break
 
-    for channel_messages in channel_message_list:
+    for channel_messages in store["channel_messages"]:
         if message_id == channel_messages["message_id"]:
             checklist_1 = True
             select_channel = channel_messages["channel_id"]
             break
 
     if checklist_1 == False:
-        raise AccessError("Invalid Message ID")
-
-    for dms in data_store["dms"]:
+        raise InputError("Invalid Message ID") 
+    else:
+        checklist_1 = False
+        
+    for dms in store["dms"]:
         if select_dm == dms["dm_id"]:
             checklist_1 = True
-            break
+            if auth_user_id not in dms["members"]:
+                raise InputError("Not Authorised User")
 
-    for channels in data_store["channels"]:
-        if select_channel == channels["channel_id"]:
+    for channels in store["channels"]:
+        if select_channel == channels["id"]:
             checklist_1 = True
-            break
-    
+            if auth_user_id not in channels["all_members"]:
+                raise InputError("Not Authorised User")
+            
     if checklist_1 == False:
         raise InputError("Invalid Channel or DM")
-
-    if auth_user_id not in dms["members"] and auth_user_id not in channels["all_members"]:
-        raise InputError("Unauthorised User")
 
     if react_id != 1:
         raise InputError("Invalid react ID")
     
     reaction = {"react_id" : react_id}
     
-    if select_dm == 0:
+    if select_dm["members"] == [0]:
         channel_messages["reacts"].append(reaction)
     else:
         messages["reacts"].append(reaction)
