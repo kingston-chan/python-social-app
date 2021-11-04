@@ -671,9 +671,5 @@ def message_react_v1(auth_user_id,message_id,react_id):
             raise InputError("Already reacted to")
         else:
             dm_message[0]["reacts"].append(reaction)
-
-
-
-    
-
+            
     return {}
