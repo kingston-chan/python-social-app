@@ -35,7 +35,13 @@ initial_object = {
     'sessions': {},
     'message_id_gen': 0,
     'session_count': 0,
-    'password_reset_codes': {}
+    'password_reset_codes': {},
+    'metrics': {
+        'channels_exist': [],
+        'dms_exist': [],
+        'messages_exist': [],
+        'utilization_rate': 0
+    }
 }
 ## YOU SHOULD MODIFY THIS OBJECT ABOVE
 

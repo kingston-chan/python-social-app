@@ -1,5 +1,6 @@
 from src.error import InputError, AccessError
 from src.data_store import data_store
+from src.user import users_stats_v1
 
 def assign_user_info(user_data_placeholder):
     """Assigns the user information with the appropriate key names required in the spec"""
@@ -305,9 +306,15 @@ def dm_remove_v1(auth_user_id, dm_id):
                 raise AccessError(description="Not owner of DM")
             else:
                 list_of_dms.remove(dms)
-                for dm_msg in store["dm_messages"]:
-                    if dm_msg["dm_id"] == dm_id:
-                        store["dm_messages"].remove(dm_msg)
+                # store["dm_messages"] = [msg for msg in store["dm_messages"] if msg["dm_id"] != dm_id]
+                idx = 0
+                while idx < len(store["dm_messages"]):
+                    if store["dm_messages"][idx]["dm_id"] == dm_id:
+                        store["dm_messages"].remove(store["dm_messages"][idx])
+                        data_store.set(store)
+                        users_stats_v1()
+                    else:
+                        idx += 1
     if i == False:
         raise InputError(description="DM does not exist")
     data_store.set(store)
