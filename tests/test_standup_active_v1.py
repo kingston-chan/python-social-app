@@ -40,6 +40,15 @@ def test_standup_active_invalid_channel_id(clear, first_user_data):
 
     assert response.status_code == 400
 
+def test_standup_active_negative_channel_id(clear, first_user_data):
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
+
+    fake_channel_id = -1
+
+    response = rh.standup_active(first_user_data["token"], fake_channel_id)
+
+    assert response.status_code == 400
+
 
 def test_standup_active_valid(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
