@@ -1,4 +1,3 @@
-from ctypes import _StructUnionBase
 from src.data_store import data_store
 from src.error import InputError
 from src import config
