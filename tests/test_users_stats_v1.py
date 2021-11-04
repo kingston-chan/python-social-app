@@ -7,11 +7,11 @@ def clear_and_register():
     return rh.auth_register("random@gmail.com", "123abc!@#", "John", "Smith").json()['token']
 
 @pytest.fixture
-def create_channel():
+def create_channel(clear_and_register):
     return rh.channels_create(clear_and_register, "channel", True).json()["channel_id"]
 
 @pytest.fixture
-def create_dm():
+def create_dm(clear_and_register):
     return rh.dm_create(clear_and_register, []).json()["dm_id"]
 
 # Valid inputs
@@ -112,13 +112,14 @@ def test_utilization_stays_same(clear_and_register, create_channel):
     assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 1
 
 # Utilization rate changes when users leave channels/dms and join/get invited channels
-def test_utilization_change_when_leaving_channel_dm(clear_and_register, create_channel, create_dm):
+def test_utilization_change_when_leaving_channel_dm(clear_and_register, create_channel):
     user2 = rh.auth_register("random2@gmail.com", "123abc!@#", "Bob", "Smith").json()
     assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 0.5
 
+    dm_id = rh.dm_create(clear_and_register, [user2["auth_user_id"]]).json()["dm_id"]
     # Test dm leave
     assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 1
-    rh.dm_leave(user2["token"], create_dm)
+    rh.dm_leave(user2["token"], dm_id)
     assert rh.users_stats(clear_and_register).json()["workspace_stats"]["utilization_rate"] == 0.5
 
     # Test channel invite/leave/join
