@@ -641,53 +641,39 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
 def message_react_v1(auth_user_id,message_id,react_id):
     
     store = data_store.get()
-
-    checklist_1 = False
-    select_channel = {}
-    select_channel["all_members"] = [0]
-    select_dm = {}
-    select_dm["members"] = [0]
-
-    for messages in store["dm_messages"]:
-        if message_id == messages["message_id"]:
-            checklist_1 = True
-            select_dm = messages["dm_id"]
-            break
-
-    for channel_messages in store["channel_messages"]:
-        if message_id == channel_messages["message_id"]:
-            checklist_1 = True
-            select_channel = channel_messages["channel_id"]
-            break
-
-    if checklist_1 == False:
-        raise InputError("Invalid Message ID") 
-    else:
-        checklist_1 = False
-        
-    for dms in store["dms"]:
-        if select_dm == dms["dm_id"]:
-            checklist_1 = True
-            if auth_user_id not in dms["members"]:
-                raise InputError("Not Authorised User")
-
-    for channels in store["channels"]:
-        if select_channel == channels["id"]:
-            checklist_1 = True
-            if auth_user_id not in channels["all_members"]:
-                raise InputError("Not Authorised User")
-            
-    if checklist_1 == False:
-        raise InputError("Invalid Channel or DM")
+    reaction = (auth_user_id, react_id)
+    
+    dm_message = list(filter(lambda x : message_id == x["message_id"], store["dm_messages"]))
+    channel_message = list(filter(lambda x : message_id == x["message_id"], store["channel_messages"]))
 
     if react_id != 1:
         raise InputError("Invalid react ID")
+
+    if len(dm_message) == 0 and len(channel_message) == 0:
+        raise InputError("Not a valid  message ID")
     
-    reaction = {"react_id" : react_id}
-    
-    if select_dm["members"] == [0]:
-        channel_messages["reacts"].append(reaction)
+    if len(dm_message) == 0:
+        select_channel = channel_message[0]["channel_id"] 
+        channel = list(filter(lambda x : select_channel == x["id"], store["channels"]))
+        if len(channel)> 0 and auth_user_id not in channel[0]["all_members"]:
+            raise InputError("Not Authorised User")
+        if reaction in channel_message[0]["reacts"]:
+            raise InputError("Already reacted to")
+        else:
+            channel_message[0]["reacts"].append(reaction)
+
     else:
-        messages["reacts"].append(reaction)
+        select_dm = dm_message[0]["dm_id"]
+        dm = list(filter(lambda x : select_dm == x["dm_id"], store["dms"]))
+        if len(dm)> 0 and auth_user_id not in dm[0]["members"]:
+            raise InputError("Not Authorised User")
+        if reaction in dm_message[0]["reacts"]:
+            raise InputError("Already reacted to")
+        else:
+            dm_message[0]["reacts"].append(reaction)
+
+
+
+    
 
     return {}

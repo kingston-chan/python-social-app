@@ -38,7 +38,7 @@ def channel_create_public(token):
 
 #==tests==#
 def test_invalid_token(clear):
-    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : 0, "message_id": 'a', "react_id" : 'a'})
+    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : 0, "message_id": 'a', "react_id" : 1})
     assert response.status_code == 403
 
 def test_unauthorised_token_for_dm(clear,user1,user2):
@@ -51,7 +51,7 @@ def test_unauthorised_token_for_dm(clear,user1,user2):
     response = requests.post(f"{BASE_URL}/message/senddm/v1", json=dm_messages_dict)
     message_id = response.json()["message_id"]
 
-    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : unauth_token, "message_id": message_id, "react_id" : 2})
+    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : unauth_token, "message_id": message_id, "react_id" : 1})
 
     assert response.status_code == 400 
 
@@ -87,20 +87,36 @@ def test_invalid_react_id(clear,user1):
 def test_invalid_message_id(clear,user1):
             
     auth_token = user1["token"]
-
-    channel_id = channel_create_public(user1["token"])
-
-    channel_messages_dict = {"token": user1['token'], "channel_id": channel_id, "message": "This assignment is too long"}
-    #response = requests.post(f"{BASE_URL}/message/send/v1", json=channel_messages_dict)
-    #message_id = response.json()["message_id"] 
     
     response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : auth_token, "message_id": 'a', "react_id" : 1})
 
     assert response.status_code == 400 
 
-'''
-def test_seccessful_case_dm_react():
-    return None 
-def test_seccessful_case_channel_react():
-    return None 
-'''
+def test_already_reacted_for_dm(clear,user1):
+    new_user_token = user1["token"]
+
+    dm_create(new_user_token,[])
+
+    dm_messages_dict = {"token": user1['token'], "dm_id": 1, "message": "This assignment is too long"}
+    response = requests.post(f"{BASE_URL}/message/senddm/v1", json=dm_messages_dict)
+    message_id = response.json()["message_id"]
+
+    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : new_user_token, "message_id": message_id, "react_id" : 1})
+    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : new_user_token, "message_id": message_id, "react_id" : 1})
+
+    assert response.status_code == 400 
+
+def test_already_reacted_for_channel(clear,user1):
+    new_user_token = user1["token"]
+
+    channel_id = channel_create_public(user1["token"])
+
+    channel_messages_dict = {"token": user1['token'], "channel_id": channel_id, "message": "This assignment is too long"}
+
+    response = requests.post(f"{BASE_URL}/message/send/v1", json=channel_messages_dict)
+    message_id = response.json()["message_id"]
+
+    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : new_user_token, "message_id": message_id, "react_id" : 1})
+    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : new_user_token, "message_id": message_id, "react_id" : 1})
+
+    assert response.status_code == 400 
