@@ -49,7 +49,7 @@ def standup_active_v1(auth_user_id, channel_id):
     try:
         channel_id = int(channel_id)
     except ValueError:
-        raise InputError(description="Channel doesn't exist")
+        raise InputError(description="Channel doesn't exist") from InputError
 
         
     status = False
