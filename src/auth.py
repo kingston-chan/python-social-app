@@ -1,7 +1,9 @@
 from src.data_store import data_store
 from src.error import InputError
-import hashlib, jwt, re, secrets
 from src import config
+from string import digits, ascii_letters
+from random import choice
+import hashlib, jwt, re, secrets
 
 def auth_login_v1(email, password):
     """
@@ -164,6 +166,38 @@ def auth_register_v1(email, password, name_first, name_last):
         'auth_user_id': u_id,
         'token': create_jwt(u_id)
     }
+
+def auth_passwordreset_request_v1(email):
+    """
+    Given an email, send them an email containing a specific secret code to
+    reset their password.
+    
+    Arguments:
+        email (string) - the email input by the user
+
+    Exceptions:
+        None
+
+    Return Value:
+        Retuns a secret code (string) if email is valid, i.e. email corresponds to user
+        of Streams, else returns None
+    """
+    store = data_store.get()
+    # Find user corresponding to email
+    user = list(filter(lambda user: (user["email"] == email), store["users"]))
+    # Email does not correspond to any user of Streams
+    if len(user) == 0:
+        return None
+
+    user = user[0]
+    # Log out all sessions for user
+    store["sessions"][user["id"]].clear()
+    # Generate a 5 alphanumeric code
+    code = ''.join(choice(digits + ascii_letters) for i in range(6))
+    # Store code with email
+    store["password_reset_codes"][email] = code
+    data_store.set(store)
+    return code
 
 
 # helper function to search the data store for duplicate items
