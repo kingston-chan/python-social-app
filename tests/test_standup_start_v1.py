@@ -63,10 +63,11 @@ def test_standup_start_valid(clear, first_user_data):
     channel_1 = response.json()["channel_id"]
 
     response = rh.standup_start(first_user_data["token"], channel_1, 5)
+    response_data = response.json()
     current_time = time.time()
     
     assert response.status_code == 200
-    assert response.json()["time_finish"] >= current_time + 3 and response.json()["time_finish"] <= current_time + 7
+    assert response_data["time_finish"] >= current_time + 3 and response_data["time_finish"] <= current_time + 7
 
     
 
