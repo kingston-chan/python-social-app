@@ -56,12 +56,31 @@ def auth_logout(token):
     return requests.post(f"{url}/auth/logout/v1", json={ "token": token })   
 
 def auth_passwordreset_request(email):
+    """
+    Requests a password reset for given email
+
+    Arguments
+        email (string)
+
+    Return value
+        Returns the response of the auth/passwordreset/request/v1 request which contains json {}
+    """
     info = {
         "email": email
     }
-    return requests.post(f"{url}/auth/passwordreset/reset/v1", json=info)
+    return requests.post(f"{url}/auth/passwordreset/request/v1", json=info)
 
 def auth_passwordreset_reset(reset_code, new_password):
+    """
+    Resets a users passwrod given correct reset code and valid password
+
+    Arguments
+        reset_code (string)
+        new_password (string)
+
+    Return value
+        Returns the response of the auth/passwordreset/reset/v1 request which contains json {}
+    """
     info = {
         "reset_code": reset_code,
         "new_password": new_password
