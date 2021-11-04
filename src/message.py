@@ -4,6 +4,7 @@ Functions to:
 - Given a message, update its text with new text.
 - Given a message_id for a message, remove the message from the channel/DM.
 """
+from src import auth, channel, user
 from src.error import InputError, AccessError
 from src.data_store import data_store
 from src.user import users_stats_v1
@@ -641,3 +642,38 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     return {
         "shared_message_id": store['message_id_gen']
     }
+def message_react_v1(auth_user_id,message_id,react_id):
+    
+    store = data_store.get()
+    reaction = (auth_user_id, react_id)
+    
+    dm_message = list(filter(lambda x : message_id == x["message_id"], store["dm_messages"]))
+    channel_message = list(filter(lambda x : message_id == x["message_id"], store["channel_messages"]))
+
+    if react_id != 1:
+        raise InputError("Invalid react ID")
+
+    if len(dm_message) == 0 and len(channel_message) == 0:
+        raise InputError("Not a valid  message ID")
+    
+    if len(dm_message) == 0:
+        select_channel = channel_message[0]["channel_id"] 
+        channel = list(filter(lambda x : select_channel == x["id"], store["channels"]))
+        if len(channel)> 0 and auth_user_id not in channel[0]["all_members"]:
+            raise InputError("Not Authorised User")
+        if reaction in channel_message[0]["reacts"]:
+            raise InputError("Already reacted to")
+        else:
+            channel_message[0]["reacts"].append(reaction)
+
+    else:
+        select_dm = dm_message[0]["dm_id"]
+        dm = list(filter(lambda x : select_dm == x["dm_id"], store["dms"]))
+        if len(dm)> 0 and auth_user_id not in dm[0]["members"]:
+            raise InputError("Not Authorised User")
+        if reaction in dm_message[0]["reacts"]:
+            raise InputError("Already reacted to")
+        else:
+            dm_message[0]["reacts"].append(reaction)
+            
+    return {}
