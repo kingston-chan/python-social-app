@@ -1,3 +1,4 @@
+from ctypes import _StructUnionBase
 from src.data_store import data_store
 from src.error import InputError
 from src import config
@@ -194,11 +195,16 @@ def auth_passwordreset_reset_v1(reset_code, password):
     # Check if no email is found corresponding to given reset code
     if not email:
         raise InputError(description="Invalid code")
+
     # Find user corresponding to email
     for user in store["users"]:
         if user["email"] == email[0]:
             # Encrypt password
             user["password"] = hashlib.sha256(password.encode()).hexdigest()
+
+    # Remove reset code and email from dictionary so it cannot be used again
+    store["password_reset_codes"] = {key: value for (key, value) in store["password_reset_codes"].items() if (key, value) != (email[0], encoded_reset_code)}
+    data_store.set(store)
     return {}
 
 
