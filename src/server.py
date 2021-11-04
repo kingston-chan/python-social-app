@@ -267,7 +267,7 @@ def message_share():
 
 #message/react/v1
 @APP.route("/message/react/v1", methods=['POST'])
-def message_share():
+def message_react():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     message_react_v1(user_id, data["message_id"],data["react_id"])
