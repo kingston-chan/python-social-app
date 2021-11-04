@@ -10,7 +10,7 @@ Functions to:
 from src.data_store import data_store
 from src.channel import assign_user_info
 from src.error import InputError
-import re
+import re, time
 
 def list_all_users():
     """
@@ -153,6 +153,66 @@ def user_profile_sethandle_v1(auth_user_id, handle_str):
     else:
         raise InputError(description="invalid string")
     return{}
+
+def users_stats_v1():
+    """
+    Updates the required statistics about the use of UNSW Streams.
+
+    Arguments:
+        None
+
+    Exceptions:
+        None
+    
+    Return Value
+        None
+    """
+    store = data_store.get()
+    
+    # Find the number of users that are in at least 1 channel or dm
+    num_users_in_channel_dm = 0
+    for user in store["users"]:
+        user_channels = len(list(filter(lambda channel: (user["id"] in channel["all_members"]), store["channels"])))
+        user_dms = len(list(filter(lambda dm: (user["id"] in dm["members"]), store["dms"])))
+        if user_channels or user_dms:
+            num_users_in_channel_dm += 1
+
+    # Find the number of valid users, i.e. non-deleted users
+    valid_users = len(list(filter(lambda user: (user["email"] and user["handle"]), store["users"])))
+    # Utilization rate: if no valid users, 0 else defined by num_users_in_channel_dm divided by valid_users
+    store["metrics"]["utilization_rate"] = num_users_in_channel_dm/valid_users
+
+    # Checks if each metric has at least 1 entry
+    if store["metrics"]["channels_exist"] and store["metrics"]["dms_exist"] and store["metrics"]["messages_exist"]:
+        # Number of channels changed
+        metric_changed("channels_exist", len(store["channels"]), store)
+        # Number of dms changed
+        metric_changed("dms_exist", len(store["dms"]), store)
+        # Number of messages changed
+        metric_changed("messages_exist", len(store["channel_messages"]) + len(store["dm_messages"]), store)
+    else:
+        # First user registered, no registered use
+        init_metrics("channels_exist", store)
+        init_metrics("dms_exist", store)
+        init_metrics("messages_exist", store)
+
+
+def metric_changed(metric, metric_num, store):
+    """Helper function to check metric and append new timestamp if changed"""
+    if store["metrics"][metric][-1][f"num_{metric}"] != metric_num:
+        store["metrics"][metric].append({
+            f"num_{metric}": metric_num,
+            "time_stamp": int(time.time())
+        })
+        data_store.set(store)
+
+def init_metrics(metric, store):
+    """Helper function to initialise metrics"""
+    store["metrics"][metric].append({
+        f"num_{metric}": 0,
+        "time_stamp": int(time.time())
+    })
+    data_store.set(store)
 
 
 def dict_search(item, users, item_name):
