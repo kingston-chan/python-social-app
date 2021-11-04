@@ -9,9 +9,8 @@ from src.error import InputError, AccessError
 
 def change_removed_user_message(u_id, messages):
     """Helper function to change users message to 'Removed user'"""
-    for message in messages:
-        if message["u_id"] == u_id:
-            message["message"] = "Removed user"
+    for message in filter(lambda message: message["u_id"] == u_id, messages):
+        message["message"] = "Removed user"
     return messages
 
 def check_valid_user_and_owner(auth_user_id, u_id, users, permission=None):
@@ -73,13 +72,11 @@ def admin_userpermission_change_v1(auth_user_id, u_id, permission_id):
             user["permission"] = permission_id
     
     if permission_id == 1:
-        for channel in store["channels"]:
-            if u_id in channel["all_members"] and u_id not in channel["owner_permissions"]:
-                channel["owner_permissions"].append(u_id)
+        for channel in filter(lambda channel: u_id in channel["all_members"] and u_id not in channel["owner_permissions"], store["channels"]):
+            channel["owner_permissions"].append(u_id)
     else:
-        for channel in store["channels"]:
-            if u_id in channel["owner_permissions"] and u_id not in channel["owner_members"]:
-                channel["owner_permissions"].remove(u_id)
+        for channel in filter(lambda channel: u_id in channel["owner_permissions"] and u_id not in channel["owner_members"], store["channels"]):
+            channel["owner_permissions"].remove(u_id)
     
     data_store.set(store)
     return {}
@@ -120,23 +117,21 @@ def admin_user_remove_v1(auth_user_id, u_id):
         if u_id in channel["owner_members"]:
             channel["owner_members"].remove(u_id)
     
-    for dm in store["dms"]:
-        if u_id in dm["members"]:
-            dm["members"].remove(u_id)
+    for dm in filter(lambda dm: u_id in dm["members"], store["dms"]):
+        dm["members"].remove(u_id)
     
     store["dm_messages"] = change_removed_user_message(u_id, store["dm_messages"])
     store["channel_messages"] = change_removed_user_message(u_id, store["channel_messages"])
 
     store["sessions"][u_id].clear()
 
-    for user in store["users"]:
-        if user["id"] == u_id:
-            user["email"] = None 
-            user["password"] = None
-            user["handle"] = None
-            user["permission"] = None
-            user["name_first"] = "Removed"
-            user["name_last"] = "user"
+    for user in filter(lambda user: user["id"] == u_id, store["users"]):
+        user["email"] = None 
+        user["password"] = None
+        user["handle"] = None
+        user["permission"] = None
+        user["name_first"] = "Removed"
+        user["name_last"] = "user"
     
     data_store.set(store)
     return {}
