@@ -1,3 +1,4 @@
+from io import RawIOBase
 from src.data_store import data_store
 from src.error import InputError, AccessError
 import time
@@ -33,23 +34,34 @@ def standup_start_v1(auth_user_id, channel_id, length):
     if length < 0:
         raise InputError(description="Length is a negative integer")
 
-    x = threading.timer(length, standup_thread_send_msg, args=(auth_user_id, channel_id))
-    x.start()
+    #x = threading.timer(length, standup_thread_send_msg, args=(auth_user_id, channel_id))
+    #x.start()
+    store['channels'] = channels
+    data_store.set(store)
 
     return {'time_finish': time_finish}
 
 def standup_active_v1(auth_user_id, channel_id):
+    
     store = data_store.get()
     channels = store['channels']
 
+    try:
+        channel_id = int(channel_id)
+    except ValueError:
+        raise InputError(description="Channel doesn't exist")
+
+        
     status = False
     channel_exist = False
+    time_finish = None
 
     for channel in channels:
         if channel["id"] == channel_id:
             if channel["standup"]["active"] == True:
                 status = True
-            time_finish = channel["standup"]["time_finish"]
+                time_finish = channel["standup"]["time_finish"]
+            
             channel_exist = True
             break
 
@@ -58,6 +70,9 @@ def standup_active_v1(auth_user_id, channel_id):
     
     if auth_user_id not in channel['all_members']:
         raise AccessError(description="This user is not a member of this channel.")
+    
+    store['channels'] = channels
+    data_store.set(store)
 
     return {'is_active': status, 'time_finish': time_finish}
 
