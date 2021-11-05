@@ -29,17 +29,21 @@ def auth_login_v1(email, password):
         
     hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-    # when the email is correct determine if the password matches
-    for u in users:
-        if u['email'] == email and not u['password'] == hashed_password:
-            raise InputError(description='Password is incorrect')
-        elif u['email'] == email and u['password'] == hashed_password:
-            return {
-                'auth_user_id': u['id'],
-                'token': create_jwt(u['id'])
-            }
+    login_user = list(filter(lambda user: user["email"] == email, users))
 
-    raise InputError('Email does not exist')
+    # No registered user corresponding to given email
+    if not login_user:
+        raise InputError(description='Email does not exist')
+    # when the email is correct determine if the password matches
+    if login_user[0]["password"] != hashed_password:
+        raise InputError(description='Password is incorrect')
+
+    return {
+        'auth_user_id': login_user[0]['id'],
+        'token': create_jwt(login_user[0]['id'])
+    }
+    
+
 
 
 def auth_logout_v1(token):
@@ -196,10 +200,9 @@ def auth_passwordreset_reset_v1(reset_code, password):
         raise InputError(description="Invalid code")
 
     # Find user corresponding to email
-    for user in store["users"]:
-        if user["email"] == email[0]:
-            # Encrypt password
-            user["password"] = hashlib.sha256(password.encode()).hexdigest()
+    for user in filter(lambda user: user["email"] == email[0], store["users"]):
+        # Encrypt password
+        user["password"] = hashlib.sha256(password.encode()).hexdigest()
 
     # Remove reset code and email from dictionary so it cannot be used again
     store["password_reset_codes"] = {key: value for (key, value) in store["password_reset_codes"].items() if (key, value) != (email[0], encoded_reset_code)}
@@ -242,9 +245,7 @@ def auth_passwordreset_request_v1(email):
 
 # helper function to search the data store for duplicate items
 def dict_search(item, users, item_name):
-    for u in users:
-        if u[item_name] == item:
-            return 1
+    return len(list(filter(lambda user: user[item_name] == item, users)))
 
 # helper fucntion to create a session for the user
 def create_session():
