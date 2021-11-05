@@ -50,7 +50,8 @@ def dm_create_v1(auth_user_id, u_ids):
         - empty list ==> {} 
     '''
     store = data_store.get()
-    u_ids.append(auth_user_id)
+    if auth_user_id not in u_ids:
+        u_ids.append(auth_user_id)
     # Check if ids are valid
     users = list(filter(lambda user: user["id"] in u_ids and valid_user(user), store["users"]))
 
