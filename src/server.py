@@ -3,6 +3,7 @@ from json import dumps
 from flask import Flask, request
 from flask_cors import CORS
 from flask_mail import Mail, Message
+from src import notifications
 from src.error import AccessError
 from src import config
 from src.channels import channels_create_v1, channels_list_v1
@@ -18,6 +19,7 @@ from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, u
 from src.message import message_send_v1, message_edit_v1, message_remove_v1, message_senddm_v1, message_share_v1, message_sendlater_v1, message_sendlaterdm_v1, message_pin_v1, message_react_v1
 from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
 from src.search import search_v1
+from src.notifications import notifications_v1
 
 
 def quit_gracefully(*args):
@@ -466,6 +468,13 @@ def search():
     auth_user_id = check_valid_token_and_session(request.args.get("token"))
     messages = search_v1(auth_user_id, request.args.get("query_str"))
     return dumps(messages)
+
+#==== notifications.py ====#
+@APP.route("/notifications/get/v1", methods=['GET'])
+def notifications_v1():
+    token = request.args.get("token")
+    auth_user_id = check_valid_token_and_session(token)
+    return dumps(notifications_v1(auth_user_id))
 
 #===== other.py =====#
 
