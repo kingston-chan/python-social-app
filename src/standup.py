@@ -1,6 +1,7 @@
 from io import RawIOBase
 from src.data_store import data_store
 from src.error import InputError, AccessError
+from src.message import message_send_v1
 import time
 import threading
 
@@ -34,8 +35,8 @@ def standup_start_v1(auth_user_id, channel_id, length):
     if length < 0:
         raise InputError(description="Length is a negative integer")
 
-    #x = threading.timer(length, standup_thread_send_msg, args=(auth_user_id, channel_id))
-    #x.start()
+    x = threading.Timer(length, standup_thread_send_msg, args=(auth_user_id, channel_id))
+    x.start()
     store['channels'] = channels
     data_store.set(store)
 
@@ -76,8 +77,51 @@ def standup_active_v1(auth_user_id, channel_id):
 
     return {'is_active': status, 'time_finish': time_finish}
 
-def standup_send_v1():
-    pass
+def standup_send_v1(auth_user_id, channel_id, message):
+    store = data_store.get()
+    channels = store['channels']
+    users = store['users']
+
+    if len(message) > 1000:
+        raise InputError(description="Message is over 1000 characters")
+
+    for user in users:
+        if user["id"] == auth_user_id:
+            handle = user["handle"]
+            joined_msg = str(handle) + ": " + str(message)
+            break
+
+
+    channel_exist = False
+    for channel in channels:
+        if channel["id"] == channel_id:
+            if auth_user_id not in channel['all_members']:
+                raise AccessError(description="This user is not a member of this channel.")
+            if channel["standup"]["active"] == False:
+                raise InputError(description="Standup is not running")
+        
+            channel["standup_queue"].append(joined_msg)
+            channel_exist = True
+            break
+
+    if not channel_exist:
+        raise InputError(description="Channel doesn't exist")
+    
+    
+
+    store['channels'] = channels
+    data_store.set(store)
+    return
 
 def standup_thread_send_msg(auth_user_id, channel_id):
-    pass
+    store = data_store.get()
+    channels = store['channels']
+
+    for channel in channels:
+        if channel["id"] == channel_id:
+            standup_queue = channel["standup_queue"]
+            message = "\n".join(item[0] for item in standup_queue)
+            message_send_v1(auth_user_id, channel_id, message)
+            break
+    
+    
