@@ -1,7 +1,9 @@
 from src.data_store import data_store
 from src.error import InputError
-import hashlib, jwt, re, secrets
 from src import config
+from string import digits, ascii_letters
+from random import choice
+import hashlib, jwt, re, secrets
 
 def auth_login_v1(email, password):
     """
@@ -164,6 +166,78 @@ def auth_register_v1(email, password, name_first, name_last):
         'auth_user_id': u_id,
         'token': create_jwt(u_id)
     }
+
+def auth_passwordreset_reset_v1(reset_code, password):
+    """
+    Given a valid reset code corresponding to valid email, reset email's password with
+    given password which is valid
+    
+    Arguments:
+        reset_code (string) - reset_code given by user
+        password (string) - password to change to given by user
+
+    Exceptions:
+        InputError - occurs if any of the following is satisfied:
+            - the reset code is invalid i.e. does not correspond to any password reset request
+            - the password is shorter than 6 characters
+
+    Return Value:
+        Returns empty dictionary on successful password reset
+    """
+    # Check given password is at least 6 characters
+    if len(password) < 6:
+        raise InputError(description="Password must be at least 6 characters")
+    store = data_store.get()
+    # Find email corresponding to reset code
+    encoded_reset_code = hashlib.sha256(reset_code.encode()).hexdigest()
+    email = [email for (email, code) in store["password_reset_codes"].items() if code == encoded_reset_code]
+    # Check if no email is found corresponding to given reset code
+    if not email:
+        raise InputError(description="Invalid code")
+
+    # Find user corresponding to email
+    for user in store["users"]:
+        if user["email"] == email[0]:
+            # Encrypt password
+            user["password"] = hashlib.sha256(password.encode()).hexdigest()
+
+    # Remove reset code and email from dictionary so it cannot be used again
+    store["password_reset_codes"] = {key: value for (key, value) in store["password_reset_codes"].items() if (key, value) != (email[0], encoded_reset_code)}
+    data_store.set(store)
+    return {}
+
+
+def auth_passwordreset_request_v1(email):
+    """
+    Given an email, send them an email containing a specific secret code to
+    reset their password.
+    
+    Arguments:
+        email (string) - the email input by the user
+
+    Exceptions:
+        None
+
+    Return Value:
+        Retuns a secret code (string) if email is valid, i.e. email corresponds to user
+        of Streams, else returns None
+    """
+    store = data_store.get()
+    # Find user corresponding to email
+    user = list(filter(lambda user: (user["email"] == email), store["users"]))
+    # Email does not correspond to any user of Streams
+    if len(user) == 0:
+        return None
+
+    user = user[0]
+    # Log out all sessions for user
+    store["sessions"][user["id"]].clear()
+    # Generate a 5 alphanumeric code
+    code = ''.join(choice(digits + ascii_letters) for i in range(6))
+    # Store code with email
+    store["password_reset_codes"][email] = hashlib.sha256(code.encode()).hexdigest()
+    data_store.set(store)
+    return code
 
 
 # helper function to search the data store for duplicate items
