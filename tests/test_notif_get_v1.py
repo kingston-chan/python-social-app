@@ -1,0 +1,83 @@
+import json
+import requests
+import pytest
+from src import message
+from src.config import url
+import tests.route_helpers as rh
+
+BASE_URL = url
+
+#400 is input error
+#403 is access error
+
+#==Fixtures==#
+
+@pytest.fixture
+def clear():
+    requests.delete(f"{BASE_URL}/clear/v1")
+@pytest.fixture
+def user1():
+    new_user = {"email" : "fakeguy@gmail.com" , "password": "fake12345","name_first" : "faker", "name_last" : "is_a_faker" }
+    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user)
+    return response.json()
+@pytest.fixture
+def user2():
+    new_user1 = {"email" : "fakeguy1@gmail.com" , "password": "fake123451","name_first" : "faker", "name_last" : "is_a_faker1" }   
+    response = requests.post(f"{BASE_URL}/auth/register/v2", json=new_user1)
+    return response.json()
+
+#==Helper Functions==#
+def dm_create(token, u_ids):
+    response = requests.post(f"{url}/dm/create/v1", json={"token" : token , "u_ids" : u_ids})
+    dm = response.json()
+    return dm
+def channel_create_public(token):
+    response = requests.post(f"{url}/channels/create/v2", json={"token" : token , "name" : "fake_guys_channel" , "is_public": True })
+    channel = response.json()
+    return channel
+def channel_join(token,channel_id):
+    return requests.post(f"{url}/channels/join/v2", json={"token" : token , "channel_id" : channel_id})
+#def sending_dm_message():
+    #rh.message_send(9999, channel_id, "Hello")
+def message_react(token, message_id):
+    return requests.post(f"{BASE_URL}/message/react/v1", json={"token" : token, "message_id": message_id, "react_id" : 1})
+
+
+#==tests==#
+def test_creating_channel_notif(clear,user1,user2):
+    channel = channel_create_public(user1["token"])
+    channel_join(user2["token"], channel["channel_id"])
+    response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
+    assert response.json()["notifications"][0] ==  "{} added you to {}".format(user1["handle_str"],channel["name"])
+
+def test_creating_dm_notif(clear,user1,user2):
+    dm = dm_create(user1["token"],[user2["auth_user_id"]])
+    response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
+    assert response.json()["notifications"][0] ==  "{} added you to {}".format(user1["handle_str"],dm["name"])
+
+def test_reacted_channel_message(clear,user1,user2):
+    channel = channel_create_public(user1["token"])
+    message_id = rh.message_send(user1["token"], channel["channel_id"], "Hello")
+
+    channel_join(user2["token"], channel["channel_id"])
+    message_react(user2["token", message_id])
+
+    response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
+    assert response.json()["notifications"][0] ==  "{} added you to {}".format(user1["handle_str"],channel["name"])
+    response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
+    assert response.json()["notifications"][0] ==  "{} reacted to your message in {}".format(user2["handle_str"],channel["name"])
+
+def test_reacted_dm_message(clear,user1,user2):
+    dm = dm_create(user1["token"], [user2["token"]])
+    message_id = rh.message_senddm(user1['token'], dm["dm_id"], "Hello")
+
+    message_react(user2["token", message_id])
+
+    response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
+    assert response.json()["notifications"][0] ==  "{} added you to {}".format(user1["handle_str"],dm["name"])
+    response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
+    assert response.json()["notifications"][0] ==  "{} reacted to your message in {}".format(user2["handle_str"],dm["name"])
+
+def test_unauth_token(clear):
+    response = requests.get(f"{url}/notifications/get/v1", params={"token" : 'a'})
+    return response.status_code == 403
