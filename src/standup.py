@@ -37,6 +37,7 @@ def standup_start_v1(auth_user_id, channel_id, length):
 
     x = threading.Timer(length, standup_thread_send_msg, args=(auth_user_id, channel_id))
     x.start()
+
     store['channels'] = channels
     data_store.set(store)
 
@@ -87,8 +88,7 @@ def standup_send_v1(auth_user_id, channel_id, message):
 
     for user in users:
         if user["id"] == auth_user_id:
-            handle = user["handle"]
-            joined_msg = str(handle) + ": " + str(message)
+            joined_msg = str(user["handle"]) + ": " + str(message)
             break
 
 
@@ -120,8 +120,14 @@ def standup_thread_send_msg(auth_user_id, channel_id):
     for channel in channels:
         if channel["id"] == channel_id:
             standup_queue = channel["standup_queue"]
-            message = "\n".join(item[0] for item in standup_queue)
+            channel["standup_queue"] = []
+            channel["standup"]["active"] = False
+            message = "\n".join(item for item in standup_queue)
             message_send_v1(auth_user_id, channel_id, message)
+            
             break
-    
+    store['channels'] = channels
+    data_store.set(store)
+
+    return
     
