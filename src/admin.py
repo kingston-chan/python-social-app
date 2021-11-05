@@ -7,11 +7,34 @@ Functions to:
 from src.data_store import data_store
 from src.error import InputError, AccessError
 
-def change_removed_user_message(u_id, messages):
-    """Helper function to change users message to 'Removed user'"""
-    for message in filter(lambda message: message["u_id"] == u_id, messages):
-        message["message"] = "Removed user"
-    return messages
+def change_msg(msg, user_id):
+    if msg["u_id"] == user_id:
+        msg["message"] = "Removed user"
+    return msg
+
+def remove_from_dm(dm, user_id):
+    if user_id in dm["members"]:
+        dm["members"].remove(user_id)
+    return dm
+
+def remove_from_channel(channel, user_id):
+    if user_id in channel["all_members"]:
+        channel["all_members"].remove(user_id)
+    if user_id in channel["owner_permissions"]:
+        channel["owner_permissions"].remove(user_id)
+    if user_id in channel["owner_members"]:
+        channel["owner_members"].remove(user_id)
+    return channel
+
+def give_permissions(channel, user_id):
+    if user_id in channel["all_members"] and user_id not in channel["owner_permissions"]:
+        channel["owner_permissions"].append(user_id)
+    return channel
+
+def revoke_permissions(channel, user_id):
+    if user_id in channel["owner_permissions"] and user_id not in channel["owner_members"]:
+        channel["owner_permissions"].remove(user_id)
+    return channel
 
 def check_valid_user_and_owner(auth_user_id, u_id, users, permission=None):
     """Helper function to raise appropriate errors"""
@@ -66,17 +89,13 @@ def admin_userpermission_change_v1(auth_user_id, u_id, permission_id):
     # Check for invalid permission id
     if permission_id not in [1,2]:
         raise InputError(description="Invalid permission id")
-
-    for user in store["users"]:
-        if u_id == user["id"]:
-            user["permission"] = permission_id
     
+    list(filter(lambda user: u_id == user["id"], store["users"]))[0]["permission"] = permission_id
+
     if permission_id == 1:
-        for channel in filter(lambda channel: u_id in channel["all_members"] and u_id not in channel["owner_permissions"], store["channels"]):
-            channel["owner_permissions"].append(u_id)
+        store["channels"] = list(map(lambda channel: give_permissions(channel, u_id), store["channels"]))
     else:
-        for channel in filter(lambda channel: u_id in channel["owner_permissions"] and u_id not in channel["owner_members"], store["channels"]):
-            channel["owner_permissions"].remove(u_id)
+        store["channels"] = list(map(lambda channel: revoke_permissions(channel, u_id), store["channels"]))
     
     data_store.set(store)
     return {}
@@ -109,29 +128,22 @@ def admin_user_remove_v1(auth_user_id, u_id):
     
     check_valid_user_and_owner(auth_user_id, u_id, store["users"])
     
-    for channel in store["channels"]:
-        if u_id in channel["all_members"]:
-            channel["all_members"].remove(u_id)
-        if u_id in channel["owner_permissions"]:
-            channel["owner_permissions"].remove(u_id)
-        if u_id in channel["owner_members"]:
-            channel["owner_members"].remove(u_id)
-    
-    for dm in filter(lambda dm: u_id in dm["members"], store["dms"]):
-        dm["members"].remove(u_id)
-    
-    store["dm_messages"] = change_removed_user_message(u_id, store["dm_messages"])
-    store["channel_messages"] = change_removed_user_message(u_id, store["channel_messages"])
-
+    # Remove user from all channels
+    store["channels"] = list(map(lambda channel: remove_from_channel(channel, u_id), store["channels"]))
+    # Remove user from all dms
+    store["dms"] = list(map(lambda dm: remove_from_dm(dm, u_id), store["dms"]))
+    # Change all removed user messages to "Removed user" 
+    store["dm_messages"] = list(map(lambda msg: change_msg(msg, u_id), store["dm_messages"]))
+    store["channel_messages"] = list(map(lambda msg: change_msg(msg, u_id), store["channel_messages"]))
     store["sessions"][u_id].clear()
 
-    for user in filter(lambda user: user["id"] == u_id, store["users"]):
-        user["email"] = None 
-        user["password"] = None
-        user["handle"] = None
-        user["permission"] = None
-        user["name_first"] = "Removed"
-        user["name_last"] = "user"
+    user = list(filter(lambda user: user["id"] == u_id, store["users"]))[0]
+    user["email"] = None 
+    user["password"] = None
+    user["handle"] = None
+    user["permission"] = None
+    user["name_first"] = "Removed"
+    user["name_last"] = "user"
     
     data_store.set(store)
     return {}
