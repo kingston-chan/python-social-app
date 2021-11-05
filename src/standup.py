@@ -89,7 +89,6 @@ def standup_send_v1(auth_user_id, channel_id, message):
     for user in users:
         if user["id"] == auth_user_id:
             joined_msg = str(user["handle"]) + ": " + str(message)
-            break
 
 
     channel_exist = False
