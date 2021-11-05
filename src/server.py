@@ -418,7 +418,11 @@ def standup_active():
 
 @APP.route("/standup/send/v1", methods=['POST'])
 def standup_send():
-    pass
+    data = request.get_json()
+    auth_user_id = check_valid_token_and_session(data["token"])
+    standup_send_v1(auth_user_id, data["channel_id"], data["message"])
+    save()
+    return dumps({})
 
 # clear/v1
 @APP.route("/clear/v1", methods=['DELETE'])
