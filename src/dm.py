@@ -29,10 +29,10 @@ def dm_id_count():
 
 def remove_msg(msg, dm_id):
     """Helper function to remove msgs when removing dm"""
-    if msg["dm_id"] == dm_id:
-        users_stats_v1()
-        return False
-    return True
+    users_stats_v1()
+    if msg["dm_id"] != dm_id:
+        return True
+    return False
 
 def valid_user(user):
     """Check if removed user"""
@@ -241,7 +241,7 @@ def dm_remove_v1(auth_user_id, dm_id):
 
     store["dms"].remove(valid_dm[0])
     store["dm_messages"] = list(filter(lambda msg: remove_msg(msg, dm_id), store["dm_messages"]))
-
+    users_stats_v1()
     data_store.set(store)
     return {}
 
