@@ -66,7 +66,7 @@ def test_standup_send_valid(clear, first_user_data):
     
     assert response.status_code == 200
     
-def test_standup_send_valid(clear, first_user_data):
+def test_standup_send_from_second_channel(clear, first_user_data):
     rh.channels_create(first_user_data["token"], "channel_1", True)
     response = rh.channels_create(first_user_data["token"], "channel_2", True)
     channel_2 = response.json()["channel_id"]
@@ -76,6 +76,16 @@ def test_standup_send_valid(clear, first_user_data):
     
     assert response.status_code == 200
     
+def test_standup_send_from_second_user(clear, first_user_data, second_user_data):
+    response = rh.channels_create(first_user_data["token"], "channel_1", True)
+    
+    channel_1 = response.json()["channel_id"]
 
+    rh.channel_join(second_user_data["token"], channel_1)
+
+    rh.standup_start(first_user_data["token"], channel_1, 5)
+    response = rh.standup_send(second_user_data["token"], channel_1, "message")
+    
+    assert response.status_code == 200
 
     
