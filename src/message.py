@@ -3,6 +3,10 @@ Functions to:
 - Send a message from the authorised user to the channel specified by channel_id.
 - Given a message, update its text with new text.
 - Given a message_id for a message, remove the message from the channel/DM.
+- Share a message to other channels and dms
+- Pin and unpin messages in channels and dms
+- React and unreact to messages in channels and dms
+- Send messages at a later time in channels and dms 
 """
 from src.error import InputError, AccessError
 from src.data_store import data_store
