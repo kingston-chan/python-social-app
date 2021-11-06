@@ -101,7 +101,9 @@ def channels_create_v1(auth_user_id, name, is_public):
         'owner_members': [auth_user_id],
         'owner_permissions': [auth_user_id],
         'all_members': [auth_user_id],
-        'is_public': is_public
+        'is_public': is_public,
+        'standup': {'active': False, 'auth_user_id': None, 'time_finish': None},
+        'standup_queue': []
     }
 
     store['channels'].append(new_channel)

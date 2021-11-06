@@ -17,6 +17,7 @@ from src.dm import dm_details_v1, dm_create_v1, dm_leave_v1, dm_messages_v1, dm_
 from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1, user_profile_sethandle_v1, users_stats_v1
 from src.message import message_send_v1, message_edit_v1, message_remove_v1, message_senddm_v1, message_share_v1, message_sendlater_v1, message_sendlaterdm_v1, message_pin_v1, message_react_v1
 from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
+from src.standup import standup_start_v1, standup_active_v1, standup_send_v1
 from src.search import search_v1
 
 
@@ -460,6 +461,32 @@ def admin_userpermission_change():
     save()
     return dumps({})
 
+#===== standup.py =====#
+@APP.route("/standup/start/v1", methods=['POST'])
+def standup_start():
+    data = request.get_json()
+    auth_user_id = check_valid_token_and_session(data["token"])
+    time_finish = standup_start_v1(auth_user_id, data["channel_id"], data["length"])
+    save()
+    return dumps(time_finish)
+
+@APP.route("/standup/active/v1", methods=['GET'])
+def standup_active():
+    data_token = request.args.get("token")
+    data_channel = request.args.get("channel_id")
+    auth_user_id = check_valid_token_and_session(data_token)
+    output = standup_active_v1(auth_user_id, data_channel)
+    save()
+    return dumps(output)
+
+@APP.route("/standup/send/v1", methods=['POST'])
+def standup_send():
+    data = request.get_json()
+    auth_user_id = check_valid_token_and_session(data["token"])
+    standup_send_v1(auth_user_id, data["channel_id"], data["message"])
+    save()
+    return dumps({})
+
 #===== search.py =====#
 @APP.route("/search/v1", methods=['GET'])
 def search():
@@ -475,6 +502,8 @@ def clear():
     clear_v1()
     save()
     return dumps({})
+
+
 
 #### NO NEED TO MODIFY BELOW THIS POINT
 
