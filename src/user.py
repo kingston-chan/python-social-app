@@ -10,7 +10,49 @@ Functions to:
 from src.data_store import data_store
 from src.channel import assign_user_info
 from src.error import InputError
+from functools import reduce
 import re, time
+
+def metric_changed(metric, metric_num, store):
+    """Helper function to check metric and append new timestamp if changed"""
+    if store["metrics"][metric][-1][f"num_{metric}"] != metric_num:
+        store["metrics"][metric].append({
+            f"num_{metric}": metric_num,
+            "time_stamp": int(time.time())
+        })
+        data_store.set(store)
+
+def init_metrics(metric, store):
+    """Helper function to initialise metrics"""
+    store["metrics"][metric].append({
+        f"num_{metric}": 0,
+        "time_stamp": int(time.time())
+    })
+    data_store.set(store)
+
+def is_in_channel_dm(user, channels, dms):
+    """Helper function to determine if user is at least in a channel or not"""
+    user_channels = len(list(filter(lambda channel: (user["id"] in channel["all_members"]), channels)))
+    user_dms = len(list(filter(lambda dm: (user["id"] in dm["members"]), dms)))
+    if user_channels or user_dms:
+        return 1
+    return 0
+
+def change_email(user, user_id, email):
+    """Helper function to change user_id's email"""
+    if user["id"] == user_id:
+        user["email"] = email
+    return user
+
+def change_handle(user, user_id, handle):
+    """Helper function to change user_id's handle"""
+    if user["id"] == user_id:
+        user["handle"] = handle
+    return user
+
+def output_user(user):
+    if user["email"] is not None and user["handle"] is not None:
+        return assign_user_info(user)
 
 def list_all_users():
     """
@@ -27,13 +69,8 @@ def list_all_users():
         Each dictionary contains the user's id, email, first and last name and their 
         handle given that their email and handle is not None. 
     """
-    store = data_store.get()
-    users = store["users"]
-    user_list = []
-    for user in users:
-        if user["email"] is not None and user["handle"] is not None:
-            user_list.append(assign_user_info(user))
-    return { "users": user_list }
+    # Maps all valid users with correct output, then filter None values i.e. removed users
+    return { "users": list(filter(None, map(output_user, data_store.get()["users"]))) }
 
 def user_profile_v1(user_id):
     """
@@ -53,17 +90,12 @@ def user_profile_v1(user_id):
         - name_last
         - handle_str
     """
-
-    user_id = int(user_id)
-    store = data_store.get()
-    users = store["users"]
-    
-    for u in users:
-        if user_id == u["id"]:
-            user_dict = {"u_id": user_id, "email": u["email"], "name_first": u["name_first"], "name_last": u["name_last"], "handle_str": u["handle"]}
-            return user_dict
-        
-    raise InputError(description="u_id does not refer to a valid user")
+    # Find user corresponding to user_id
+    valid_user = list(filter(lambda user: int(user_id) == user["id"], data_store.get()["users"]))
+    if valid_user:
+        return assign_user_info(valid_user[0])
+    # Invalid user_id
+    raise InputError("Invalid user")
 
 def user_profile_setname_v1(user_id, first_name, last_name):
     """
@@ -80,17 +112,14 @@ def user_profile_setname_v1(user_id, first_name, last_name):
         Updates the data_store with the new first and last name
     """
     store = data_store.get()
-    users = store["users"]
-
+    # Raise appropriate errors
     if not 1 <= len(first_name) <= 50 or not 1 <= len(last_name) <= 50:
         raise InputError(description="Name length is too long or short")
+    # Find user corresponding to user_id
+    user = list(filter(lambda user: user_id == user["id"], store["users"]))[0]
+    user["name_first"] = first_name
+    user["name_last"] = last_name
     
-    for u in users:
-        if user_id == u["id"]:
-            u["name_first"] = first_name
-            u["name_last"] = last_name
-    
-    store["users"] = users
     data_store.set(store)
 
 def user_profile_setemail_v1(user_id, user_email):
@@ -110,20 +139,13 @@ def user_profile_setemail_v1(user_id, user_email):
 
     store = data_store.get()
     users = store["users"]
-
+    # Raise appropriate errors
     if not re.match(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$', user_email):
         raise InputError(description="Email is an invalid format")
-    
-    if dict_search(user_email, users, 'email'):
-        raise InputError(description='Email is already being used by another user')
-
-
-    for u in users:
-        if user_id == u["id"]:
-            u["email"] = user_email
-            
-    
-    store["users"] = users
+    if list(filter(lambda user: user["email"] == user_email, users)):
+        raise InputError(description='Email is already being used by another user')        
+    # Change email of user_id
+    store["users"] = list(map(lambda user: change_email(user, user_id, user_email), users))
     data_store.set(store)
 
 
@@ -141,18 +163,15 @@ def user_profile_sethandle_v1(auth_user_id, handle_str):
         - empty list 
     '''
     store = data_store.get()
-    for user in store["users"]:
-        if user["handle"] == handle_str:
-            raise InputError(description="Handle already being used")
-        if len(handle_str) > 20 or len(handle_str) < 3:
-            raise InputError(description="Handle is not valid")
-    if handle_str.isalnum():
-        for user in store["users"]:
-            if auth_user_id == user["id"]:
-                user["handle"] = handle_str
-    else:
-        raise InputError(description="invalid string")
-    return{}
+    # Raise appropriate errors
+    if len(handle_str) > 20 or len(handle_str) < 3 or not handle_str.isalnum():
+        raise InputError(description="Handle is not valid")
+    if list(filter(lambda user: user["handle"] == handle_str, store["users"])):
+        raise InputError(description="Handle already being used")
+    # Change handle of auth_user_id
+    store["users"] = list(map(lambda user: change_handle(user, auth_user_id, handle_str), store["users"]))
+    data_store.set(store)
+    return {}
 
 def user_stats_v1(auth_user_id):
     store = data_store.get()
@@ -209,13 +228,9 @@ def users_stats_v1():
     """
     store = data_store.get()
     
-    # Find the number of users that are in at least 1 channel or dm
-    num_users_in_channel_dm = 0
-    for user in store["users"]:
-        user_channels = len(list(filter(lambda channel: (user["id"] in channel["all_members"]), store["channels"])))
-        user_dms = len(list(filter(lambda dm: (user["id"] in dm["members"]), store["dms"])))
-        if user_channels or user_dms:
-            num_users_in_channel_dm += 1
+    # Go through each user, check if in a channel/dm or not
+    in_channel_dm = map(lambda user: is_in_channel_dm(user, store["channels"], store["dms"]), store["users"])
+    num_users_in_channel_dm = reduce(lambda x,y: x+y, in_channel_dm)
 
     # Find the number of valid users, i.e. non-deleted users
     valid_users = len(list(filter(lambda user: (user["email"] and user["handle"]), store["users"])))
@@ -237,25 +252,5 @@ def users_stats_v1():
         init_metrics("messages_exist", store)
 
 
-def metric_changed(metric, metric_num, store):
-    """Helper function to check metric and append new timestamp if changed"""
-    if store["metrics"][metric][-1][f"num_{metric}"] != metric_num:
-        store["metrics"][metric].append({
-            f"num_{metric}": metric_num,
-            "time_stamp": int(time.time())
-        })
-        data_store.set(store)
 
-def init_metrics(metric, store):
-    """Helper function to initialise metrics"""
-    store["metrics"][metric].append({
-        f"num_{metric}": 0,
-        "time_stamp": int(time.time())
-    })
-    data_store.set(store)
-
-
-def dict_search(item, users, item_name):
-    for u in users:
-        if u[item_name] == item:
-            return 1
+    
