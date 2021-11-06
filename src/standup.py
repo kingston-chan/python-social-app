@@ -1,4 +1,3 @@
-from io import RawIOBase
 from src.data_store import data_store
 from src.error import InputError, AccessError
 from src.message import message_send_v1
@@ -123,7 +122,6 @@ def standup_thread_send_msg(auth_user_id, channel_id):
             channel["standup"]["active"] = False
             message = "\n".join(item for item in standup_queue)
             message_send_v1(auth_user_id, channel_id, message)
-            
             break
     store['channels'] = channels
     data_store.set(store)
