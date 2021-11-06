@@ -4,7 +4,6 @@ Functions to:
 - Given a message, update its text with new text.
 - Given a message_id for a message, remove the message from the channel/DM.
 """
-from src import auth, channel, user
 from src.error import InputError, AccessError
 from src.data_store import data_store
 from src.user import users_stats_v1
@@ -12,8 +11,35 @@ from src.other import save
 import time
 import threading
 
-IS_CHANNEL = 0
-IS_DM = 1
+def update_message(new_message, message_list, old_message):
+    """Helper function for message edit"""
+    # If message too long, InputError
+    if len(new_message) > 1000:
+        raise InputError(description="Invalid message length")
+    # Remove channel message if empty message
+    if new_message == "":
+        message_list.remove(old_message)
+    else:
+        old_message["message"] = new_message
+
+def pin_message(message):
+    """Helper function to check if message is pinned, else pin it"""
+    if message["is_pinned"]:
+        raise InputError(description="Message is already pinned")
+    message["is_pinned"] = True
+
+
+def get_message(message_id, channel_messages, dm_messages):
+    """Helper function to get message"""
+    # Find channel/dm of og message
+    channel_msg = list(filter(lambda message: message["message_id"] == message_id, channel_messages))
+    dm_msg = list(filter(lambda message: message["message_id"] == message_id, dm_messages))
+    return (channel_msg, dm_msg)
+
+def react_message(message, reaction):
+    if reaction in message["reacts"]:
+        raise InputError("Already reacted to")
+    message["reacts"].append(reaction)
 
 def message_send_v1(auth_user_id, channel_id, message):
     """
@@ -38,37 +64,21 @@ def message_send_v1(auth_user_id, channel_id, message):
     """
     # Get variables from store
     store = data_store.get()
-    channels = store["channels"]
     messages = store["channel_messages"]
 
-    # Initialise new variables
-    selected_channel = {}
-    valid_channel = False
-    valid_message = False
-
-    # Locate channel
-    for channel in channels:
-        if channel['id'] == channel_id:
-            valid_channel = True
-            selected_channel = channel
-    
-    # Validates length of message
-    if len(message) > 0 and len(message) < 1001:
-        valid_message = True
-
+    valid_channel = list(filter(lambda channel: channel["id"] == channel_id, store["channels"]))
     # If channel not found, InputError
     if not valid_channel:
         raise InputError(description="This channel is not valid.")
-    # If message too short/long, InputError
-    elif not valid_message:
-        if len(message) < 1:
-            raise InputError(description="This message is too short.")
-        else:
-            raise InputError(description="This message is too long.")
     
     # If user not in channel, InputError
-    if auth_user_id not in selected_channel['all_members']:
+    if auth_user_id not in valid_channel[0]['all_members']:
         raise AccessError(description="This user is not a member of this channel.")
+    
+    # Validates length of message
+    # If message too short/long, InputError
+    if len(message) < 1 or len(message) > 1000:
+        raise InputError(description="This message length is invalid.")
 
     # Increment message_id_gen
     store['message_id_gen'] += 1
@@ -83,6 +93,7 @@ def message_send_v1(auth_user_id, channel_id, message):
         'reacts': [],
         'is_pinned': False
     }
+
     messages.append(new_message)
     
     # Store data into data_store and return dictionary with the message_id
@@ -117,84 +128,30 @@ def message_edit_v1(auth_user_id, message_id, message):
     """
     # Get variables from store
     store = data_store.get()
-    channels = store["channels"]
-    dms = store["dms"]
-    channel_messages = store["channel_messages"]
-    dm_messages = store["dm_messages"]
-
-    # Initialise new variables
-    selected_message = {}
-    selected_channel = {}
-    selected_dm = {}
-    valid_message_id = False
-    valid_message = False
-    in_channel = False
 
     # Locate message in channels
-    for target_message in channel_messages:
-        if int(target_message['message_id']) == int(message_id):
-            valid_message_id = True
-            selected_message = target_message
-            in_channel = True
-
+    valid_channel_msg = list(filter(lambda msg: msg["message_id"] == message_id, store["channel_messages"]))
     # Locate message in DMs
-    for target_message in dm_messages:
-        if int(target_message['message_id']) == int(message_id):
-            valid_message_id = True
-            selected_message = target_message
-
-    # Validates length of message
-    if len(message) < 1001:
-        valid_message = True
-
-    # If message not found, InputError
-    if not valid_message_id:
-        raise InputError(description="This message id is not valid.")
-    # If message too long, InputError
-    elif not valid_message:
-        raise InputError(description="This message is too long.")
-
-    # If message in channel
-    if in_channel:
-        # Locate channel        
-        for channel in channels:
-            if int(channel['id']) == int(selected_message['channel_id']):
-                selected_channel = channel
-        # If user not in channel, InputError
-        if auth_user_id not in selected_channel['all_members']:
+    valid_dm_msg = list(filter(lambda msg: msg["message_id"] == message_id, store["dm_messages"]))
+    # Message belongs to a channel
+    if valid_channel_msg:
+        # There must be a channel that contains this message if message_id is valid
+        valid_channel = list(filter(lambda channel: channel["id"] == valid_channel_msg[0]["channel_id"], store["channels"]))[0]
+        if auth_user_id not in valid_channel["all_members"]:
             raise InputError(description="This user is not a member of this channel.")
-        # If user not in message and not an owner, AccessError
-        elif auth_user_id is not selected_message['u_id'] and auth_user_id not in selected_channel['owner_permissions']:
-            raise AccessError(description="This user is not allowed to edit this message.")
-        
-        # If message is empty, remove new message in located channel
-        if message == "":
-            channel_messages.remove(selected_message)
-        # Else edit message in located channel
-        else:
-            selected_message['message'] = message
-            
-
-    # Else message should be in DM
-    else: 
-        # Locate DM
-        for dm in dms:
-            if int(dm['dm_id']) == int(selected_message['dm_id']):
-                selected_dm = dm
-        # If user not in DM, InputError
-        if auth_user_id not in dm['members']:
+        if auth_user_id != valid_channel_msg[0]["u_id"] and auth_user_id not in valid_channel["owner_permissions"]:
+            raise AccessError(description="This user is not allowed to edit this message.")        
+        update_message(message, store["channel_messages"], valid_channel_msg[0])
+    elif valid_dm_msg:
+        # There must be a dm that contains this message if message_id is valid
+        valid_dm = list(filter(lambda dm: dm["dm_id"] == valid_dm_msg[0]["dm_id"], store["dms"]))[0]
+        if auth_user_id not in valid_dm["members"]:
             raise InputError(description="This user is not a member of this DM.")
-        # If user not in DM and not an owner, AccessError
-        elif auth_user_id is not selected_message['u_id'] and auth_user_id is not selected_dm['owner_of_dm']:
-            raise AccessError(description="This user is not allowed to edit this DM message.")
-        
-        # If message is empty, remove new message in located DM
-        if message == "":
-            dm_messages.remove(selected_message)
-        # Else edit message in located DM
-        else:
-            selected_message['message'] = message
-    
+        if auth_user_id != valid_dm_msg[0]["u_id"] and auth_user_id != valid_dm["owner_of_dm"]:
+            raise AccessError(description="This user is not allowed to edit this message.")        
+        update_message(message, store["dm_messages"], valid_dm_msg[0])
+    else:
+        raise InputError("Invalid message id")
     # Store data into data_store and return empty dictionary
     data_store.set(store)
     return {}
@@ -223,65 +180,30 @@ def message_remove_v1(auth_user_id, message_id):
     """
     # Get variables from store
     store = data_store.get()
-    channels = store["channels"]
-    dms = store["dms"]
-    channel_messages = store["channel_messages"]
-    dm_messages = store["dm_messages"]
-
-    # Initialise new variables
-    selected_message = {}
-    selected_channel = {}
-    selected_dm = {}
-    valid_message_id = False
-    in_channel = False
 
     # Locate message in channels
-    for target_message in channel_messages:
-        if int(target_message['message_id']) == int(message_id):
-            valid_message_id = True
-            selected_message = target_message
-            in_channel = True
-
+    valid_channel_msg = list(filter(lambda msg: msg["message_id"] == message_id, store["channel_messages"]))
     # Locate message in DMs
-    for target_message in dm_messages:
-        if int(target_message['message_id']) == int(message_id):
-            valid_message_id = True
-            selected_message = target_message
-    
-    # If message not found, InputError
-    if not valid_message_id:
-        raise InputError(description="This message id is not valid.")
-
-    # If message in channel
-    if in_channel:
-        # Locate channel
-        for channel in channels:
-            if int(channel['id']) == int(selected_message['channel_id']):
-                selected_channel = channel
-        # If user not in channel, InputError
-        if auth_user_id not in selected_channel['all_members']:
+    valid_dm_msg = list(filter(lambda msg: msg["message_id"] == message_id, store["dm_messages"]))
+    # Message belongs to a channel
+    if valid_channel_msg:
+        # There must be a channel that contains this message if message_id is valid
+        valid_channel = list(filter(lambda channel: channel["id"] == valid_channel_msg[0]["channel_id"], store["channels"]))[0]
+        if auth_user_id not in valid_channel["all_members"]:
             raise InputError(description="This user is not a member of this channel.")
-        # If user not in message and not an owner, AccessError
-        elif auth_user_id is not selected_message['u_id'] and auth_user_id not in selected_channel['owner_permissions']:
-            raise AccessError(description="This user is not allowed to edit this message.")
-        # Remove located message in located channel
-        channel_messages.remove(selected_message)
-
-    # Else message should be in DM
-    else:
-        # Locate DM
-        for dm in dms:
-            if int(dm['dm_id']) == int(selected_message['dm_id']):
-                selected_dm = dm
-        # If user not in DM, InputError
-        if auth_user_id not in selected_dm['members']:
+        if auth_user_id != valid_channel_msg[0]["u_id"] and auth_user_id not in valid_channel["owner_permissions"]:
+            raise AccessError(description="This user is not allowed to remove this message.")
+        store["channel_messages"].remove(valid_channel_msg[0])
+    elif valid_dm_msg:
+        # There must be a dm that contains this message if message_id is valid
+        valid_dm = list(filter(lambda dm: dm["dm_id"] == valid_dm_msg[0]["dm_id"], store["dms"]))[0]
+        if auth_user_id not in valid_dm["members"]:
             raise InputError(description="This user is not a member of this DM.")
-        # If user not in DM and not an owner, AccessError
-        elif auth_user_id is not selected_message['u_id'] and auth_user_id is not selected_dm['owner_of_dm']:
-            raise AccessError(description="This user is not allowed to edit this DM message.")
-        # Remove located message in located DM
-        dm_messages.remove(selected_message)
-
+        if auth_user_id != valid_dm_msg[0]["u_id"] and auth_user_id != valid_dm["owner_of_dm"]:
+            raise AccessError(description="This user is not allowed to remove this message.")
+        store["dm_messages"].remove(valid_dm_msg[0])
+    else:
+        raise InputError("Invalid message id")
     # Store data into data_store and return empty dictionary
     data_store.set(store)
     return {}
@@ -309,37 +231,22 @@ def message_senddm_v1(auth_user_id, dm_id, message):
     """
     # Get variables from store
     store = data_store.get()
-    dms = store["dms"]
     dm_messages = store["dm_messages"]
 
-    # Initialise new variables
-    selected_dm = {}
-    valid_dm = False
-    valid_message = False
-
     # Locate DM
-    for dm in dms:
-        if dm['dm_id'] == dm_id:
-            valid_dm = True
-            selected_dm = dm
-    
-    # Validates length of message
-    if len(message) > 0 and len(message) < 1001:
-        valid_message = True
+    valid_dm = list(filter(lambda dm: dm["dm_id"] == dm_id, store["dms"]))
 
     # If DM not found, InputError
     if not valid_dm:
         raise InputError(description="This DM is not valid.")
-    # If message too short/long, InputError
-    elif not valid_message:
-        if len(message) < 1:
-            raise InputError(description="This message is too short.")
-        else:
-            raise InputError(description="This message is too long.")
-
+    
     # If user not in DM, InputError
-    if auth_user_id not in selected_dm['members']:
+    if auth_user_id not in valid_dm[0]['members']:
         raise AccessError(description="This user is not a member of this DM.")
+    
+    # Validates length of message
+    if len(message) < 1 or len(message) > 1000:
+        raise InputError(description="This message length is invalid.")
 
     # Increment message_id_gen
     store['message_id_gen'] += 1
@@ -386,68 +293,37 @@ def message_pin_v1(auth_user_id, message_id):
     """
     # Get variables from store
     store = data_store.get()
-    channels = store['channels']
-    dms = store['dms']
-    channel_messages = store['channel_messages']
-    dm_messages = store['dm_messages']
     
-    # Initialise new variables
-    selected_message = {}
-    selected_channel = {}
-    selected_dm = {}
-    valid_message_id = False
-    in_channel = False
-
     # Locate message in channels
-    for target_message in channel_messages:
-        if int(target_message['message_id']) == int(message_id):
-            valid_message_id = True
-            selected_message = target_message
-            in_channel = True
-
+    valid_channel_msg = list(filter(lambda msg: msg["message_id"] == message_id, store["channel_messages"]))
     # Locate message in DMs
-    for target_message in dm_messages:
-        if int(target_message['message_id']) == int(message_id):
-            valid_message_id = True
-            selected_message = target_message
-    
-    # If message not found, InputError
-    if not valid_message_id:
-        raise InputError(description="This message id is not valid.")
-    
-    if selected_message['is_pinned']:
-        raise InputError(description="This message id is already pinned.")
+    valid_dm_msg = list(filter(lambda msg: msg["message_id"] == message_id, store["dm_messages"]))
 
     # If message in channel
-    if in_channel:
+    if valid_channel_msg:
         # Locate channel
-        for channel in channels:
-            if int(channel['id']) == int(selected_message['channel_id']):
-                selected_channel = channel
+        valid_channel = list(filter(lambda channel: channel["id"] == valid_channel_msg[0]["channel_id"], store["channels"]))[0]
         # If user not in channel, InputError
-        if auth_user_id not in selected_channel['all_members']:
+        if auth_user_id not in valid_channel['all_members']:
             raise InputError(description="This user is not a member of this channel.")
         # If user not in message and not an owner, AccessError
-        elif auth_user_id not in selected_channel['owner_permissions']:
-            raise AccessError(description="This user is not allowed to edit this message.")
-        # Pin located message in located channel
-        selected_message['is_pinned'] = True
-
-    # Else message should be in DM
-    else:
+        if auth_user_id not in valid_channel['owner_permissions']:
+            raise AccessError(description="This user is not allowed to pin this message.")
+        pin_message(valid_channel_msg[0])
+    elif valid_dm_msg:
         # Locate DM
-        for dm in dms:
-            if int(dm['dm_id']) == int(selected_message['dm_id']):
-                selected_dm = dm
+        valid_dm = list(filter(lambda dm: dm["dm_id"] == valid_dm_msg[0]["dm_id"], store["dms"]))[0]
         # If user not in DM, InputError
-        if auth_user_id not in selected_dm['members']:
+        if auth_user_id not in valid_dm['members']:
             raise InputError(description="This user is not a member of this DM.")
         # If user not in DM and not an owner, AccessError
-        elif auth_user_id is not selected_dm['owner_of_dm']:
-            raise AccessError(description="This user is not allowed to edit this DM message.")
+        if auth_user_id is not valid_dm['owner_of_dm']:
+            raise AccessError(description="This user is not allowed to pin this DM message.")
         # Pin located message in located DM
-        selected_message['is_pinned'] = True
-
+        pin_message(valid_dm_msg[0])
+    else:
+        # If message not found, InputError
+        raise InputError(description="This message id is not valid.")
     # Store data into data_store and return empty dictionary
     data_store.set(store)
     return {}
@@ -473,27 +349,19 @@ def message_sendlaterdm_threading(auth_user_id, dm_id, message, time_sent, messa
 
 def message_sendlaterdm_v1(auth_user_id, dm_id, message, time_sent):
     store = data_store.get()
-    dms = store['dms']
-    
     time_now = time.time()
     time_difference = int(time_sent - time_now)
-
-    member_ids = None
-    dm_exist = False
-    for dm in dms:
-        if dm["dm_id"] == dm_id:
-            dm_exist = True
-            member_ids = dm["members"]
-        
-    if not dm_exist:
+    valid_dm = list(filter(lambda dm: dm["dm_id"] == dm_id, store['dms']))
+    # Check if valid dm id
+    if not valid_dm:
         raise InputError(description="dm doesn't exist")
-
-    if auth_user_id not in member_ids:
+    # Check if user is part of dm
+    if auth_user_id not in valid_dm[0]["members"]:
         raise AccessError(description="User is not apart of the dm")
-    
+    # Check valid message length
     if len(message) > 1000:
         raise InputError(description="Message is too long")
-    
+    # Check if time_send is a time in the past
     if time_difference < 0:
         raise InputError(description="Time set is in the past")
     
@@ -533,16 +401,12 @@ def message_sendlater_v1(auth_user_id, channel_id, message, time_sent):
     time_now = time.time()
     time_difference = int(time_sent - time_now)
 
-    channel_exist = False
-    for channel in channels:
-        if channel["id"] == channel_id:
-            channel_exist = True
-            member_ids = channel["all_members"]
+    valid_channel = list(filter(lambda channel: channel["id"] == channel_id, channels))
         
-    if not channel_exist:
+    if not valid_channel:
         raise InputError(description="Channel doesn't exist")
 
-    if auth_user_id not in member_ids:
+    if auth_user_id not in valid_channel[0]["all_members"]:
         raise AccessError(description="User is not apart of the channel")
 
     if time_difference < 0:
@@ -563,63 +427,41 @@ def message_sendlater_v1(auth_user_id, channel_id, message, time_sent):
 
 def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     store = data_store.get()
-    channels = store["channels"]
-    dms = store["dms"]
     channel_messages = store["channel_messages"]
     dm_messages = store["dm_messages"]
-    members = None
-    channel_or_dm = None
-    if channel_id != -1 and dm_id == -1:
-        channel_or_dm = IS_CHANNEL
-        channel_exists = False
-        for channel in channels:
-            if channel_id == channel["id"]:
-                members = channel["all_members"]
-                channel_exists = True
 
-        if not channel_exists:
-            raise InputError(description="Channel does not exist")
-
-    elif channel_id == -1 and dm_id != -1:
-        channel_or_dm = IS_DM
-        dm_exists = False
-        for dm in dms:
-            if dm_id == dm["dm_id"]:
-                members = dm["members"]
-                dm_exists = True
-    
-        if not dm_exists:
-            raise InputError(description="DM does not exist")
-
-    else:
+    valid_channel = list(filter(lambda channel: channel["id"] == channel_id, store["channels"]))
+    valid_dm = list(filter(lambda dm: dm["dm_id"] == dm_id, store["dms"]))
+    # Check if both channel/dm id are invalid
+    if not valid_channel and not valid_dm:
+        raise InputError(description="Channel/DM does not exist")
+    # Check if both channel/dm id are valid i.e. neither channel_id nor dm_id are -1
+    if valid_channel and valid_dm:
         raise InputError(description="Neither channel_id nor dm_id are -1")
-
-    if auth_user_id not in members:
+    # Check if user is in channel/dm given that one of them is valid
+    if auth_user_id not in (valid_channel[0]["all_members"] if valid_channel else valid_dm[0]["members"]):
         raise AccessError(description="The authorised user has not joined the channel/DM they are trying to share the message to")
-    
-    og_message_id_exists = False
-    og_message = None
-    for channel_message in channel_messages:
-        if og_message_id == channel_message["message_id"]:
-            og_message_id_exists = True
-            og_message = channel_message["message"]
-    
-    for dm_message in dm_messages:
-        if og_message_id == dm_message["message_id"]:
-            og_message_id_exists = True
-            og_message = dm_message["message"]
-
-    
-    if not og_message_id_exists:
-        raise InputError(description="Invalid message ID")
+    valid_og_message = get_message(og_message_id, channel_messages, dm_messages)
+    # Message id does not refer to any message id
+    if valid_og_message == ([], []):
+        raise InputError(description="Message ID does not refer to a valid message within a channel/dm user has joined")
+    valid_og_message = valid_og_message[0][0] if valid_og_message[0] else valid_og_message[1][0]
+    # Check for the message id refers to a valid message that refers to a message within a channel/dm the auth_user has joined
+    if "channel_id" in valid_og_message:
+        channel_og_message = list(filter(lambda channel: channel["id"] == valid_og_message["channel_id"], store["channels"]))[0]
+        if auth_user_id not in channel_og_message["all_members"]:
+            raise InputError(description="Message ID does not refer to a valid message within a channel/dm user has joined")
+    else:
+        dm_og_message = list(filter(lambda dm: dm["dm_id"] == valid_og_message["dm_id"], store["dms"]))[0]
+        if auth_user_id not in dm_og_message["members"]:
+            raise InputError(description="Message ID does not refer to a valid message within a channel/dm user has joined")
     
     if len(message) > 1000:
         raise InputError(description="Message is too long")
 
     store["message_id_gen"] += 1
-
-    shared_message = message + "\n\n" + "\"\"\"\n" + og_message + "\n\"\"\""
-
+    og_message = valid_og_message["message"]
+    shared_message = f"{message}\n\n\"\"\"\n{og_message}\n\"\"\""
     new_message = {
         'message_id': store['message_id_gen'],
         'u_id': auth_user_id,
@@ -629,11 +471,10 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
         'is_pinned': False,
     }
 
-    if channel_or_dm == IS_CHANNEL:
+    if valid_channel:
         new_message["channel_id"] = channel_id
         channel_messages.append(new_message)
-
-    else: # IS_DM
+    else:
         new_message["dm_id"] = dm_id
         dm_messages.append(new_message)
 
@@ -642,38 +483,33 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     return {
         "shared_message_id": store['message_id_gen']
     }
-def message_react_v1(auth_user_id,message_id,react_id):
+
+def message_react_v1(auth_user_id, message_id, react_id):
     
     store = data_store.get()
     reaction = (auth_user_id, react_id)
-    
-    dm_message = list(filter(lambda x : message_id == x["message_id"], store["dm_messages"]))
-    channel_message = list(filter(lambda x : message_id == x["message_id"], store["channel_messages"]))
+    # Find message
+    dm_message = list(filter(lambda msg: message_id == msg["message_id"], store["dm_messages"]))
+    channel_message = list(filter(lambda msg: message_id == msg["message_id"], store["channel_messages"]))
 
     if react_id != 1:
-        raise InputError("Invalid react ID")
-
-    if len(dm_message) == 0 and len(channel_message) == 0:
-        raise InputError("Not a valid  message ID")
+        raise InputError("Invalid react ID")        
     
-    if len(dm_message) == 0:
-        select_channel = channel_message[0]["channel_id"] 
-        channel = list(filter(lambda x : select_channel == x["id"], store["channels"]))
-        if len(channel)> 0 and auth_user_id not in channel[0]["all_members"]:
+    if channel_message:
+        # If channel message is valid then channel must be valid
+        channel = list(filter(lambda channel: channel_message[0]["channel_id"] == channel["id"], store["channels"]))[0]
+        # Check if message id refers to a channel message such that user has joined that channel
+        if auth_user_id not in channel["all_members"]:
             raise InputError("Not Authorised User")
-        if reaction in channel_message[0]["reacts"]:
-            raise InputError("Already reacted to")
-        else:
-            channel_message[0]["reacts"].append(reaction)
-
+        react_message(channel_message[0], reaction)
+    elif dm_message:
+        # If dm_message is valid then dm must be valid
+        dm = list(filter(lambda dm: dm_message[0]["dm_id"] == dm["dm_id"], store["dms"]))[0]
+        # Check if message id refers to a dm message such that user has joined that dm
+        if auth_user_id not in dm["members"]:
+            raise InputError("Not Authorised User")
+        react_message(dm_message[0], reaction)
     else:
-        select_dm = dm_message[0]["dm_id"]
-        dm = list(filter(lambda x : select_dm == x["dm_id"], store["dms"]))
-        if len(dm)> 0 and auth_user_id not in dm[0]["members"]:
-            raise InputError("Not Authorised User")
-        if reaction in dm_message[0]["reacts"]:
-            raise InputError("Already reacted to")
-        else:
-            dm_message[0]["reacts"].append(reaction)
+        raise InputError("Not a valid message ID")
             
     return {}
