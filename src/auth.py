@@ -5,6 +5,40 @@ from string import digits, ascii_letters
 from random import choice
 import hashlib, jwt, re, secrets
 
+# helper function to search the data store for duplicate items
+def dict_search(item, users, item_name):
+    return len(list(filter(lambda user: user[item_name] == item, users)))
+
+# helper fucntion to create a session for the user
+def create_session():
+    store = data_store.get()
+    store["session_count"] += 1
+    data_store.set(store)
+    return store["session_count"]
+
+# helper function to create a jwt for the user given their u_id
+def create_jwt(u_id):
+    store = data_store.get()
+    session_id = create_session()
+    token_id = secrets.token_urlsafe()
+    if u_id in store["sessions"]:
+        store["sessions"][u_id].append((session_id, token_id))
+    else:
+        store["sessions"][u_id] = [(session_id, token_id)]
+    data_store.set(store)
+    payload = {
+        'user_id': u_id,
+        'session_id': session_id,
+        'token_id': token_id
+    }
+    return jwt.encode(payload, config.hashcode, algorithm='HS256')
+
+def store_new_password(user, email, password):
+    if user["email"] == email:
+        # Encrypt password
+        user["password"] = hashlib.sha256(password.encode()).hexdigest()
+    return user
+
 def auth_login_v1(email, password):
     """
     Given a users email and password return their user id
@@ -29,18 +63,19 @@ def auth_login_v1(email, password):
         
     hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
+    login_user = list(filter(lambda user: user["email"] == email, users))
+
+    # No registered user corresponding to given email
+    if not login_user:
+        raise InputError(description='Email does not exist')
     # when the email is correct determine if the password matches
-    for u in users:
-        if u['email'] == email and not u['password'] == hashed_password:
-            raise InputError(description='Password is incorrect')
-        elif u['email'] == email and u['password'] == hashed_password:
-            return {
-                'auth_user_id': u['id'],
-                'token': create_jwt(u['id'])
-            }
+    if login_user[0]["password"] != hashed_password:
+        raise InputError(description='Password is incorrect')
 
-    raise InputError('Email does not exist')
-
+    return {
+        'auth_user_id': login_user[0]['id'],
+        'token': create_jwt(login_user[0]['id'])
+    }
 
 def auth_logout_v1(token):
     """
@@ -69,7 +104,6 @@ def auth_logout_v1(token):
     data_store.set(store)
     
     return {}
-    
 
 def auth_register_v1(email, password, name_first, name_last):
     """
@@ -195,17 +229,13 @@ def auth_passwordreset_reset_v1(reset_code, password):
     if not email:
         raise InputError(description="Invalid code")
 
-    # Find user corresponding to email
-    for user in store["users"]:
-        if user["email"] == email[0]:
-            # Encrypt password
-            user["password"] = hashlib.sha256(password.encode()).hexdigest()
+    # Find user corresponding to email and store new password
+    store["users"] = list(map(lambda user: store_new_password(user, email[0], password), store["users"]))
 
     # Remove reset code and email from dictionary so it cannot be used again
     store["password_reset_codes"] = {key: value for (key, value) in store["password_reset_codes"].items() if (key, value) != (email[0], encoded_reset_code)}
     data_store.set(store)
     return {}
-
 
 def auth_passwordreset_request_v1(email):
     """
@@ -238,34 +268,3 @@ def auth_passwordreset_request_v1(email):
     store["password_reset_codes"][email] = hashlib.sha256(code.encode()).hexdigest()
     data_store.set(store)
     return code
-
-
-# helper function to search the data store for duplicate items
-def dict_search(item, users, item_name):
-    for u in users:
-        if u[item_name] == item:
-            return 1
-
-# helper fucntion to create a session for the user
-def create_session():
-    store = data_store.get()
-    store["session_count"] += 1
-    data_store.set(store)
-    return store["session_count"]
-
-# helper function to create a jwt for the user given their u_id
-def create_jwt(u_id):
-    store = data_store.get()
-    session_id = create_session()
-    token_id = secrets.token_urlsafe()
-    if u_id in store["sessions"]:
-        store["sessions"][u_id].append((session_id, token_id))
-    else:
-        store["sessions"][u_id] = [(session_id, token_id)]
-    data_store.set(store)
-    payload = {
-        'user_id': u_id,
-        'session_id': session_id,
-        'token_id': token_id
-    }
-    return jwt.encode(payload, config.hashcode, algorithm='HS256')
