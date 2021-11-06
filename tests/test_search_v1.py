@@ -100,6 +100,10 @@ def test_sendlater_and_dm(clear_and_register, channel_one, dm_one):
     assert messages[1]["message_id"] == msg2
     assert messages[1]["message"] == "hellodm2hello"
 
+def test_no_messages_found_with_query(clear_and_register, channel_one):
+    rh.message_send(clear_and_register, channel_one, "hello")
+    assert rh.search(clear_and_register, "bye").json()["messages"] == []
+
 # Invalid inputs
 
 # Invalid query length
