@@ -5,6 +5,7 @@ Functions to:
 - Update authorised user's first and last name
 - Update the authorised user's email address
 - Update the authorised user's handle (i.e. display name)
+- Track the Streams workspace stats
 """
 
 from src.data_store import data_store
