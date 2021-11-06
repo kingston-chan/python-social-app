@@ -3,7 +3,7 @@ import pytest, mailslurp_client, re
 
 # Set up testing with mailslurp_client
 configuration = mailslurp_client.Configuration()
-configuration.api_key['x-api-key'] = "c9f19de2102ebab1803a52cf6ab6628c615295c9edf6c68b8689b7974a5c2fc1"
+configuration.api_key['x-api-key'] = "37f5e5f56d4916284ba8fdee42821a595486b5c00ca28eae036f9bdf2fb152d0"
 
 @pytest.fixture
 def clear_and_register():
