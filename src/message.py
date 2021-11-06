@@ -37,9 +37,20 @@ def get_message(message_id, channel_messages, dm_messages):
     return (channel_msg, dm_msg)
 
 def react_message(message, reaction):
-    if reaction in message["reacts"]:
-        raise InputError("Already reacted to")
-    message["reacts"].append(reaction)
+    """Helper function to create/append new reaction"""
+    react = list(filter(lambda react: react["id"] == reaction[0], message["reacts"]))
+    # See if react id already exists
+    if not react:
+        message["reacts"].append({
+            "react_id": reaction[0],
+            "u_ids": [reaction[1]],
+            "is_this_user_reacted": False
+        })
+    else:
+        # Check if user already reacted with same react id
+        if reaction[0] in react[0]["u_ids"]:
+            raise InputError("User has already reacted")
+        react[0]["u_ids"].append(reaction[1])
 
 def message_send_v1(auth_user_id, channel_id, message):
     """
