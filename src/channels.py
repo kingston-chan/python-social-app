@@ -8,6 +8,12 @@ Functions to:
 from src.error import InputError, AccessError
 from src.data_store import data_store
 
+def channel_output(channel):
+    return {
+        "channel_id": channel["id"],
+        "name": channel["name"]
+    }
+
 def channels_list_v1(auth_user_id):
     """
     List all channels that the user is a member of
@@ -27,17 +33,11 @@ def channels_list_v1(auth_user_id):
     store = data_store.get()
     channels = store['channels']
 
-    channels_list = []
     # Append all the channels the user is part of, that being a member or an owner
-    for channel in channels:
-        if auth_user_id in channel['all_members']:
-            channels_list.append({
-                'channel_id': channel['id'],
-                'name': channel['name']
-            })
+    channels_list = filter(lambda channel: auth_user_id in channel["all_members"], channels)
 
     return {
-        'channels': channels_list
+        'channels': list(map(channel_output, channels_list))
     }
 
 def channels_listall_v1(auth_user_id):
@@ -57,18 +57,10 @@ def channels_listall_v1(auth_user_id):
     """
     # Grabs the items in the data_store
     store = data_store.get()
-    channels = store['channels']
     # Loops through 'channels' and appends a dictionary with 'channel_id' and
     # 'name' to a list.
-    channels_list = []
-    for channel in channels:
-        channels_list.append({
-            "channel_id": channel["id"],
-            "name": channel["name"]
-        })
-
     return {
-        "channels": channels_list
+        "channels": list(map(channel_output, store["channels"]))
     }
 
 def channels_create_v1(auth_user_id, name, is_public):
@@ -92,33 +84,29 @@ def channels_create_v1(auth_user_id, name, is_public):
                         
     """
     store = data_store.get()
-    channels = store['channels']
-
     # Trim any leading/trailing whitespace characters in name
     name = name.strip()
     # Checks if the length of the name is valid
     if len(name) > 20 or len(name) < 1:
         raise InputError(description="Invalid channel name length")
     # Checks if given name is the same as an existing channel
-    for channel in channels:
-        if channel['name'].lower() == name.lower():
-            raise InputError(description="Channel name already exists")
+    if [channel for channel in store['channels'] if channel['name'].lower() == name.lower()]:
+        raise InputError(description="Channel name already exists")
     # Create new channel with given information
     new_channel = {
         'name': name,
-        'id': len(channels) + 1,
-        'owner_members': [],
-        'owner_permissions': [],
-        'all_members': [],
-        'is_public': is_public
+        'id': len(store['channels']) + 1,
+        # Add the creator of the channel to the list
+        # of owner_members and all_members
+        'owner_members': [auth_user_id],
+        'owner_permissions': [auth_user_id],
+        'all_members': [auth_user_id],
+        'is_public': is_public,
+        'standup': {'active': False, 'auth_user_id': None, 'time_finish': None},
+        'standup_queue': []
     }
 
-    # Add the creator of the channel to the list
-    # of owner_members and all_members
-    new_channel['owner_members'].append(auth_user_id)
-    new_channel['owner_permissions'].append(auth_user_id)
-    new_channel['all_members'].append(auth_user_id)
-    channels.append(new_channel)
+    store['channels'].append(new_channel)
     data_store.set(store)
     return {
         'channel_id': new_channel['id']
