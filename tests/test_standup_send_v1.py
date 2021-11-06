@@ -83,10 +83,10 @@ def test_standup_send_from_second_user(clear, first_user_data, second_user_data)
 
     rh.channel_join(second_user_data["token"], channel_1)
 
-    rh.standup_start(first_user_data["token"], channel_1, 5)
+    rh.standup_start(first_user_data["token"], channel_1, 2)
     rh.standup_send(first_user_data["token"], channel_1, "message1")
     response = rh.standup_send(second_user_data["token"], channel_1, "message2")
-    
+    time.sleep(4)
     assert response.status_code == 200
 
     
