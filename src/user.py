@@ -11,6 +11,11 @@ from src.data_store import data_store
 from src.channel import assign_user_info
 from src.error import InputError
 import re, time
+import urllib.request
+import urllib.error
+from PIL import Image
+from src.config import url
+
 
 def list_all_users():
     """
@@ -126,7 +131,6 @@ def user_profile_setemail_v1(user_id, user_email):
     store["users"] = users
     data_store.set(store)
 
-
 def user_profile_sethandle_v1(auth_user_id, handle_str):
     '''
     Update the authorised user's handle (i.e. display name)
@@ -153,6 +157,47 @@ def user_profile_sethandle_v1(auth_user_id, handle_str):
     else:
         raise InputError(description="invalid string")
     return{}
+
+def user_profile_uploadphoto_v1(auth_user_id, img_url, x_start, y_start, x_end, y_end):
+    store = data_store.get()
+    users = store["users"]
+    img_count = store["img_count"]
+    
+    login_user = list(filter(lambda user: user["id"] == auth_user_id, users))
+
+    if not img_url.endswith(".jpeg") and not img_url.endswith(".jpg"):
+        raise InputError("Image uploaded not a JPG.")
+
+    image_string = f"src/static/{img_count}.jpg"
+
+    try:
+        urllib.request.urlretrieve(img_url, image_string)
+    except Exception as e:
+        raise InputError("img_url returning HTTP status other than 200.")
+
+    im = Image.open(image_string)
+    print(im.size)
+    max_y, max_x = im.size
+
+    if x_start < 0 or x_start > max_x:
+        raise InputError("Invalid x_start.")
+    else:
+        if x_end < 0 or x_end > max_x or x_end < x_start:
+            raise InputError("Invalid x_end.")  
+
+    if y_start < 0 or y_start > max_y:
+        raise InputError("Invalid y_start.")
+    else:
+        if y_end < 0 or y_end > max_y or y_end < y_start:
+            raise InputError("Invalid y_end.")    
+    
+    cropped = im.crop((x_start, y_start, x_end, y_end))
+    cropped.save(image_string)
+    login_user[0]['profile_img_url'] = f"{url}/static/{img_count}.jpg"
+    print(login_user[0]['profile_img_url'])
+    store["img_count"] += 1
+    data_store.set(store)
+        
 
 def users_stats_v1():
     """
@@ -196,7 +241,6 @@ def users_stats_v1():
         init_metrics("dms_exist", store)
         init_metrics("messages_exist", store)
 
-
 def metric_changed(metric, metric_num, store):
     """Helper function to check metric and append new timestamp if changed"""
     if store["metrics"][metric][-1][f"num_{metric}"] != metric_num:
@@ -213,7 +257,6 @@ def init_metrics(metric, store):
         "time_stamp": int(time.time())
     })
     data_store.set(store)
-
 
 def dict_search(item, users, item_name):
     for u in users:
