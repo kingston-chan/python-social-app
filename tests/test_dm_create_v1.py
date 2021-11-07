@@ -91,4 +91,10 @@ def test_users_removed(clear, user1,user2):
     response = requests.delete(f"{url}/admin/user/remove/v1", json={"token" : user_token, "u_id" : user1_id})
     response = requests.post(f"{url}/dm/create/v1", json={"token" : user_token, "u_ids" : [user1_id]})
 
-    assert response.status_code == 400  
+    assert response.status_code == 400
+
+def test_owner_in_uids_list(clear, user1):
+    assert rh.dm_create(user1["token"], [user1["auth_user_id"]]).status_code == 200
+    dm_id = rh.dm_create(user1["token"], [user1["auth_user_id"]]).json()["dm_id"]
+    dm_name = rh.user_profile(user1["token"], user1["auth_user_id"]).json()["user"]["handle_str"]
+    assert rh.dm_details(user1["token"], dm_id).json()["name"] == dm_name
