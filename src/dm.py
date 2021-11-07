@@ -1,6 +1,7 @@
 from src.error import InputError, AccessError
 from src.data_store import data_store
 from src.user import users_stats_v1
+from src.channel import output_message
 
 def assign_user_info(user_data_placeholder):
     """Assigns the user information with the appropriate key names required in the spec"""
@@ -193,10 +194,10 @@ def dm_messages_v1(auth_user_id, dm_id, start):
         raise AccessError(description='User is not authorised.')
 
     valid_msgs.reverse()
-
+    output_msgs = valid_msgs[start:start+50] if len(valid_msgs) >= start+50 else valid_msgs[start:]
     # The selected messages, the start and the end values are returned.
     return {
-        'messages': valid_msgs[start:start+50] if len(valid_msgs) >= start+50 else valid_msgs[start:],
+        'messages': list(map(lambda msg: output_message(msg, auth_user_id), output_msgs)),
         'start': start,
         'end': start+50 if start+50 < len(valid_msgs) else -1
     }
