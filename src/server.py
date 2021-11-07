@@ -471,10 +471,10 @@ def search():
 
 #==== notifications.py ====#
 @APP.route("/notifications/get/v1", methods=['GET'])
-def notifications_v1():
+def notifications_get_v1():
     token = request.args.get("token")
     auth_user_id = check_valid_token_and_session(token)
-    return dumps(notifications_v1(auth_user_id))
+    return dumps({"notifications" : notifications_v1(auth_user_id)})
 
 #===== other.py =====#
 
@@ -490,3 +490,4 @@ def clear():
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, quit_gracefully) # For coverage
     APP.run(port=config.port) # Do not edit this port
+

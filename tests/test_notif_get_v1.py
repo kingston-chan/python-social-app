@@ -3,6 +3,7 @@ import requests
 import pytest
 from src import message
 from src.config import url
+from src.server import channel_invite
 import tests.route_helpers as rh
 
 BASE_URL = url
@@ -44,6 +45,7 @@ def message_react(token, message_id):
 
 
 #==tests==#
+'''
 def test_creating_channel_notif(clear,user1,user2):
     channel = channel_create_public(user1["token"])
     channel_join(user2["token"], channel["channel_id"])
@@ -54,29 +56,25 @@ def test_creating_dm_notif(clear,user1,user2):
     dm = dm_create(user1["token"],[user2["auth_user_id"]])
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
     assert response.json()["notifications"][0] ==  "{} added you to {}".format(user1["handle_str"],dm["name"])
-
+'''
 def test_reacted_channel_message(clear,user1,user2):
-    channel = channel_create_public(user1["token"])
+    channel = rh.channels_create(user1["token"],"fake_guys_channel", True).json()
     message_id = rh.message_send(user1["token"], channel["channel_id"], "Hello")
 
-    channel_join(user2["token"], channel["channel_id"])
-    message_react(user2["token", message_id])
+    rh.channel_invite(user1["token"], channel["channel_id"], user2["auth_user_id"])
+    rh.message_react(user2["token"], message_id.json()["message_id"],1)
 
-    response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
-    assert response.json()["notifications"][0] ==  "{} added you to {}".format(user1["handle_str"],channel["name"])
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
-    assert response.json()["notifications"][0] ==  "{} reacted to your message in {}".format(user2["handle_str"],channel["name"])
+    assert response.json()["notifications"][0] ==  "{} reacted to your message in {}".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],"fake_guys_channel")
 
 def test_reacted_dm_message(clear,user1,user2):
-    dm = dm_create(user1["token"], [user2["token"]])
+    dm = rh.dm_create(user1["token"], [user2["auth_user_id"]]).json()
     message_id = rh.message_senddm(user1['token'], dm["dm_id"], "Hello")
 
-    message_react(user2["token", message_id])
-
-    response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
-    assert response.json()["notifications"][0] ==  "{} added you to {}".format(user1["handle_str"],dm["name"])
+    rh.message_react(user2["token"], message_id.json()["message_id"],1)
+    
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
-    assert response.json()["notifications"][0] ==  "{} reacted to your message in {}".format(user2["handle_str"],dm["name"])
+    assert response.json()["notifications"][0] ==  "{} reacted to your message in {}".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],rh.dm_details(user1["token"],dm["dm_id"]).json()["name"])
 
 def test_unauth_token(clear):
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : 'a'})
