@@ -53,11 +53,13 @@ def test_correct_messages(clear_and_register, channel_one, channel_two, channel_
     # Should not include messages that user is not in, therefore exclude "hello" message in dm3 and channel3
     assert len(messages) == 4
     
+    # Check correct output
     assert messages[0]["message_id"] == msg_check1
     assert messages[0]["message"] == "hello channel1"
     assert messages[0]["u_id"] == uid
     assert "time_created" in messages[0]
     assert "reacts" in messages[0]
+    assert messages[0]["reacts"][0]["is_this_user_reacted"]
     assert "is_pinned" in messages[0]
 
     assert messages[1]["message_id"] == msg_check2
@@ -72,6 +74,7 @@ def test_correct_messages(clear_and_register, channel_one, channel_two, channel_
     assert messages[2]["u_id"] == uid
     assert "time_created" in messages[2]
     assert "reacts" in messages[2]
+    assert messages[2]["reacts"][0]["is_this_user_reacted"]
     assert "is_pinned" in messages[2]
 
     assert messages[3]["message_id"] == msg_check4
