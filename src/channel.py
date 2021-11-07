@@ -6,6 +6,29 @@ of the channel, leaving the channel and adding/removing owners
 
 from src.error import InputError, AccessError
 from src.data_store import data_store
+def assign_user_info(user_data_placeholder):
+    """Assigns the user information with the appropriate key names required in the spec"""
+    return {
+        'u_id': user_data_placeholder['id'],
+        'email': user_data_placeholder['email'],
+        'name_first': user_data_placeholder['name_first'],
+        'name_last': user_data_placeholder['name_last'],
+        'handle_str':user_data_placeholder['handle']
+    }
+
+def check_user_reacted(react, user_id):
+    react["is_this_user_reacted"] = user_id in react["u_ids"]
+    return react
+
+def output_message(message, user_id):
+    return {
+        "message_id": message["message_id"],
+        "u_id": message["u_id"],
+        "message": message["message"],
+        "time_created": message["time_created"],
+        "reacts": list(map(lambda react: check_user_reacted(react, user_id), message["reacts"])),
+        "is_pinned": message["is_pinned"]
+    }
 
 def channel_invite_v1(auth_user_id, channel_id, u_id):
     """
@@ -162,10 +185,11 @@ def channel_messages_v1(auth_user_id, channel_id, start):
 
     # Most recent message is stored as the last element
     valid_msgs.reverse()
+    output_msgs = valid_msgs[start:start+50] if len(valid_msgs) >= start + 50 else valid_msgs[start:]
 
     # The selected messages, the start and the end values are returned.
     return {
-        'messages': valid_msgs[start:start+50] if len(valid_msgs) >= start + 50 else valid_msgs[start:],
+        'messages': list(map(lambda message: output_message(message, auth_user_id), output_msgs)),
         'start': start,
         # If the scanner hits the end of the messages, the end is -1
         # else, the end is the final message index.
@@ -381,12 +405,3 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
     return {}
 
 
-def assign_user_info(user_data_placeholder):
-    """Assigns the user information with the appropriate key names required in the spec"""
-    return {
-        'u_id': user_data_placeholder['id'],
-        'email': user_data_placeholder['email'],
-        'name_first': user_data_placeholder['name_first'],
-        'name_last': user_data_placeholder['name_last'],
-        'handle_str':user_data_placeholder['handle']
-    }
