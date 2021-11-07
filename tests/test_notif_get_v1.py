@@ -1,7 +1,7 @@
 import json
 import requests
 import pytest
-from src import message
+from src import message, user
 from src.config import url
 from src.server import channel_invite
 import tests.route_helpers as rh
@@ -45,18 +45,18 @@ def message_react(token, message_id):
 
 
 #==tests==#
-'''
+
 def test_creating_channel_notif(clear,user1,user2):
-    channel = channel_create_public(user1["token"])
-    channel_join(user2["token"], channel["channel_id"])
+    channel = rh.channels_create(user1["token"],"fake_guys_channel", True).json()
+    rh.channel_invite(user1["token"],channel["channel_id"],user2["token"])
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
-    assert response.json()["notifications"][0] ==  "{} added you to {}".format(user1["handle_str"],channel["name"])
+    assert response.json()["notifications"][0] ==  "{} added you to {}".format(rh.user_profile(user1["token"],user1["auth_user_id"]),"fake_guys_channel")
 
 def test_creating_dm_notif(clear,user1,user2):
     dm = dm_create(user1["token"],[user2["auth_user_id"]])
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
-    assert response.json()["notifications"][0] ==  "{} added you to {}".format(user1["handle_str"],dm["name"])
-'''
+    assert response.json()["notifications"][0] ==  "{} added you to {}".format(rh.user_profile(user1["token"],user1["auth_user_id"]),rh.dm_details(user1["token"],dm["dm_id"]).json()["name"])
+
 def test_reacted_channel_message(clear,user1,user2):
     channel = rh.channels_create(user1["token"],"fake_guys_channel", True).json()
     message_id = rh.message_send(user1["token"], channel["channel_id"], "Hello")
