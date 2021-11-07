@@ -18,7 +18,10 @@ def test_user_list_channel(clear_and_register):
     
     assert len(list_channels) == 2
     assert list_channels[0]["channel_id"] == channel1_id
+    assert list_channels[0]["name"] == "channel1"
+
     assert list_channels[1]["channel_id"] == channel2_id
+    assert list_channels[1]["name"] == "channel2"
 
 # List only channels authorised user is in, including private ones
 def test_only_list_authorised_user_channels(clear_and_register):
