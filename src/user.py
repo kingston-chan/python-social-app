@@ -11,7 +11,6 @@ Functions to:
 from src.data_store import data_store
 from src.channel import assign_user_info
 from src.error import InputError
-from functools import reduce
 import re, time
 
 def metric_changed(metric, metric_num, store):
@@ -35,9 +34,7 @@ def is_in_channel_dm(user, channels, dms):
     """Helper function to determine if user is at least in a channel or not"""
     user_channels = len(list(filter(lambda channel: (user["id"] in channel["all_members"]), channels)))
     user_dms = len(list(filter(lambda dm: (user["id"] in dm["members"]), dms)))
-    if user_channels or user_dms:
-        return 1
-    return 0
+    return bool(user_channels or user_dms)
 
 def change_email(user, user_id, email):
     """Helper function to change user_id's email"""
@@ -228,13 +225,14 @@ def users_stats_v1():
         None
     """
     store = data_store.get()
-    
+    users = store["users"]
+    channels = store["channels"]
+    dms = store["dms"]
     # Go through each user, check if in a channel/dm or not
-    in_channel_dm = map(lambda user: is_in_channel_dm(user, store["channels"], store["dms"]), store["users"])
-    num_users_in_channel_dm = reduce(lambda x,y: x+y, in_channel_dm)
+    num_users_in_channel_dm = len(list(filter(lambda user: is_in_channel_dm(user, channels, dms), users)))
 
     # Find the number of valid users, i.e. non-deleted users
-    valid_users = len(list(filter(lambda user: (user["email"] and user["handle"]), store["users"])))
+    valid_users = len(list(filter(lambda user: (user["email"] and user["handle"]), users)))
     # Utilization rate: if no valid users, 0 else defined by num_users_in_channel_dm divided by valid_users
     store["metrics"]["utilization_rate"] = num_users_in_channel_dm/valid_users
 
