@@ -1,11 +1,34 @@
 """
 Various methods to interact with channels such as inviting users to the channel,
-returning the details of the channel, joining channels and returning messages 
-of the channel
+returning the details of the channel, joining channels, returning messages 
+of the channel, leaving the channel and adding/removing owners
 """
 
 from src.error import InputError, AccessError
 from src.data_store import data_store
+def assign_user_info(user_data_placeholder):
+    """Assigns the user information with the appropriate key names required in the spec"""
+    return {
+        'u_id': user_data_placeholder['id'],
+        'email': user_data_placeholder['email'],
+        'name_first': user_data_placeholder['name_first'],
+        'name_last': user_data_placeholder['name_last'],
+        'handle_str':user_data_placeholder['handle']
+    }
+
+def check_user_reacted(react, user_id):
+    react["is_this_user_reacted"] = user_id in react["u_ids"]
+    return react
+
+def output_message(message, user_id):
+    return {
+        "message_id": message["message_id"],
+        "u_id": message["u_id"],
+        "message": message["message"],
+        "time_created": message["time_created"],
+        "reacts": list(map(lambda react: check_user_reacted(react, user_id), message["reacts"])),
+        "is_pinned": message["is_pinned"]
+    }
 
 def channel_invite_v1(auth_user_id, channel_id, u_id):
     """
@@ -36,34 +59,23 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     users = store['users']
     channels = store['channels']
 
-    valid_channel = 0
-    valid_user = 0
-    #checks for valid channel
-    for channel in channels:
-        if channel_id == channel['id']:
-            valid_channel = 1
-            #checks to see authorised member is sending channel invitation
-            if auth_user_id not in channel['all_members']: 
-                raise AccessError(description="not authorised user")
-            break
-    if valid_channel == 0:
-        raise InputError(description="not valid channel ID")   
+    valid_channel = list(filter(lambda channel: channel_id == channel['id'], channels))
+    if not valid_channel:
+        raise InputError(description="not valid channel ID")
+    if auth_user_id not in valid_channel[0]['all_members']: 
+        raise AccessError(description="not authorised user") 
     #checks for valid user 
-    for user in users:
-        if u_id == user['id'] and user["email"] is not None and user["handle"] is not None:
-            valid_user = 1
-            break
-    
-    if valid_user == 0:
+    valid_user = list(filter(lambda user: u_id == user['id'] and user["email"] is not None and user["handle"] is not None, users))
+    if not valid_user:
         raise InputError(description="not valid user")
     #checks to see if member
-    if u_id in channel['all_members']:
+    if u_id in valid_channel[0]['all_members']:
         raise InputError(description="already member")
    
-    channel['all_members'].append(u_id)
+    valid_channel[0]['all_members'].append(u_id)
     
-    if user['permission'] == 1:
-        channel['owner_permissions'].append(u_id)
+    if valid_user[0]['permission'] == 1:
+        valid_channel[0]['owner_permissions'].append(u_id)
     
     data_store.set(store)
     
@@ -101,51 +113,28 @@ def channel_details_v1(auth_user_id, channel_id):
     store = data_store.get()
     channels = store['channels']
     users = store['users']
-    channel_details = {}
     
-    channel_exists = False
-    owner_ids = None
-    all_members_ids = None
-
-    # Searches for a channel with the same ID and stores its information.
-    # Also checks if a channel exists.
-    for channel in channels:
-        if channel["id"] == channel_id:
-            channel_exists = True
-            channel_details["name"] = channel["name"]
-            channel_details["is_public"] = channel["is_public"]
-            channel_details["owner_members"] = []
-            channel_details["all_members"] = []
-            # channel["owner_members"] and channel["all_members"] are lists of user IDs.
-            owner_ids = channel["owner_members"]
-            all_members_ids = channel["all_members"]
-
-    if not channel_exists:
+    # Find the channel requested
+    valid_channel = list(filter(lambda channel: channel["id"] == channel_id, channels))
+    if not valid_channel:
         raise InputError(description="Channel does not exist") 
     
-    # Finds a user's information based on their user IDs.
-    for user_data in users:
-        if user_data["id"] in owner_ids:
-            # Assigns the necessary keys required from user_data.
-            user_info = assign_user_info(user_data)
-            # Stores the owners' information into channel_details["owner_members"].
-            channel_details["owner_members"].append(user_info)
-        if user_data["id"] in all_members_ids:
-            user_info = assign_user_info(user_data)
-            channel_details["all_members"].append(user_info)
-
-    an_invited_member = False
-    members = channel_details["all_members"]
+    # Find channel owners and members information
+    channel_owners = list(filter(lambda user: user["id"] in valid_channel[0]["owner_members"], users))
+    channel_members = list(filter(lambda user: user["id"] in valid_channel[0]["all_members"], users))
 
     # Checks if the user is apart of the channel.
-    for member in members:
-        if member["u_id"] == auth_user_id:
-            an_invited_member = True
-
-    if not an_invited_member:
+    if not list(filter(lambda member: member["id"] == auth_user_id, channel_members)):
         raise AccessError(description="User is not a member of the channel")
 
-    return channel_details
+    return {
+        "name": valid_channel[0]["name"],
+        "is_public": valid_channel[0]["is_public"],
+        # Stores the owners' information 
+        "owner_members": list(map(assign_user_info, channel_owners)),
+        # Assigns the necessary keys required from user_data.
+        "all_members": list(map(assign_user_info, channel_members))
+    }
 
 def channel_messages_v1(auth_user_id, channel_id, start):
     """
@@ -173,70 +162,38 @@ def channel_messages_v1(auth_user_id, channel_id, start):
     
     """
     # Checks if channel and start are valid inputs.
-    channel_valid = False
-    start_valid = False
-    selected_channel = {}
     store = data_store.get()
     channels = store['channels']
     channel_messages = store['channel_messages']
 
     # Scans if the channel exists.
-    for channel in channels:
-        if channel['id'] == channel_id:
-            channel_valid = True
-            # Checks if the start value is valid within the length of 
-            # messages in the channel.
-            if start <= len(list(filter(lambda x: (x['channel_id'] == channel_id), channel_messages))):
-                start_valid = True
-                selected_channel = channel  # Channel is also selected
-
+    valid_channel = list(filter(lambda channel: channel['id'] == channel_id, channels))
     # If the channel_id or start value are invalid, then errors are raised.
-    if channel_valid is False:
+    if not valid_channel:
         raise InputError(description="This channel is not valid.")
-    if start_valid is False:
-        raise InputError(description="This start is not valid.")
+
+    # Checks if the start value is valid within the length of messages in the channel.
+    valid_msgs = list(filter(lambda message: (message['channel_id'] == channel_id), channel_messages))
     
-    # Checks if the authorised user is a member of the channel.
-    member_valid = False
-    for member in selected_channel['all_members']:
-        if member == auth_user_id:
-            member_valid = True
+    # Find the length of the channel messages
+    if start > len(valid_msgs):
+        raise InputError(description="This start is not valid.")
 
     # If the user is not a member, then an error is raised.
-    if member_valid is False:
+    if auth_user_id not in valid_channel[0]["all_members"]:
         raise AccessError(description='User is not authorised.')
 
-    # The channel is scanned for its messages.
-
-    selected_channel_messages = []
-
-    if channel_messages == []:
-        length = 0
-    else:
-        selected_channel_messages = list(filter(lambda x: (x['channel_id'] == channel_id), channel_messages))
-        selected_channel_messages.reverse()
-        length = len(selected_channel_messages)
-
-    index = start
-    counter = 0
-    selected_messages = []
-    while index < length and counter < 50:
-        selected_messages.append(selected_channel_messages[index])
-        index += 1
-        counter += 1
-
-    # If the scanner hits the end of the messages, the end is -1
-    # else, the end is the final message index.
-    if index == length:
-        end = -1
-    else:
-        end = index
+    # Most recent message is stored as the last element
+    valid_msgs.reverse()
+    output_msgs = valid_msgs[start:start+50] if len(valid_msgs) >= start + 50 else valid_msgs[start:]
 
     # The selected messages, the start and the end values are returned.
     return {
-        'messages': selected_messages,
+        'messages': list(map(lambda message: output_message(message, auth_user_id), output_msgs)),
         'start': start,
-        'end': end,
+        # If the scanner hits the end of the messages, the end is -1
+        # else, the end is the final message index.
+        'end': start + 50 if start + 50 < len(valid_msgs) else -1,
     }
     
 def channel_join_v1(auth_user_id, channel_id):
@@ -265,30 +222,25 @@ def channel_join_v1(auth_user_id, channel_id):
     users = store['users']
     channels = store['channels']
 
-    user = list(filter((lambda user: user["id"] == auth_user_id), users))[0]
-    
+    valid_user = list(filter((lambda user: user["id"] == auth_user_id), users))[0]
+    valid_channel = list(filter(lambda channel: channel_id == channel['id'], channels))
+
     # Check if channel is valid
-    channel_exists = 0
-    for channel in channels:
-        if channel_id == channel['id']:
-            channel_exists = 1
-            break
-        
-    if not channel_exists:
+    if not valid_channel:
         raise InputError(description="Invalid Channel ID")
     
-    if auth_user_id in channel['all_members']:
+    if auth_user_id in valid_channel[0]['all_members']:
         raise InputError(description="Already a member of channel")
 
     # Global members cannot join private channels
-    if channel['is_public'] is False and user['permission'] == 2:
+    if valid_channel[0]['is_public'] is False and valid_user['permission'] == 2:
         raise AccessError(description="Channel is private")
     
     # Give channel owner permissions to global owners
-    if user['permission'] == 1:
-        channel['owner_permissions'].append(auth_user_id)
+    if valid_user['permission'] == 1:
+        valid_channel[0]['owner_permissions'].append(auth_user_id)
     
-    channel['all_members'].append(auth_user_id)
+    valid_channel[0]['all_members'].append(auth_user_id)
     
     data_store.set(store)
 
@@ -320,50 +272,35 @@ def channel_addowner_v1(auth_user_id, channel_id, u_id):
     users = store['users']
     channels = store['channels']
 
-    # Checks if a user exists.
-    user_exists = False
-    for user in users:
-        if u_id == user['id']:
-            user_exists = True
-            break
-    
-    if not user_exists:
-        raise InputError(description="User is not authorised.")
-
-    channel_exists = False
-    owner_ids = None
-    all_members_ids = None
-    owner_perms_ids = None
 
     # Searches for a channel with the same ID and stores its information.
     # Also checks if a channel exists.
-    for channel in channels:
-        if channel["id"] == channel_id:
-            channel_exists = True
-            # channel["owner_members"], channel["all_members"] and
-            # channel["owner_permissions"] are lists of user IDs.
-            owner_ids = channel["owner_members"]
-            all_members_ids = channel["all_members"]
-            owner_perms_ids = channel["owner_permissions"]
+    valid_channel = list(filter(lambda channel: channel["id"] == channel_id, channels))
 
-    if not channel_exists:
+    if not valid_channel:
         raise InputError(description="Channel does not exist") 
     
-    if auth_user_id not in owner_ids and auth_user_id not in owner_perms_ids:
+    if auth_user_id not in valid_channel[0]["owner_permissions"]:
         raise AccessError(description="User is not an owner/does not have the owner permissions.")
+    
+    # Checks if a user exists.
+    if not list(filter(lambda user: u_id == user['id'], users)):
+        raise InputError(description="Invalid user.")
 
-    if u_id not in all_members_ids:
+    # Check if user being added as owner is in channel
+    if u_id not in valid_channel[0]["all_members"]:
         raise InputError(description="User is not a member of the channel")
 
-    if u_id in owner_ids:
+    # Check if user is not alreayd an owner
+    if u_id in valid_channel[0]["owner_members"]:
         raise InputError(description="User is already an owner of the channel")
 
     # Assigns the new owner's u_id to the owner_members list and the owner_permissions list.
-    owner_ids.append(u_id)
+    valid_channel[0]["owner_members"].append(u_id)
 
     # Checks if they're a global owner.
-    if u_id not in owner_perms_ids:
-        owner_perms_ids.append(u_id)
+    if u_id not in valid_channel[0]["owner_permissions"]:
+        valid_channel[0]["owner_permissions"].append(u_id)
 
     data_store.set(store)
 
@@ -387,24 +324,28 @@ def channel_leave_v1(auth_user_id, channel_id):
     Return value:
         Returns an empty dictionary when user successfully leaves the channel
     """
+    
+    # Find channel corresponding to channel_id
     store = data_store.get()
-    for channel in store["channels"]:
-        # Find channel corresponding to channel_id
-        if channel["id"] == channel_id:
-            # Check if auth user id is in the members list
-            if auth_user_id in channel["all_members"]:
-                # Check if auth user is a owner
-                if auth_user_id in channel["owner_members"]:
-                    channel["owner_members"].remove(auth_user_id)
-                # Revoke permissions if owner/global owner
-                if auth_user_id in channel["owner_permissions"]:
-                    channel["owner_permissions"].remove(auth_user_id)
-                channel["all_members"].remove(auth_user_id)
-            else:
-                raise AccessError(description="Authorised user is not member of the channel")
-            data_store.set(store)
-            return {}
-    raise InputError(description="Invalid channel id")
+    valid_channel = list(filter(lambda channel: channel["id"] == channel_id, store["channels"]))
+    if not valid_channel:
+        raise InputError(description="Invalid channel id")
+    # Check if auth user id is in the members list
+    if auth_user_id not in valid_channel[0]["all_members"]:
+        raise AccessError(description="Authorised user is not member of the channel")
+
+    # Check if auth user is a owner
+    if auth_user_id in valid_channel[0]["owner_members"]:
+        valid_channel[0]["owner_members"].remove(auth_user_id)
+    
+    # Revoke permissions if owner/global owner
+    if auth_user_id in valid_channel[0]["owner_permissions"]:
+        valid_channel[0]["owner_permissions"].remove(auth_user_id)
+    
+    valid_channel[0]["all_members"].remove(auth_user_id)
+    
+    data_store.set(store)
+    return {}
     
 def channel_removeowner_v1(auth_user_id, channel_id, u_id):
     """
@@ -432,59 +373,35 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
     channels = store["channels"]
     users = store["users"]
     
-    owner_ids = None
-    owner_perms_ids = None
+    # Find channel
+    valid_channel = list(filter(lambda channel: channel["id"] == channel_id, channels))
 
-    # Checks if a channel exists
-    channel_exists = False
-    for channel in channels:
-        if channel["id"] == channel_id:
-            channel_exists = True
-            owner_ids = channel["owner_members"]
-            owner_perms_ids = channel["owner_permissions"]
-
-    if not channel_exists:
+    if not valid_channel:
         raise InputError(description="Channel does not exist")
     
-    # Checks if a user exists
-    user_exists = False
-    user_permission = None
-    for user in users:
-        if u_id == user['id']:
-            user_exists = True
-            user_permission = user["permission"]
-            break
+    user = list(filter(lambda user: u_id == user['id'], users))
     
-    if not user_exists:
+    if not user:
         raise InputError(description="User is not authorised.")
 
-    if auth_user_id not in owner_ids and auth_user_id not in owner_perms_ids:
+    if auth_user_id not in valid_channel[0]["owner_permissions"]:
         raise AccessError(description="User is not an owner/does not have owner perms")
 
-    if u_id not in owner_ids and u_id not in owner_perms_ids:
+    if u_id not in valid_channel[0]["owner_members"]:
         raise InputError(description="User is not an owner/does not have owner perms")
     
-    if u_id in owner_ids and len(owner_ids) == 1:
+    if u_id in valid_channel[0]["owner_members"] and len(valid_channel[0]["owner_members"]) == 1:
         raise InputError(description="User is currently the only owner of the channel")
     
     # Removes the owner's u_id from the owner_members list and the owner_permissions list.
-    owner_ids.remove(u_id)
+    valid_channel[0]["owner_members"].remove(u_id)
 
     # Checks to see if they're a global owner.
-    if user_permission != 1:
-        owner_perms_ids.remove(u_id)
+    if user[0]["permission"] != 1:
+        valid_channel[0]["owner_permissions"].remove(u_id)
     
     data_store.set(store)
 
     return {}
 
 
-def assign_user_info(user_data_placeholder):
-    """Assigns the user information with the appropriate key names required in the spec"""
-    return {
-        'u_id': user_data_placeholder['id'],
-        'email': user_data_placeholder['email'],
-        'name_first': user_data_placeholder['name_first'],
-        'name_last': user_data_placeholder['name_last'],
-        'handle_str':user_data_placeholder['handle']
-    }
