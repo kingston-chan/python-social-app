@@ -1,6 +1,6 @@
 import signal
 from json import dumps
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from src.error import AccessError
@@ -14,12 +14,11 @@ from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
 from src.dm import dm_details_v1, dm_create_v1, dm_leave_v1, dm_messages_v1, dm_list_v1, dm_remove_v1
-from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1, user_profile_sethandle_v1, users_stats_v1
+from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1, user_profile_sethandle_v1, user_profile_uploadphoto_v1, users_stats_v1
 from src.message import message_send_v1, message_edit_v1, message_remove_v1, message_senddm_v1, message_share_v1, message_sendlater_v1, message_sendlaterdm_v1, message_pin_v1, message_react_v1, message_unpin_v1
 from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
 from src.standup import standup_start_v1, standup_active_v1, standup_send_v1
 from src.search import search_v1
-
 
 def quit_gracefully(*args):
     '''For coverage'''
@@ -51,6 +50,12 @@ APP.config['MAIL_PASSWORD'] = 'h13beaglestreams'
 APP.config['MAIL_USE_TLS'] = False
 APP.config['MAIL_USE_SSL'] = True
 mail = Mail(APP)
+APP.static_url_path = "/static/"
+
+@APP.route('/static/<path:path>')
+def send_js(path):
+    print(path)
+    return send_from_directory("", path)
 
 def save():
     store = data_store.get()
@@ -103,7 +108,6 @@ def auth_register():
     users_stats_v1()
     save()
     return dumps(user_info)
-
 
 # auth/logout/v1
 @APP.route("/auth/logout/v1", methods=['POST'])
@@ -442,6 +446,17 @@ def user_profile_sethandle():
     user_profile_sethandle_v1(user_id, new_handle)
     save()
     return dumps({})
+
+# user/profile/sethandle/v1
+@APP.route("/user/profile/uploadphoto/v1", methods=['POST'])
+def user_profile_uploadphoto():
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    user_profile_uploadphoto_v1(user_id, data["img_url"], data["x_start"], data["y_start"], data["x_end"], data["y_end"])
+    save()
+    return dumps({})
+
+
 
 # users/stats/v1
 @APP.route("/users/stats/v1", methods=['GET'])
