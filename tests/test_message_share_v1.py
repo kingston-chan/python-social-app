@@ -170,3 +170,18 @@ def test_message_share_channel_message_to_dm(clear, first_user_data):
     response = rh.message_share(first_user_data["token"], message_id, "funny", -1, dm_id)
 
     assert response.status_code == 200
+
+# Input Error is raised when user tries to share a message such that they are not in
+# the channel/dm where the message originates from
+def test_user_share_message_not_in_channel_dm(clear, first_user_data, second_user_data):
+    channel_1 = rh.channels_create(first_user_data["token"], "channel1", True).json()["channel_id"]
+    msg1_id = rh.message_send(first_user_data["token"], channel_1, "hello").json()["message_id"]
+    # Test user 2 tries to share a message such that they do not belong to that message's channel
+    dm_1 = rh.dm_create(second_user_data["token"], [first_user_data["auth_user_id"]]).json()["dm_id"]
+    assert rh.message_share(second_user_data["token"], msg1_id, "hello", -1, dm_1).status_code == 400
+
+    msg2_id = rh.message_senddm(second_user_data["token"], dm_1, "bye").json()["message_id"]
+    rh.dm_leave(second_user_data["token"], dm_1)
+    rh.channel_join(second_user_data["token"], channel_1)
+    # Test user 2 tries to share a message such that they do not belong to that message's dm
+    assert rh.message_share(second_user_data["token"], msg2_id, "hello", channel_1, -1).status_code == 400

@@ -290,3 +290,55 @@ def test_start_60_total_110(clear, user1, user2):
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
         assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
+
+def test_ch_mess_shows_correct_reacts(clear, user1, user2):
+    dm_id = rh.dm_create(user1['token'], [user2["auth_user_id"]]).json()['dm_id']
+    
+    rh.message_senddm(user1['token'], dm_id, "hello").json()["message_id"]
+    msg2 = rh.message_senddm(user1['token'], dm_id, "hello").json()["message_id"]
+    rh.message_senddm(user1['token'], dm_id, "hello").json()["message_id"]
+    msg4 = rh.message_senddm(user1['token'], dm_id, "hello").json()["message_id"]
+
+    react_id = 1
+    
+    rh.message_react(user1['token'], msg2, react_id)
+    rh.message_react(user1['token'], msg4, react_id)
+
+    messages_user1 = rh.dm_messages(user1['token'], dm_id, 0).json()["messages"]
+
+    # Test that reacts and each react is correct type
+    assert type(messages_user1[0]["reacts"]) is list
+    assert type(messages_user1[0]["reacts"][0]) is dict
+    assert len(messages_user1[0]["reacts"]) == 1
+
+    # Test react contains corret keys
+    assert "react_id" in messages_user1[0]["reacts"][0]
+    assert "u_ids" in messages_user1[0]["reacts"][0]
+    assert "is_this_user_reacted" in messages_user1[0]["reacts"][0]
+
+    # Test values of react
+    assert messages_user1[0]["reacts"][0]["react_id"] == react_id
+    # Test u_ids is a list
+    assert type(messages_user1[0]["reacts"][0]["u_ids"]) is list
+    assert user1["auth_user_id"] in messages_user1[0]["reacts"][0]["u_ids"]
+    assert messages_user1[0]["reacts"][0]["is_this_user_reacted"] == True
+
+    assert len(messages_user1[2]["reacts"]) == 1
+    assert messages_user1[2]["reacts"][0]["react_id"] == react_id
+    assert user1["auth_user_id"] in messages_user1[2]["reacts"][0]["u_ids"]
+    assert messages_user1[0]["reacts"][0]["is_this_user_reacted"] == True
+    
+    # No reactions so empty
+    assert messages_user1[1]["reacts"] == []
+    assert messages_user1[3]["reacts"] == []
+
+    # Test values of react for user not reacted, but someone has
+    messages_user2 = rh.dm_messages(user2['token'], dm_id, 0).json()["messages"]
+
+    assert messages_user2[0]["reacts"][0]["react_id"] == react_id
+    assert user2["auth_user_id"] not in messages_user2[0]["reacts"][0]["u_ids"]
+    assert messages_user2[0]["reacts"][0]["is_this_user_reacted"] == False
+
+    assert messages_user2[2]["reacts"][0]["react_id"] == react_id
+    assert user2["auth_user_id"] not in messages_user2[2]["reacts"][0]["u_ids"]
+    assert messages_user2[2]["reacts"][0]["is_this_user_reacted"] == False
