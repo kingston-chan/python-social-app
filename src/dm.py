@@ -65,6 +65,19 @@ def dm_create_v1(auth_user_id, u_ids):
     }
 
     store["dms"].append(new_dm)
+
+
+    user_creating = list(filter(lambda x : auth_user_id == x["id"], store["users"]))
+
+    notif_string = "{} added you to {}".format(user_creating[0]["handle"],name)
+    notification = {"channel_id" : -1, "dm_id": new_dm_id, "notification_message": notif_string}
+
+    for users in new_dm["members"]:
+        if users in store["notifications"] and users != auth_user_id:
+            store["notifications"][users].append(notification)
+        elif users not in store["notifications"] and users != auth_user_id:
+            store["notifications"][users] = [notification]
+
     data_store.set(store)
 
     return {"dm_id" : new_dm_id}

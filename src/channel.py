@@ -4,6 +4,7 @@ returning the details of the channel, joining channels and returning messages
 of the channel
 """
 
+from src import notifications
 from src.error import InputError, AccessError
 from src.data_store import data_store
 
@@ -65,6 +66,18 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     if user['permission'] == 1:
         channel['owner_permissions'].append(u_id)
     
+
+    user_inviting = list(filter(lambda x : auth_user_id == x["id"], store["users"]))
+    channel = list(filter(lambda x : channel_id == x["id"], store["channels"]))
+
+    notif_string = "{} added you to {}".format(user_inviting[0]["handle"],channel[0]["name"])
+    notification = {"channel_id" : channel_id, "dm_id": -1, "notification_message": notif_string}
+    
+    if u_id in store["notifications"]:
+        store["notifications"][u_id].append(notification)
+    else:
+        store["notifications"][u_id] = [notification]
+
     data_store.set(store)
     
     return {}

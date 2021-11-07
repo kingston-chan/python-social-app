@@ -46,16 +46,20 @@ def message_react(token, message_id):
 
 #==tests==#
 
+def test_unauth_token(clear):
+    response = requests.get(f"{url}/notifications/get/v1", params={"token" : 'a'})
+    return response.status_code == 403
+
 def test_creating_channel_notif(clear,user1,user2):
     channel = rh.channels_create(user1["token"],"fake_guys_channel", True).json()
-    rh.channel_invite(user1["token"],channel["channel_id"],user2["token"])
+    rh.channel_invite(user1["token"],channel["channel_id"],user2["auth_user_id"])
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
-    assert response.json()["notifications"][0] ==  "{} added you to {}".format(rh.user_profile(user1["token"],user1["auth_user_id"]),"fake_guys_channel")
+    assert response.json()["notifications"][0] ==  "{} added you to {}".format(rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"],"fake_guys_channel")
 
 def test_creating_dm_notif(clear,user1,user2):
     dm = dm_create(user1["token"],[user2["auth_user_id"]])
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
-    assert response.json()["notifications"][0] ==  "{} added you to {}".format(rh.user_profile(user1["token"],user1["auth_user_id"]),rh.dm_details(user1["token"],dm["dm_id"]).json()["name"])
+    assert response.json()["notifications"][0] ==  "{} added you to {}".format(rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"],rh.dm_details(user1["token"],dm["dm_id"]).json()["name"])
 
 def test_reacted_channel_message(clear,user1,user2):
     channel = rh.channels_create(user1["token"],"fake_guys_channel", True).json()
@@ -76,6 +80,3 @@ def test_reacted_dm_message(clear,user1,user2):
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
     assert response.json()["notifications"][0] ==  "{} reacted to your message in {}".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],rh.dm_details(user1["token"],dm["dm_id"]).json()["name"])
 
-def test_unauth_token(clear):
-    response = requests.get(f"{url}/notifications/get/v1", params={"token" : 'a'})
-    return response.status_code == 403

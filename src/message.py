@@ -668,9 +668,9 @@ def message_react_v1(auth_user_id,message_id,react_id):
             for user in store["users"]:
                 if user["id"] == auth_user_id:
                     notif_string = "{} reacted to your message in {}".format(user["handle"], channel[0]["name"])
-                    notification_dict = {"channel_id" : select_channel, "dm_id" : -1, "notification_string" : notif_string}
+                    notification_dict = {"channel_id" : select_channel, "dm_id" : -1, "notification_message" : notif_string}
                     break
-            if channel_message[0]["u_id"] in store["notifications"]:
+            if channel_message[0]["u_id"] in store["notifications"]: 
                 store["notifications"][channel_message[0]["u_id"]].append(notification_dict) 
             else:
                 store["notifications"][channel_message[0]["u_id"]] = [notification_dict]
@@ -688,7 +688,7 @@ def message_react_v1(auth_user_id,message_id,react_id):
             for user in store["users"]:
                 if user["id"] == auth_user_id:
                     notif_string = "{} reacted to your message in {}".format(user["handle"], dm[0]["name"])
-                    notification_dict = {"channel_id" : -1, "dm_id" : select_dm, "notification_string" : notif_string}
+                    notification_dict = {"channel_id" : -1, "dm_id" : select_dm, "notification_message" : notif_string}
                     break
             if dm_message[0]["u_id"] in store["notifications"]:
                 store["notifications"][dm_message[0]["u_id"]].append(notification_dict) 
