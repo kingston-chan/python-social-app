@@ -18,9 +18,9 @@ import threading
 CHANNEL = 1
 DM = 2
 
-                                        ###################################
-                                        # ====== Helper functions ======= #
-                                        ###################################
+#########################################################################################################
+#################################### ====== Helper functions ======= ####################################
+#########################################################################################################
 
 def find_item(find_id, lst, id_name):
     """Helper function for filtering channel/message/dm"""
@@ -250,9 +250,9 @@ def send_message(auth_user_id, group_id, message, group):
     return {
         'message_id': new_message['message_id']
     }
-                                        #################################
-                                        # ====== Main functions ======= #
-                                        #################################
+#########################################################################################################
+##################################### ====== Main functions ======= #####################################
+#########################################################################################################
 
 def message_send_v1(auth_user_id, channel_id, message):
     """
@@ -408,7 +408,6 @@ def message_unpin_v1(auth_user_id, message_id):
 
     Return Value:
         Returns an empty dictionary
-
     """
     # Get variables from store
     store = data_store.get()
@@ -418,12 +417,83 @@ def message_unpin_v1(auth_user_id, message_id):
     return {}
 
 def message_sendlaterdm_v1(auth_user_id, dm_id, message, time_sent):
+    """
+    Send a message from the authorised user to the DM specified by dm_id 
+    automatically at a specified time in the future.
+
+    Arguments: 
+        auth_user_id (integer) - id of user sending the message
+        dm_id (integer) - id of the dm the message is being sent from
+        message (string) - the new message
+        time_sent (integer (unix timestamp)) - time in the future to send message
+
+    Exceptions:
+        InputError - Occurs when any of:
+                        - dm_id does not refer to a valid DM
+                        - length of message is over 1000 characters
+                        - time_sent is a time in the past
+        AccessError - Occurs when:
+                        - dm_id is valid and the authorised user is not a member 
+                          of the DM they are trying to post to
+
+    Return Value:
+        Returns a dictionary containing the id of the message being sent
+    """
     return message_sendlater(auth_user_id, dm_id, message, time_sent, DM)
     
 def message_sendlater_v1(auth_user_id, channel_id, message, time_sent):
+    """
+    Send a message from the authorised user to the channel specified by 
+    channel_id automatically at a specified time in the future.
+
+    Arguments: 
+        auth_user_id (integer) - id of user sending the message
+        channel_id (integer) - id of the channel the message is being sent from
+        message (string) - the new message
+        time_sent (integer (unix timestamp)) - time in the future to send message
+
+    Exceptions:
+        InputError - Occurs when any of:
+                        - channel_id does not refer to a valid DM
+                        - length of message is over 1000 characters
+                        - time_sent is a time in the past
+        AccessError - Occurs when:
+                        - channel_id is valid and the authorised user is not a member 
+                          of the channel they are trying to post to
+
+    Return Value:
+        Returns a dictionary containing the id of the message being sent
+    """
     return message_sendlater(auth_user_id, channel_id, message, time_sent, CHANNEL)
 
 def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
+    """
+    Share a message between channels and dms, given that the user is in both the channel/dm
+    where the message originated from and the channel/dm being shared to. User can also 
+    add optional message to the shared message.
+
+    Arguments: 
+        auth_user_id (integer) - id of user sharing the message
+        og_message_id (integer) - id of original message being shared
+        message (string) - optional message in addition to the original message being shared
+        channel_id (integer) - id of the channel being shared to
+        dm_id (integer) - id of the dm being shared to
+
+    Exceptions:
+        InputError - Occurs when any of:
+                        - both channel_id and dm_id are invalid
+                        - neither channel_id nor dm_id are -1
+                        - og_message_id does not refer to a valid message within 
+                          a channel/DM that the authorised user has joined
+                        - length of message is more than 1000 characters
+        AccessError - Occurs when:
+                        - the pair of channel_id and dm_id are valid (i.e. one is -1, the other is valid) 
+                          and the authorised user has not joined the channel or DM they are trying 
+                          to share the message to
+
+    Return Value:
+        Returns a dictionary containing the id of the new shared message
+    """
     store = data_store.get()
     channel_messages = store["channel_messages"]
     dm_messages = store["dm_messages"]
@@ -485,7 +555,23 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     }
 
 def message_react_v1(auth_user_id, message_id, react_id):
-    
+    """
+    Given a message within a channel or DM the authorised user is part of, 
+    add a "react" to that particular message.
+
+    Arguments: 
+        auth_user_id (integer) - id of user reacting to the message
+        message_id (integer) - id of the message being reacted to
+        react_id (integer) - id of the reaction
+
+    Exceptions:
+        InputError - Occurs when any of:
+                        - message_id is not a valid message within a channel or DM that the authorised user has joined
+                        - react_id is not a valid react ID - currently, the only valid react ID the frontend has is 1
+                        - the message already contains a react with ID react_id from the authorised user
+    Return Value:
+        Returns an empty dictionary on successful reaction of message
+    """
     store = data_store.get()
     reaction = (auth_user_id, react_id)
     # Find message
