@@ -1,7 +1,4 @@
-import json
-import requests
-import pytest
-from src import message
+import pytest, requests
 from src.config import url
 import tests.route_helpers as rh
 
@@ -119,4 +116,18 @@ def test_already_reacted_for_channel(clear,user1):
     response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : new_user_token, "message_id": message_id, "react_id" : 1})
     response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : new_user_token, "message_id": message_id, "react_id" : 1})
 
-    assert response.status_code == 400 
+    assert response.status_code == 400
+
+def test_multiple_users_react(clear, user1, user2):
+    channel_1 = rh.channels_create(user1["token"], "channel1", True).json()["channel_id"]
+    dm_1 = rh.dm_create(user1["token"], [user2["auth_user_id"]]).json()["dm_id"]
+    rh.channel_join(user2["token"], channel_1)
+
+    channel_msg = rh.message_send(user1["token"], channel_1, "hello").json()["message_id"]
+    dm_msg = rh.message_senddm(user1["token"], dm_1, "hello").json()["message_id"]
+
+    rh.message_react(user1["token"], channel_msg, 1)
+    rh.message_react(user1["token"], dm_msg, 1)
+
+    assert rh.message_react(user2["token"], channel_msg, 1).status_code == 200
+    assert rh.message_react(user2["token"], dm_msg, 1).status_code == 200
