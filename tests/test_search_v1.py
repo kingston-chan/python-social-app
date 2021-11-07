@@ -34,10 +34,12 @@ def dm_three(clear_and_register):
 
 def test_correct_messages(clear_and_register, channel_one, channel_two, channel_three, dm_one, dm_two, dm_three):
     msg_check1 = rh.message_send(clear_and_register, channel_one, "hello channel1").json()["message_id"]
+    rh.message_react(clear_and_register, msg_check1, 1)
     rh.message_send(clear_and_register, channel_one, "bye")
     msg_check2 = rh.message_send(clear_and_register, channel_two, "channel2hello").json()["message_id"]
     rh.message_send(clear_and_register, channel_two, "bye")
     msg_check3 = rh.message_senddm(clear_and_register, dm_one, "hello dm1").json()["message_id"]
+    rh.message_react(clear_and_register, msg_check3, 1)
     rh.message_send(clear_and_register, channel_three, "hello")
     rh.message_senddm(clear_and_register, dm_one, "bye")
     msg_check4 = rh.message_senddm(clear_and_register, dm_two, "dm2hello").json()["message_id"]
