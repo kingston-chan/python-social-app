@@ -1,10 +1,9 @@
 import json
 import requests
 import pytest
-from src import message, user
 from src.config import url
-from src.server import channel_invite
 import tests.route_helpers as rh
+import time
 
 BASE_URL = url
 
@@ -54,12 +53,12 @@ def test_creating_channel_notif(clear,user1,user2):
     channel = rh.channels_create(user1["token"],"fake_guys_channel", True).json()
     rh.channel_invite(user1["token"],channel["channel_id"],user2["auth_user_id"])
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
-    assert response.json()["notifications"][0] ==  "{} added you to {}".format(rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"],"fake_guys_channel")
+    assert response.json()["notifications"][0]["notification_message"] ==  "{} added you to {}".format(rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"],"fake_guys_channel")
 
 def test_creating_dm_notif(clear,user1,user2):
     dm = dm_create(user1["token"],[user2["auth_user_id"]])
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
-    assert response.json()["notifications"][0] ==  "{} added you to {}".format(rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"],rh.dm_details(user1["token"],dm["dm_id"]).json()["name"])
+    assert response.json()["notifications"][0]["notification_message"] ==  "{} added you to {}".format(rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"],rh.dm_details(user1["token"],dm["dm_id"]).json()["name"])
 
 def test_reacted_channel_message(clear,user1,user2):
     channel = rh.channels_create(user1["token"],"fake_guys_channel", True).json()
@@ -69,28 +68,56 @@ def test_reacted_channel_message(clear,user1,user2):
     rh.message_react(user2["token"], message_id.json()["message_id"],1)
 
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
-    assert response.json()["notifications"][0] ==  "{} reacted to your message in {}".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],"fake_guys_channel")
+    assert response.json()["notifications"][0]["notification_message"] ==  "{} reacted to your message in {}".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],"fake_guys_channel")
 
 def test_reacted_dm_message(clear,user1,user2):
     dm = rh.dm_create(user1["token"], [user2["auth_user_id"]]).json()
     message_id = rh.message_senddm(user1['token'], dm["dm_id"], "Hello")
     rh.message_react(user2["token"], message_id.json()["message_id"],1)
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
-    assert response.json()["notifications"][0] ==  "{} reacted to your message in {}".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],rh.dm_details(user1["token"],dm["dm_id"]).json()["name"])
+    assert response.json()["notifications"][0]["notification_message"] ==  "{} reacted to your message in {}".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],rh.dm_details(user1["token"],dm["dm_id"]).json()["name"])
 
 def test_tagged_message_senddm_notif(clear,user1,user2):
     dm = rh.dm_create(user1["token"], [user2["auth_user_id"]]).json()
     rh.message_senddm(user2["token"], dm["dm_id"], "{} Hello".format('@' + rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"]))
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
-    assert response.json()["notifications"][0] == "{} tagged you in {}: @fakerisafaker Hello".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],rh.dm_details(user1["token"],dm["dm_id"]).json()["name"])
+    assert response.json()["notifications"][0]["notification_message"] == "{} tagged you in {}: @fakerisafaker Hello".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],rh.dm_details(user1["token"],dm["dm_id"]).json()["name"])
 
 def test_tagged_message_send_notif(clear,user1,user2):
     channel = rh.channels_create(user1["token"],"fake_guys_channel", True).json()
     rh.channel_invite(user1["token"], channel["channel_id"], user2["auth_user_id"])
     rh.message_send(user2["token"], channel["channel_id"], "{} Hello".format('@' + rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"]))
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
-    assert response.json()["notifications"][0] == "{} tagged you in {}: @fakerisafaker Hello".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],"fake_guys_channel")
-'''
-def test_tagged_message_share():
-    return None
-'''
+    assert response.json()["notifications"][0]["notification_message"] == "{} tagged you in {}: @fakerisafaker Hello".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],"fake_guys_channel")
+
+def test_tagged_message_send_later(clear,user1,user2):
+    channel = rh.channels_create(user1["token"],"fake_guys_channel", True).json()
+    rh.channel_invite(user1["token"], channel["channel_id"], user2["auth_user_id"])
+    rh.message_sendlater(user2["token"], channel["channel_id"], "{} Hello".format('@' + rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"]),int(time.time()) + 2)
+    response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
+    assert response.json()["notifications"] == []
+    time.sleep(2)
+    response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
+    assert response.json()["notifications"][0]["notification_message"] == "{} tagged you in {}: @fakerisafaker Hello".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],"fake_guys_channel")
+
+def test_tagged_message_senddm_later(clear,user1,user2):
+    dm = rh.dm_create(user1["token"], [user2["auth_user_id"]]).json()
+    rh.message_sendlaterdm(user2["token"], dm["dm_id"], "{} Hello".format('@' + rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"]),int(time.time()) + 2)
+    response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
+    assert response.json()["notifications"] == []
+    time.sleep(2)
+    response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
+    assert response.json()["notifications"][0]["notification_message"] == "{} tagged you in {}: @fakerisafaker Hello".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],rh.dm_details(user1["token"],dm["dm_id"]).json()["name"])
+
+def test_tagged_message_share(clear,user1,user2):
+    dm = rh.dm_create(user1["token"], [user2["auth_user_id"]]).json()
+    channel = rh.channels_create(user1["token"],"fake_guys_channel", True).json()
+    rh.channel_invite(user1["token"], channel["channel_id"], user2["auth_user_id"])
+
+    message_id = rh.message_send(user2["token"], channel["channel_id"], "{} Hello".format('@' + rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"])).json()["message_id"]
+    rh.message_share(user1["token"],message_id, '@' + rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"], -1,dm["dm_id"])
+
+    response = requests.get(f"{url}/notifications/get/v1", params={"token" : user1["token"]})
+    assert response.json()["notifications"][1]["notification_message"] == "{} tagged you in {}: @fakerisafaker Hello".format(rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"],"fake_guys_channel")
+    assert response.json()["notifications"][0]["notification_message"] == "{} tagged you in {}: @fakerisafaker\n\n\"\"\"\n".format(rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"],rh.dm_details(user1["token"],dm["dm_id"]).json()["name"])
+

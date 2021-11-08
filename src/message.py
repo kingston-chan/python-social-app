@@ -169,7 +169,7 @@ def sendlater(auth_user_id, message_id, message, time_sent, message_type, group_
     }
     group = CHANNEL if group_id_name == "channel_id" else DM
     group_type = "channels" if group == CHANNEL else "dms"
-    group_id_type = "id'" if group == CHANNEL else "dm_id"
+    group_id_type = "id" if group == CHANNEL else "dm_id"
     group_name = find_item(group_id,store[group_type],group_id_type)[0]["name"]
     tagged_message_notification(auth_user_id, group_id, message,group,group_name)
     store[message_type].append(new_message)
@@ -213,17 +213,19 @@ def message_sendlater(auth_user_id, group_id, message, time_sent, group):
     return {
         "message_id": store['message_id_gen']
     }
+
 def tagged_message_notification(auth_user_id, group_id, message,group, group_name):
     store = data_store.get()
     i = 0
+    check_handle = []
     for i in range(len(message)):
         if message[i] == '@':
             string_list = ''
             while i+1 < len(message) and message[i+1].isalnum():
                 string_list += message[i+1]
                 i += 1
-            x = find_item(string_list,store["users"],'handle') #guy getting tagged #he gets the notif 
-            if len(x) > 0:
+            x = find_item(string_list,store["users"],'handle')  
+            if len(x) > 0 and x[0]["handle"] not in check_handle:
                 if group == CHANNEL:
                     select_channel = find_item(group_id,store["channels"], "id")
                     if x[0]["id"] not in select_channel[0]["all_members"]:
@@ -232,7 +234,7 @@ def tagged_message_notification(auth_user_id, group_id, message,group, group_nam
                     select_dm = find_item(group_id,store["dms"], "dm_id")
                     if x[0]["id"] not in select_dm[0]["members"]:
                         break
-                y = find_item(auth_user_id,store["users"],'id') #guy sending meesage 
+                y = find_item(auth_user_id,store["users"],'id') 
                 notif_string = "{} tagged you in {}: {}".format(y[0]["handle"], group_name,message[:20])
                 if x[0]["id"] in store["notifications"]:
                     if group == CHANNEL:
@@ -244,6 +246,8 @@ def tagged_message_notification(auth_user_id, group_id, message,group, group_nam
                         store["notifications"][x[0]["id"]]= [{"channel_id" : group_id, "dm_id": -1, "notification_message": notif_string}]
                     else:
                         store["notifications"][x[0]["id"]] = [{"channel_id" : -1, "dm_id": group_id, "notification_message": notif_string}]
+                check_handle.append(x[0]["handle"])
+
 def send_message(auth_user_id, group_id, message, group):
     """Helper function to send a message from channel or dm"""
     # Get variables from store
