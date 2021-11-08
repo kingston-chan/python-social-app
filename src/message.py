@@ -173,10 +173,12 @@ def sendlater(auth_user_id, message_id, message, time_sent, message_type, group_
     group_name = find_item(group_id,store[group_type],group_id_type)[0]["name"]
     tagged_message_notification(auth_user_id, group_id, message,group,group_name)
     store[message_type].append(new_message)
-    for user in store["users"]:
-        if auth_user_id == user["id"]:
-            user["message_count"] += 1
-            break
+    #for user in store["users"]:
+        #if auth_user_id == user["id"]:
+            #user["message_count"] += 1
+            #break
+    user = find_item(auth_user_id,store["users"], "id")
+    user[0]["message_count"] += 1 
     users_stats_v1()
     user_stats_v1(auth_user_id)
     data_store.set(store)
@@ -648,11 +650,16 @@ def message_react_v1(auth_user_id, message_id, react_id):
         if auth_user_id not in channel["all_members"]:
             raise InputError("Not Authorised User")
         react_message(channel_msg[0], reaction)
+        '''
         for user in store["users"]:
             if user["id"] == auth_user_id:
                 notif_string = "{} reacted to your message in {}".format(user["handle"], channel["name"])
                 notification_dict = {"channel_id" : channel["id"], "dm_id" : -1, "notification_message" : notif_string}
                 break
+        '''
+        user = find_item(auth_user_id,store["users"], "id")
+        notif_string = "{} reacted to your message in {}".format(user[0]["handle"], channel["name"])
+        notification_dict = {"channel_id" : channel["id"], "dm_id" : -1, "notification_message" : notif_string}
         if channel_msg[0]["u_id"] in store["notifications"]: 
             store["notifications"][channel_msg[0]["u_id"]].append(notification_dict) 
         else:
@@ -664,11 +671,9 @@ def message_react_v1(auth_user_id, message_id, react_id):
         if auth_user_id not in dm["members"]:
             raise InputError("Not Authorised User")
         react_message(dm_msg[0], reaction)
-        for user in store["users"]:
-            if user["id"] == auth_user_id:
-                notif_string = "{} reacted to your message in {}".format(user["handle"], dm["name"])
-                notification_dict = {"channel_id" : -1, "dm_id" : dm["dm_id"], "notification_message" : notif_string}
-                break
+        user = find_item(auth_user_id,store["users"], "id")
+        notif_string = "{} reacted to your message in {}".format(user[0]["handle"], dm["name"])
+        notification_dict = {"channel_id" : -1, "dm_id" : dm["dm_id"], "notification_message" : notif_string}
         if dm_msg[0]["u_id"] in store["notifications"]:
             store["notifications"][dm_msg[0]["u_id"]].append(notification_dict) 
         else:
