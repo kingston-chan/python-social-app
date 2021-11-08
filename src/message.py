@@ -10,6 +10,7 @@ Functions to:
 """
 from src.error import InputError, AccessError
 from src.data_store import data_store
+from src.server import dm_messages
 from src.user import users_stats_v1
 from src.other import save
 import time
@@ -365,6 +366,15 @@ def message_edit_v1(auth_user_id, message_id, message):
     # Get variables from store
     store = data_store.get()
     edit_remove_msg(auth_user_id, message_id, store, "edit", message)
+    channel_message_list = find_item(message_id, store["channel_messages"], "message_id")
+    dm_message_list = find_item(message_id, store["dm_messages"], "message_id")
+    if len(channel_message_list) > 0:
+        channel_name = find_item(channel_message_list[0]["channel_id"],store["channels"], "id")[0]["name"]
+        tagged_message_notification(channel_message_list[0]["u_id"], channel_message_list[0]["channel_id"], message, CHANNEL, channel_name)
+    elif len(dm_message_list) > 0:
+        dm_name = find_item(dm_message_list[0]["dm_id"],store["dms"], "dm_id")[0]["name"]
+        tagged_message_notification(dm_message_list[0]["u_id"], dm_message_list[0]["dm_id"], message, DM, dm_name)       
+    
     # Store data into data_store and return empty dictionary
     data_store.set(store)
     return {}
@@ -582,9 +592,12 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     if valid_channel:
         new_message["channel_id"] = channel_id
         channel_messages.append(new_message)
+        tagged_message_notification(auth_user_id, channel_id,shared_message,CHANNEL,valid_channel[0]["name"])
     else:
         new_message["dm_id"] = dm_id
         dm_messages.append(new_message)
+        tagged_message_notification(auth_user_id, dm_id,shared_message,DM,valid_dm[0]["name"])
+
 
     data_store.set(store)
 
