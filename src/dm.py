@@ -1,6 +1,7 @@
 from src.error import InputError, AccessError
 from src.data_store import data_store
 from src.user import users_stats_v1
+from src.channel import output_message
 
 def assign_user_info(user_data_placeholder):
     """Assigns the user information with the appropriate key names required in the spec"""
@@ -11,6 +12,32 @@ def assign_user_info(user_data_placeholder):
         'name_last': user_data_placeholder['name_last'],
         'handle_str':user_data_placeholder['handle']
     }
+
+def output_dm(dm):
+    """Change to required dm output format"""
+    return {
+        "name": dm["name"],
+        "dm_id": dm["dm_id"]
+    }
+
+def dm_id_count():
+    """Generate dm id"""
+    store = data_store.get()
+    store["dm_id_gen"] += 1
+    dms_id = store["dm_id_gen"]
+    data_store.set(store)
+    return dms_id
+
+def remove_msg(msg, dm_id):
+    """Helper function to remove msgs when removing dm"""
+    users_stats_v1()
+    if msg["dm_id"] != dm_id:
+        return True
+    return False
+
+def valid_user(user):
+    """Check if removed user"""
+    return user["email"] and user["handle"]
 
 def dm_create_v1(auth_user_id, u_ids):
     '''
@@ -24,41 +51,18 @@ def dm_create_v1(auth_user_id, u_ids):
         - empty list ==> {} 
     '''
     store = data_store.get()
-    name_list= []
+    if auth_user_id not in u_ids:
+        u_ids.append(auth_user_id)
+    # Check if ids are valid
+    users = list(filter(lambda user: user["id"] in u_ids and valid_user(user), store["users"]))
 
-    owner_name = None
+    if len(users) != len(u_ids):
+        raise InputError(description="Invalid users")
 
     new_dm_id = dm_id_count()
 
-    for users in u_ids:
-        i = False
-        for user in store["users"]:
-            if users == user["id"]:
-                i = True
-                if user["handle"] == None and user["email"] == None:
-                    raise InputError(description="Invalid users") 
-                else:
-                    name_list.append(user["handle"])
-        if i == False:
-            raise InputError(description="Invalid users") 
-
-    for user in store["users"]:
-        if auth_user_id == user["id"]:
-            owner_name = user["handle"]
-
-    name_list.append(owner_name)
-    name_list = sorted(name_list)
-
-    i = 1
-    name = name_list[0]
-    while i  < len(name_list):
-        name = name + ', ' + name_list[i]
-        i += 1
-
-    u_ids.append(auth_user_id)
-
     new_dm = {
-        'name': name,
+        'name': ', '.join(sorted([user["handle"] for user in users])),
         'dm_id': new_dm_id,
         'owner_of_dm' : auth_user_id,
         'members': u_ids
@@ -88,25 +92,17 @@ def dm_leave_v1(auth_user_id, dm_id):
     """
 
     store = data_store.get()
-    dms = store['dms']
 
-    member_ids = None
+    valid_dm = list(filter(lambda dm: dm["dm_id"] == dm_id, store["dms"]))
 
-    # Checks if a dm exists.
-    dm_exists = False
-    for dm in dms:
-        if dm["dm_id"] == dm_id:
-            dm_exists = True
-            member_ids = dm["members"]
-
-    if not dm_exists:
+    if not valid_dm:
         raise InputError(description="DM does not exist")
 
-    if auth_user_id not in member_ids:
+    if auth_user_id not in valid_dm[0]["members"]:
         raise AccessError(description="User is not apart of the DM")
 
     # Removes the member from the members_list.
-    member_ids.remove(auth_user_id)
+    valid_dm[0]["members"].remove(auth_user_id)
     
     data_store.set(store)
     
@@ -138,36 +134,23 @@ def dm_details_v1(auth_user_id, dm_id):
             - handle_str (string)
     """
     store = data_store.get()
-    users = store['users']
-    dms = store['dms']
-
-    dm_info = {}
-    user_info = {}
-
-    member_ids = None
     
-    # Checks if the dm exists.
-    dm_exists = False
-    for dm in dms:
-        if dm["dm_id"] == dm_id:
-            dm_exists = True
-            member_ids = dm["members"]
-            dm_info["name"] = dm["name"]
-            dm_info["members"] = []
-        
-    if not dm_exists:
+    valid_dm = list(filter(lambda dm: dm["dm_id"] == dm_id, store["dms"]))
+    # Check if valid dm_id
+    if not valid_dm:
         raise InputError(description="DM does not exist")
-    
-    if auth_user_id not in member_ids:
+    # If dm id is valid, check if auth_user_id is part of dm
+    if auth_user_id not in valid_dm[0]["members"]:
         raise AccessError(description="User is not apart of the DM")
     
-    # Grabs the member's info and assigns it to the dictionary.
-    for user in users:
-        if user["id"] in member_ids:
-            user_info = assign_user_info(user)
-            dm_info["members"].append(user_info)
+    # List of the members info
+    users = list(filter(lambda user: user["id"] in valid_dm[0]["members"], store["users"]))
 
-    return dm_info
+    return {
+        "name": valid_dm[0]["name"],
+        # Grabs the member's info and assigns it to the dictionary.
+        "members": list(map(assign_user_info, users))
+    }
 
 def dm_messages_v1(auth_user_id, dm_id, start):
     """
@@ -195,74 +178,33 @@ def dm_messages_v1(auth_user_id, dm_id, start):
     
     """
     # Checks if DM and start are valid inputs.
-    dm_valid = False
-    start_valid = False
-    selected_dm = {}
     store = data_store.get()
-    dms = store['dms']
-    dm_messages = store['dm_messages']
-
-    # Scans if the DM exists.
-    for dm in dms:
-        if int(dm['dm_id']) == int(dm_id):
-            dm_valid = True
-            # Checks if the start value is valid within the length of 
-            # messages in the DM.
-            if start <= len(list(filter(lambda x: (x['dm_id'] == dm_id), dm_messages))):
-                start_valid = True
-                selected_dm = dm  # DM is also selected
 
     # If the dm_id or start value are invalid, then errors are raised.
-    if dm_valid is False:
+    valid_dm = list(filter(lambda dm: dm["dm_id"] == dm_id, store["dms"]))
+    if not valid_dm:
         raise InputError(description="This DM is not valid.")
-    if start_valid is False:
+    valid_msgs = list(filter(lambda msg: msg['dm_id'] == dm_id, store["dm_messages"]))
+    if start > len(valid_msgs):
         raise InputError(description="This start is not valid.")
     
     # Checks if the authorised user is a member of the DM.
-    member_valid = False
-    for member in selected_dm['members']:
-        if member == auth_user_id:
-            member_valid = True
-
     # If the user is not a member, then an error is raised.
-    if member_valid is False:
+    if auth_user_id not in valid_dm[0]["members"]:
         raise AccessError(description='User is not authorised.')
 
-    # The DM is scanned for its messages.
-    filtered_dm_messages = []
-
-    if dm_messages == []:
-        length = 0
-    else:
-        filtered_dm_messages = list(filter(lambda x: (x['dm_id'] == dm_id), dm_messages))
-        filtered_dm_messages.reverse()
-        length = len(filtered_dm_messages)
-
-    index = start
-    counter = 0
-    selected_dm_messages = []
-    while index < length and counter < 50:
-        selected_dm_messages.append(filtered_dm_messages[index])
-        index += 1
-        counter += 1
-
-    # If the scanner hits the end of the messages, the end is -1
-    # else, the end is the final message index.
-    if index == length:
-        end = -1
-    else:
-        end = index
-
+    valid_msgs.reverse()
+    output_msgs = valid_msgs[start:start+50] if len(valid_msgs) >= start+50 else valid_msgs[start:]
     # The selected messages, the start and the end values are returned.
     return {
-        'messages': selected_dm_messages,
+        'messages': list(map(lambda msg: output_message(msg, auth_user_id), output_msgs)),
         'start': start,
-        'end': end,
+        'end': start+50 if start+50 < len(valid_msgs) else -1
     }
 
 def dm_list_v1(auth_user_id):
     '''
-    Return a list of dms that the the user beliongs to where the user is passed as a token through the function
+    Return a list of dms that the the user belongs to where the user is passed as a token through the function
 
     Arguement
         - auth_user_id (integer) 
@@ -271,17 +213,8 @@ def dm_list_v1(auth_user_id):
                 {"dms" : [{"dm_id" : xxxxx, "name" : yyyyy}]}
                 where 'dm_id' is a number and 'name' is a alphanumneric string 
     '''
-
-    data = data_store.get()
-    list_of_dms = data["dms"]
-
-    return_list = []
-
-    for dicts in list_of_dms:
-        if auth_user_id in dicts["members"]:
-            new_item = {"dm_id" : dicts["dm_id"], "name" : dicts["name"]}
-            return_list.append(new_item)
-    return {"dms" : return_list}
+    dm_list = filter(lambda dm: auth_user_id in dm["members"], data_store.get()["dms"])
+    return {"dms" : list(map(output_dm, dm_list))}
 
 def dm_remove_v1(auth_user_id, dm_id):
     '''
@@ -297,34 +230,22 @@ def dm_remove_v1(auth_user_id, dm_id):
         -empty list ==>{}
     '''
     store = data_store.get()
-    list_of_dms = store["dms"]
-    i = False
-    for dms in list_of_dms:
-        if dms["dm_id"] == dm_id:
-            i = True
-            if dms["owner_of_dm"] != auth_user_id:
-                raise AccessError(description="Not owner of DM")
-            else:
-                list_of_dms.remove(dms)
-                # store["dm_messages"] = [msg for msg in store["dm_messages"] if msg["dm_id"] != dm_id]
-                idx = 0
-                while idx < len(store["dm_messages"]):
-                    if store["dm_messages"][idx]["dm_id"] == dm_id:
-                        store["dm_messages"].remove(store["dm_messages"][idx])
-                        data_store.set(store)
-                        users_stats_v1()
-                    else:
-                        idx += 1
-    if i == False:
+
+    valid_dm = list(filter(lambda dm: dm["dm_id"] == dm_id, store["dms"]))
+
+    # Check if dm_id is valid
+    if not valid_dm:
         raise InputError(description="DM does not exist")
+    # Check if auth_user_id is owner
+    if valid_dm[0]["owner_of_dm"] != auth_user_id:
+        raise AccessError(description="Not owner of DM")
+
+    store["dms"].remove(valid_dm[0])
+    store["dm_messages"] = list(filter(lambda msg: remove_msg(msg, dm_id), store["dm_messages"]))
+    users_stats_v1()
     data_store.set(store)
     return {}
 
-def dm_id_count():
-    store = data_store.get()
-    store["dm_id_gen"] += 1
-    dms_id = store["dm_id_gen"]
-    data_store.set(store)
-    return dms_id
+
 
     
