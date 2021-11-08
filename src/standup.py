@@ -114,6 +114,12 @@ def standup_send_v1(auth_user_id, channel_id, message):
 def standup_thread_send_msg(auth_user_id, channel_id):
     store = data_store.get()
     channels = store['channels']
+    users = store['users']
+    store = data_store.get()
+    for user in users:
+        if auth_user_id == user["id"]:
+            user["message_count"] += 1
+            break
 
     for channel in channels:
         if channel["id"] == channel_id:
@@ -123,6 +129,7 @@ def standup_thread_send_msg(auth_user_id, channel_id):
             message = "\n".join(item for item in standup_queue)
             message_send_v1(auth_user_id, channel_id, message)
             break
+    store['users'] = users
     store['channels'] = channels
     data_store.set(store)
 
