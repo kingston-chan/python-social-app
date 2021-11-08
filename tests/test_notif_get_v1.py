@@ -134,11 +134,13 @@ def test_tagged_message_senddm_share(clear,user1,user2):
     assert response.json()["notifications"][0]["notification_message"] == "{} tagged you in {}: @fakerisafaker\n\n\"\"\"\n".format(rh.user_profile(user1["token"],user1["auth_user_id"]).json()["user"]["handle_str"],"fake_guys_channel")
 
 def test_fail_channel_msg(clear,user1,user2):
-    rh.channels_create(user1["token"],"fake_guys_channel", True).json()
+    channel = rh.channels_create(user1["token"],"fake_guys_channel", True).json()
+    rh.message_send(user1["token"], channel["channel_id"], "{} Hello".format('@' + rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"])).json()["message_id"]
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
     assert response.json()["notifications"] == []
 
 def test_fail_dm_msg(clear,user1,user2):
-    rh.dm_create(user1["token"], []).json()
+    dm = rh.dm_create(user1["token"], []).json()
+    rh.message_senddm(user1["token"], dm["dm_id"], "{} Hello".format('@' + rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"])).json()["message_id"]
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
     assert response.json()["notifications"] == []
