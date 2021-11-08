@@ -599,3 +599,38 @@ def message_react_v1(auth_user_id, message_id, react_id):
         raise InputError("Not a valid message ID")
             
     return {}
+
+def message_unreact_v1(auth_user_id, message_id, react_id):
+    store = data_store.get()
+    dm_msg = find_item(message_id,store["dm_messages"],"message_id")
+    channel_msg = find_item(message_id,store["channel_messages"],"message_id")
+
+    if react_id != 1:
+        raise InputError("Invalid react ID")
+
+    if channel_msg:
+        # If channel message is valid then channel must be valid
+        channel = find_item(channel_msg[0]["channel_id"], store["channels"], "id")[0]
+        # Check if message id refers to a channel message such that user has joined that channel
+        if auth_user_id not in channel["all_members"]:
+            raise InputError("Not Authorised User")
+        reaction = find_item(react_id,channel_msg[0]["reacts"],"react_id") 
+        if auth_user_id not in reaction[0]["u_ids"]:
+            raise InputError("Not reacted to")
+        reaction[0]["u_ids"].remove(auth_user_id)
+    elif dm_msg:
+        # If dm_message is valid then dm must be valid
+        dm = find_item(dm_msg[0]["dm_id"], store["dms"], "dm_id")[0]
+        # Check if message id refers to a dm message such that user has joined that dm
+        if auth_user_id not in dm["members"]:
+            raise InputError("Not Authorised User")
+        reaction = find_item(react_id,dm_msg[0]["reacts"],"react_id")
+        if auth_user_id not in reaction[0]["u_ids"]:
+            raise InputError("Not reacted to")
+        reaction[0]["u_ids"].remove(auth_user_id)
+    else:
+        raise InputError("Not a valid message ID")
+      
+    return {}
+
+
