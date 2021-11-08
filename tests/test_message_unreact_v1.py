@@ -25,16 +25,16 @@ def user2():
 
 #==tests==#
 def test_not_valid_message_id(clear,user1,user2):
-    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : user1["token"], "message_id": 0, "react_id" : 1})
+    response = requests.post(f"{BASE_URL}/message/unreact/v1", json={"token" : user1["token"], "message_id": 0, "react_id" : 1})
     assert response.status_code == 400
 def test_not_valid_react_id(clear,user1,user2):
     channel = rh.channels_create(user1["token"], "fake_guy_channel", True).json()
     message_id = rh.message_send(user1["token"],channel["channel_id"], "Hello").json()["message_id"]
-    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : user1["token"], "message_id": message_id, "react_id" : 0})
+    response = requests.post(f"{BASE_URL}/message/unreact/v1", json={"token" : user1["token"], "message_id": message_id, "react_id" : 0})
     assert response.status_code == 400 
 def test_not_auth_user(clear,user1,user2):
     channel = rh.channels_create(user1["token"], "fake_guy_channel", True).json()
     message_id = rh.message_send(user1["token"],channel["channel_id"], "Hello").json()["message_id"]
-    response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : user2["token"], "message_id": message_id, "react_id" : 1})
+    response = requests.post(f"{BASE_URL}/message/unreact/v1", json={"token" : user2["token"], "message_id": message_id, "react_id" : 1})
     assert response.status_code == 400
     
