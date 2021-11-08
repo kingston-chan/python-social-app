@@ -5,6 +5,7 @@ Functions to:
 - Update authorised user's first and last name
 - Update the authorised user's email address
 - Update the authorised user's handle (i.e. display name)
+- Update the authorised user's photo
 """
 
 from src.data_store import data_store
@@ -159,42 +160,76 @@ def user_profile_sethandle_v1(auth_user_id, handle_str):
     return{}
 
 def user_profile_uploadphoto_v1(auth_user_id, img_url, x_start, y_start, x_end, y_end):
+    """
+    Given a URL of an image on the internet, crops the image within bounds 
+    (x_start, y_start) and (x_end, y_end). 
+
+    Arguments: 
+        auth_user_id (integer) - id of user uploading the phone
+        img_url (string) - url of the image being uploaded
+        x_start (integer) - x start bound
+        x_end (integer) - x end bound
+        y_start (integer) - y start bound
+        y_end (integer) - y end bound
+
+    Exceptions:
+        InputError - Occurs when any of:
+                        - img_url returns an HTTP status other than 200
+                        - any of x_start, y_start, x_end, y_end are not 
+                          within the dimensions of the image at the URL
+                        - x_end is less than x_start or y_end is less than y_start
+                        - image uploaded is not a JPG
+
+    Return Value:
+        Returns an empty dictionary
+
+    """
+    
+   # Get variables from store
     store = data_store.get()
     users = store["users"]
     img_count = store["img_count"]
     
+    # Locate user
     login_user = list(filter(lambda user: user["id"] == auth_user_id, users))
-
+    
+    # Check if img_url is a .jpeg/.jpg
     if not img_url.endswith(".jpeg") and not img_url.endswith(".jpg"):
         raise InputError("Image uploaded not a JPG.")
 
+    # Make image_string variable then url_retrieve it
+    # If it does not work, InputError
     image_string = f"./imgurl/{img_count}.jpg"
-
     try:
         urllib.request.urlretrieve(img_url, image_string)
     except Exception:
         raise InputError("img_url returning HTTP status other than 200.") from InputError
 
+    # Open image after retrieval.
     im = Image.open(image_string)
-    print(im.size)
+    
+    # Check size of the image and if bounds are allowed
     max_y, max_x = im.size
-
     if x_start < 0 or x_start > max_x:
         raise InputError("Invalid x_start.")
     else:
         if x_end < 0 or x_end > max_x or x_end < x_start:
             raise InputError("Invalid x_end.")  
-
     if y_start < 0 or y_start > max_y:
         raise InputError("Invalid y_start.")
     else:
         if y_end < 0 or y_end > max_y or y_end < y_start:
             raise InputError("Invalid y_end.")    
     
+    # Crop and save image
     cropped = im.crop((x_start, y_start, x_end, y_end))
     cropped.save(image_string)
+
+    # Save imgurl onto the user's profile_img_url key
     login_user[0]['profile_img_url'] = f"{url}/imgurl/{img_count}.jpg"
     print(login_user[0]['profile_img_url'])
+
+    # Increment img_count and set data_store
     store["img_count"] += 1
     data_store.set(store)
 
