@@ -18,7 +18,7 @@ def test_use_reset_code(clear_and_register):
     with mailslurp_client.ApiClient(configuration) as api_client:
         # Create an inbox to recieve reset code
         inbox_controller = mailslurp_client.InboxControllerApi(api_client)
-        inbox_1 = inbox_controller.get_inbox("fcde425c-83d8-4b0d-8990-522362d9aa8a")
+        inbox_1 = inbox_controller.get_inbox("314946f1-6a7d-49a4-8059-b72f7d736c6b")
 
         # Register with inbox's email
         rh.auth_register(inbox_1.email_address, "password1", "Test", "test")
