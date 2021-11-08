@@ -244,6 +244,9 @@ def send_message(auth_user_id, group_id, message, group):
         'is_pinned': False,
     }
     group_messages.append(new_message)
+
+    
+
     
     # Store data into data_store and return dictionary with the message_id
     data_store.set(store)
@@ -590,7 +593,7 @@ def message_react_v1(auth_user_id, message_id, react_id):
         react_message(channel_msg[0], reaction)
         for user in store["users"]:
             if user["id"] == auth_user_id:
-                notif_string = "{} reacted to your message in {}".format(user["handle"], channel[0]["name"])
+                notif_string = "{} reacted to your message in {}".format(user["handle"], channel["name"])
                 notification_dict = {"channel_id" : channel["id"], "dm_id" : -1, "notification_message" : notif_string}
                 break
         if channel_msg[0]["u_id"] in store["notifications"]: 
@@ -606,7 +609,7 @@ def message_react_v1(auth_user_id, message_id, react_id):
         react_message(dm_msg[0], reaction)
         for user in store["users"]:
             if user["id"] == auth_user_id:
-                notif_string = "{} reacted to your message in {}".format(user["handle"], dm[0]["name"])
+                notif_string = "{} reacted to your message in {}".format(user["handle"], dm["name"])
                 notification_dict = {"channel_id" : -1, "dm_id" : dm["dm_id"], "notification_message" : notif_string}
                 break
         if dm_msg[0]["u_id"] in store["notifications"]:
