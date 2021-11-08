@@ -37,3 +37,4 @@ def test_not_auth_user(clear,user1,user2):
     message_id = rh.message_send(user1["token"],channel["channel_id"], "Hello").json()["message_id"]
     response = requests.post(f"{BASE_URL}/message/react/v1", json={"token" : user2["token"], "message_id": message_id, "react_id" : 1})
     assert response.status_code == 400
+    
