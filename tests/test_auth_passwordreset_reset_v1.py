@@ -3,7 +3,7 @@ import pytest, mailslurp_client, re
 
 # Set up testing with mailslurp_client
 configuration = mailslurp_client.Configuration()
-configuration.api_key['x-api-key'] = "6b68b04801aaa7e4869c56cd164aa43d50b5fb97608cb05505fc5b5031c1fa96"
+configuration.api_key['x-api-key'] = "5276619eb3cc8ca6e2c3e939f7bd0ce24526562d8bb0b7fa9a1b6c1a63ecd911"
 
 @pytest.fixture
 def clear_and_register():
@@ -18,7 +18,7 @@ def test_use_reset_code(clear_and_register):
     with mailslurp_client.ApiClient(configuration) as api_client:
         # Create an inbox to recieve reset code
         inbox_controller = mailslurp_client.InboxControllerApi(api_client)
-        inbox_1 = inbox_controller.get_inbox("314946f1-6a7d-49a4-8059-b72f7d736c6b")
+        inbox_1 = inbox_controller.get_inbox("610896f4-673b-4df3-be1a-2c1ac465abdc")
 
         # Register with inbox's email
         rh.auth_register(inbox_1.email_address, "password1", "Test", "test")
