@@ -10,7 +10,7 @@ Functions to:
 """
 from src.error import InputError, AccessError
 from src.data_store import data_store
-from src.user import users_stats_v1
+from src.user import users_stats_v1, user_stats_v1
 from src.other import save
 import time
 import threading
@@ -168,7 +168,12 @@ def sendlater(auth_user_id, message_id, message, time_sent, message_type, group_
         'is_pinned': False,
     }
     store[message_type].append(new_message)
+    for user in store["users"]:
+        if auth_user_id == user["id"]:
+            user["message_count"] += 1
+            break
     users_stats_v1()
+    user_stats_v1(auth_user_id)
     data_store.set(store)
     save()
 
