@@ -168,7 +168,7 @@ def user_profile_uploadphoto_v1(auth_user_id, img_url, x_start, y_start, x_end, 
     if not img_url.endswith(".jpeg") and not img_url.endswith(".jpg"):
         raise InputError("Image uploaded not a JPG.")
 
-    image_string = f"src/static/{img_count}.jpg"
+    image_string = f"./imgurl/{img_count}.jpg"
 
     try:
         urllib.request.urlretrieve(img_url, image_string)
@@ -193,11 +193,10 @@ def user_profile_uploadphoto_v1(auth_user_id, img_url, x_start, y_start, x_end, 
     
     cropped = im.crop((x_start, y_start, x_end, y_end))
     cropped.save(image_string)
-    login_user[0]['profile_img_url'] = f"{url}/static/{img_count}.jpg"
+    login_user[0]['profile_img_url'] = f"{url}/imgurl/{img_count}.jpg"
     print(login_user[0]['profile_img_url'])
     store["img_count"] += 1
     data_store.set(store)
-        
 
 def users_stats_v1():
     """

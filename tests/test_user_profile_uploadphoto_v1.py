@@ -68,44 +68,44 @@ def test_image_not_jpeg(clear, user1):
 
 # ==== Tests - Valids ==== #
 def test_default_photo(clear, user1):
-    response = requests.get(f"{url}/static/default.jpg")
+    response = requests.get(f"{url}/imgurl/default.jpg")
     assert response.status_code == 200
 
 def test_valid_photo(clear, user1):
     response = rh.user_profile_uploadphoto(user1['token'], SAMPLE_JPEG_IMG_LINK, 0, 0, 700, 700)
     assert response.status_code == 200
 
-    response = requests.get(f"{url}/static/0.jpg")
+    response = requests.get(f"{url}/imgurl/0.jpg")
     assert response.status_code == 200
 
 def test_valid_photos(clear, user1):
     response = rh.user_profile_uploadphoto(user1['token'], SAMPLE_JPEG_IMG_LINK, 0, 0, 700, 700)
     assert response.status_code == 200
 
-    response = requests.get(f"{url}/static/0.jpg")
+    response = requests.get(f"{url}/imgurl/0.jpg")
     assert response.status_code == 200
 
     response = rh.user_profile_uploadphoto(user1['token'], SAMPLE_JPEG_IMG_LINK2, 0, 0, 700, 700)
     assert response.status_code == 200
 
-    response = requests.get(f"{url}/static/1.jpg")
+    response = requests.get(f"{url}/imgurl/1.jpg")
     assert response.status_code == 200
 
 def test_mulitple_users(clear, user1, user2, user3):
     response = rh.user_profile_uploadphoto(user1['token'], SAMPLE_JPEG_IMG_LINK, 0, 0, 700, 700)
     assert response.status_code == 200
 
-    response = requests.get(f"{url}/static/0.jpg")
+    response = requests.get(f"{url}/imgurl/0.jpg")
     assert response.status_code == 200
 
     response = rh.user_profile_uploadphoto(user2['token'], SAMPLE_JPEG_IMG_LINK, 0, 0, 700, 700)
     assert response.status_code == 200
 
-    response = requests.get(f"{url}/static/1.jpg")
+    response = requests.get(f"{url}/imgurl/1.jpg")
     assert response.status_code == 200
 
     response = rh.user_profile_uploadphoto(user3['token'], SAMPLE_JPEG_IMG_LINK2, 0, 0, 700, 700)
     assert response.status_code == 200
 
-    response = requests.get(f"{url}/static/2.jpg")
+    response = requests.get(f"{url}/imgurl/2.jpg")
     assert response.status_code == 200

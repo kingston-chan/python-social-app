@@ -179,7 +179,7 @@ def auth_register_v1(email, password, name_first, name_last):
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
         # add all given data into a dictionary to be added to the data store
-        user_dict = {'email': email, 'password': hashed_password, 'name_first': name_first, 'name_last': name_last, 'handle': handle, 'id': u_id, 'permission': permission, 'profile_img_url': f"{url}/static/default.jpg"}
+        user_dict = {'email': email, 'password': hashed_password, 'name_first': name_first, 'name_last': name_last, 'handle': handle, 'id': u_id, 'permission': permission, 'profile_img_url': f"{url}/imgurl/default.jpg"}
         
         users.append(user_dict)
         

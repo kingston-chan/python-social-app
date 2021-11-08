@@ -50,12 +50,12 @@ APP.config['MAIL_PASSWORD'] = 'h13beaglestreams'
 APP.config['MAIL_USE_TLS'] = False
 APP.config['MAIL_USE_SSL'] = True
 mail = Mail(APP)
-APP.static_url_path = "/static/"
+APP.static_url_path = "../imgurl"
 
-@APP.route('/static/<path:path>')
+@APP.route('/imgurl/<path:path>', methods=["GET"])
 def send_js(path):
     print(path)
-    return send_from_directory("", path)
+    return send_from_directory(APP.static_url_path, path)
 
 def save():
     store = data_store.get()

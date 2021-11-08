@@ -22,7 +22,7 @@ def clear_v1():
     store['metrics']['utilization_rate'] = 0
     data_store.set(store)
 
-    static_folder_path = "src/static/"
+    static_folder_path = "./imgurl/"
     for file in os.listdir(static_folder_path):
         print(file)
         if file != "default.jpg":
