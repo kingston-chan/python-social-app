@@ -3,6 +3,7 @@ from json import dumps
 from flask import Flask, request
 from flask_cors import CORS
 from flask_mail import Mail, Message
+from src import notifications
 from src.error import AccessError
 from src import config
 from src.channels import channels_create_v1, channels_list_v1
@@ -19,6 +20,7 @@ from src.message import message_send_v1, message_edit_v1, message_remove_v1, mes
 from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
 from src.standup import standup_start_v1, standup_active_v1, standup_send_v1
 from src.search import search_v1
+from src.notifications import notifications_v1
 
 
 def quit_gracefully(*args):
@@ -543,6 +545,13 @@ def search():
     messages = search_v1(auth_user_id, request.args.get("query_str"))
     return dumps(messages)
 
+#==== notifications.py ====#
+@APP.route("/notifications/get/v1", methods=['GET'])
+def notifications_get_v1():
+    token = request.args.get("token")
+    auth_user_id = check_valid_token_and_session(token)
+    return dumps({"notifications" : notifications_v1(auth_user_id)})
+
 #===== other.py =====#
 
 # clear/v1
@@ -559,3 +568,4 @@ def clear():
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, quit_gracefully) # For coverage
     APP.run(port=config.port) # Do not edit this port
+
