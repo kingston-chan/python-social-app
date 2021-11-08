@@ -171,6 +171,46 @@ def user_profile_sethandle_v1(auth_user_id, handle_str):
     data_store.set(store)
     return {}
 
+def user_stats_v1(auth_user_id):
+    store = data_store.get()
+    users = store["users"]
+
+    for user in users:
+        if auth_user_id == user["id"]:
+            user_channels = len(list(filter(lambda channel: (user["id"] in channel["all_members"]), store["channels"])))
+            user_dms = len(list(filter(lambda dm: (user["id"] in dm["members"]), store["dms"])))
+            break
+
+    if user["user_metrics"]["channels_joined"][-1]["num_channels_joined"] != user_channels:
+        user["user_metrics"]["channels_joined"].append({'num_channels_joined': user_channels, 'time_stamp': int(time.time())})
+    elif user["user_metrics"]["dms_joined"][-1]["num_dms_joined"] != user_dms:
+        user["user_metrics"]["dms_joined"].append({'num_dms_joined': user_dms, 'time_stamp': int(time.time())})
+    elif user["user_metrics"]["messages_sent"][-1]["num_messages_sent"] != user["message_count"]:
+        user["user_metrics"]["messages_sent"].append({'num_messages_sent': user["message_count"], 'time_stamp': int(time.time())})
+        
+    num_channels_joined = user["user_metrics"]["channels_joined"][-1]["num_channels_joined"]
+    num_dms_joined = user["user_metrics"]["dms_joined"][-1]["num_dms_joined"]
+    num_messages_sent = user["user_metrics"]["messages_sent"][-1]["num_messages_sent"]
+
+    divisor = num_channels_joined + num_dms_joined + num_messages_sent
+
+    num_channels = store["metrics"]["channels_exist"][-1]["num_channels_exist"]
+    num_dms = store["metrics"]["dms_exist"][-1]["num_dms_exist"]
+    num_msgs = store["metrics"]["messages_exist"][-1]["num_messages_exist"]
+
+    denominator = num_channels + num_dms + num_msgs
+
+    involvement = 0 if denominator == 0 else divisor / denominator
+    
+    if involvement > 1:
+        involvement = 1
+    
+    user["user_metrics"]["involvement_rate"] = involvement
+
+    store["users"] = users
+    data_store.set(store)
+    return user["user_metrics"]
+
 def users_stats_v1():
     """
     Updates the required statistics about the use of UNSW Streams.

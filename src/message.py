@@ -10,7 +10,7 @@ Functions to:
 """
 from src.error import InputError, AccessError
 from src.data_store import data_store
-from src.user import users_stats_v1
+from src.user import users_stats_v1, user_stats_v1
 from src.other import save
 import time
 import threading
@@ -173,7 +173,12 @@ def sendlater(auth_user_id, message_id, message, time_sent, message_type, group_
     group_name = find_item(group_id,store[group_type],group_id_type)[0]["name"]
     tagged_message_notification(auth_user_id, group_id, message,group,group_name)
     store[message_type].append(new_message)
+    for user in store["users"]:
+        if auth_user_id == user["id"]:
+            user["message_count"] += 1
+            break
     users_stats_v1()
+    user_stats_v1(auth_user_id)
     data_store.set(store)
     save()
 
