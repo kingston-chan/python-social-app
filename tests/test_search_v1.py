@@ -34,10 +34,12 @@ def dm_three(clear_and_register):
 
 def test_correct_messages(clear_and_register, channel_one, channel_two, channel_three, dm_one, dm_two, dm_three):
     msg_check1 = rh.message_send(clear_and_register, channel_one, "hello channel1").json()["message_id"]
+    rh.message_react(clear_and_register, msg_check1, 1)
     rh.message_send(clear_and_register, channel_one, "bye")
     msg_check2 = rh.message_send(clear_and_register, channel_two, "channel2hello").json()["message_id"]
     rh.message_send(clear_and_register, channel_two, "bye")
     msg_check3 = rh.message_senddm(clear_and_register, dm_one, "hello dm1").json()["message_id"]
+    rh.message_react(clear_and_register, msg_check3, 1)
     rh.message_send(clear_and_register, channel_three, "hello")
     rh.message_senddm(clear_and_register, dm_one, "bye")
     msg_check4 = rh.message_senddm(clear_and_register, dm_two, "dm2hello").json()["message_id"]
@@ -53,11 +55,13 @@ def test_correct_messages(clear_and_register, channel_one, channel_two, channel_
     # Should not include messages that user is not in, therefore exclude "hello" message in dm3 and channel3
     assert len(messages) == 4
     
+    # Check correct output
     assert messages[0]["message_id"] == msg_check1
     assert messages[0]["message"] == "hello channel1"
     assert messages[0]["u_id"] == uid
     assert "time_created" in messages[0]
     assert "reacts" in messages[0]
+    assert messages[0]["reacts"][0]["is_this_user_reacted"]
     assert "is_pinned" in messages[0]
 
     assert messages[1]["message_id"] == msg_check2
@@ -72,6 +76,7 @@ def test_correct_messages(clear_and_register, channel_one, channel_two, channel_
     assert messages[2]["u_id"] == uid
     assert "time_created" in messages[2]
     assert "reacts" in messages[2]
+    assert messages[2]["reacts"][0]["is_this_user_reacted"]
     assert "is_pinned" in messages[2]
 
     assert messages[3]["message_id"] == msg_check4
@@ -99,6 +104,10 @@ def test_sendlater_and_dm(clear_and_register, channel_one, dm_one):
 
     assert messages[1]["message_id"] == msg2
     assert messages[1]["message"] == "hellodm2hello"
+
+def test_no_messages_found_with_query(clear_and_register, channel_one):
+    rh.message_send(clear_and_register, channel_one, "hello")
+    assert rh.search(clear_and_register, "bye").json()["messages"] == []
 
 # Invalid inputs
 
