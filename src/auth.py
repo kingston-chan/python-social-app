@@ -3,9 +3,9 @@ from src.error import InputError
 from src import config
 from string import digits, ascii_letters
 from random import choice
-import hashlib, jwt, re, secrets
 import urllib.request
 from src.config import url
+import hashlib, jwt, re, secrets, time
 
 # helper function to search the data store for duplicate items
 def dict_search(item, users, item_name):
@@ -179,7 +179,23 @@ def auth_register_v1(email, password, name_first, name_last):
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
         # add all given data into a dictionary to be added to the data store
-        user_dict = {'email': email, 'password': hashed_password, 'name_first': name_first, 'name_last': name_last, 'handle': handle, 'id': u_id, 'permission': permission, 'profile_img_url': f"{url}/imgurl/default.jpg"}
+        user_dict = {
+            'email': email, 
+            'password': hashed_password, 
+            'name_first': name_first, 
+            'name_last': name_last, 
+            'handle': handle, 
+            'id': u_id, 
+            'permission': permission,
+            'user_metrics': {
+                'channels_joined': [{'num_channels_joined': 0, 'time_stamp': int(time.time())}],
+                'dms_joined': [{'num_dms_joined': 0, 'time_stamp': int(time.time())}], 
+                'messages_sent': [{'num_messages_sent': 0, 'time_stamp': int(time.time())}], 
+                'involvement_rate': None
+            },
+            'message_count': 0,
+            'profile_img_url': f"{url}/imgurl/default.jpg"
+        }
         
         users.append(user_dict)
         
