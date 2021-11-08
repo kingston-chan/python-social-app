@@ -244,13 +244,6 @@ def tagged_message_notification(auth_user_id, group_id, message,group, group_nam
                         store["notifications"][x[0]["id"]]= [{"channel_id" : group_id, "dm_id": -1, "notification_message": notif_string}]
                     else:
                         store["notifications"][x[0]["id"]] = [{"channel_id" : -1, "dm_id": group_id, "notification_message": notif_string}]
-
-
-
-
-    
-    
-
 def send_message(auth_user_id, group_id, message, group):
     """Helper function to send a message from channel or dm"""
     # Get variables from store
