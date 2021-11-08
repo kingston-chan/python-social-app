@@ -25,7 +25,7 @@ def test_standup_start_member_not_apart_of_channel(clear, first_user_data, secon
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
     channel_1 = response.json()["channel_id"]
 
-    response = rh.standup_start(second_user_data["token"], channel_1, 5)
+    response = rh.standup_start(second_user_data["token"], channel_1, 1)
 
     assert response.status_code == 403
 
@@ -35,7 +35,7 @@ def test_standup_start_invalid_channel_id(clear, first_user_data):
 
     fake_channel_id = "foajsfsaf"
 
-    response = rh.standup_start(first_user_data["token"], fake_channel_id, 5)
+    response = rh.standup_start(first_user_data["token"], fake_channel_id, 1)
 
     assert response.status_code == 400
 
@@ -44,7 +44,7 @@ def test_standup_start_negative_time(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
     channel_1 = response.json()["channel_id"]
 
-    response = rh.standup_start(first_user_data["token"], channel_1, -5)
+    response = rh.standup_start(first_user_data["token"], channel_1, -1)
 
     assert response.status_code == 400
 
@@ -52,8 +52,8 @@ def test_standup_start_already_active(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
     channel_1 = response.json()["channel_id"]
 
-    rh.standup_start(first_user_data["token"], channel_1, 5)
-    response = rh.standup_start(first_user_data["token"], channel_1, 5)
+    rh.standup_start(first_user_data["token"], channel_1, 2)
+    response = rh.standup_start(first_user_data["token"], channel_1, 2)
 
     assert response.status_code == 400
 
@@ -62,12 +62,13 @@ def test_standup_start_valid(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
     channel_1 = response.json()["channel_id"]
 
-    response = rh.standup_start(first_user_data["token"], channel_1, 5)
+    response = rh.standup_start(first_user_data["token"], channel_1, 2)
     response_data = response.json()
     current_time = time.time()
     
     assert response.status_code == 200
-    assert response_data["time_finish"] >= current_time + 3 and response_data["time_finish"] <= current_time + 7
+    assert response_data["time_finish"] >= current_time and response_data["time_finish"] <= current_time + 4
+    time.sleep(3)
 
     
 

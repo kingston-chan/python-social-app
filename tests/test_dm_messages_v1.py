@@ -321,12 +321,12 @@ def test_ch_mess_shows_correct_reacts(clear, user1, user2):
     # Test u_ids is a list
     assert type(messages_user1[0]["reacts"][0]["u_ids"]) is list
     assert user1["auth_user_id"] in messages_user1[0]["reacts"][0]["u_ids"]
-    assert messages_user1[0]["reacts"][0]["is_this_user_reacted"] == True
+    assert messages_user1[0]["reacts"][0]["is_this_user_reacted"]
 
     assert len(messages_user1[2]["reacts"]) == 1
     assert messages_user1[2]["reacts"][0]["react_id"] == react_id
     assert user1["auth_user_id"] in messages_user1[2]["reacts"][0]["u_ids"]
-    assert messages_user1[0]["reacts"][0]["is_this_user_reacted"] == True
+    assert messages_user1[0]["reacts"][0]["is_this_user_reacted"]
     
     # No reactions so empty
     assert messages_user1[1]["reacts"] == []
@@ -337,8 +337,8 @@ def test_ch_mess_shows_correct_reacts(clear, user1, user2):
 
     assert messages_user2[0]["reacts"][0]["react_id"] == react_id
     assert user2["auth_user_id"] not in messages_user2[0]["reacts"][0]["u_ids"]
-    assert messages_user2[0]["reacts"][0]["is_this_user_reacted"] == False
+    assert not messages_user2[0]["reacts"][0]["is_this_user_reacted"]
 
     assert messages_user2[2]["reacts"][0]["react_id"] == react_id
     assert user2["auth_user_id"] not in messages_user2[2]["reacts"][0]["u_ids"]
-    assert messages_user2[2]["reacts"][0]["is_this_user_reacted"] == False
+    assert not messages_user2[2]["reacts"][0]["is_this_user_reacted"]
