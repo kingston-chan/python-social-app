@@ -10,7 +10,6 @@ Functions to:
 """
 from src.error import InputError, AccessError
 from src.data_store import data_store
-from src.server import dm_messages
 from src.user import users_stats_v1
 from src.other import save
 import time
@@ -225,6 +224,14 @@ def tagged_message_notification(auth_user_id, group_id, message,group, group_nam
                 i += 1
             x = find_item(string_list,store["users"],'handle') #guy getting tagged #he gets the notif 
             if len(x) > 0:
+                if group == CHANNEL:
+                    select_channel = find_item(group_id,store["channels"], "id")
+                    if x[0]["id"] not in select_channel[0]["all_members"]:
+                        break
+                else:
+                    select_dm = find_item(group_id,store["dms"], "dm_id")
+                    if x[0]["id"] not in select_dm[0]["members"]:
+                        break
                 y = find_item(auth_user_id,store["users"],'id') #guy sending meesage 
                 notif_string = "{} tagged you in {}: {}".format(y[0]["handle"], group_name,message[:20])
                 if x[0]["id"] in store["notifications"]:
