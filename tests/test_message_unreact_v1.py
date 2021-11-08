@@ -1,4 +1,5 @@
 import pytest, requests
+from src import user
 from src.config import url
 import tests.route_helpers as rh
 
@@ -32,9 +33,60 @@ def test_not_valid_react_id(clear,user1,user2):
     message_id = rh.message_send(user1["token"],channel["channel_id"], "Hello").json()["message_id"]
     response = requests.post(f"{BASE_URL}/message/unreact/v1", json={"token" : user1["token"], "message_id": message_id, "react_id" : 0})
     assert response.status_code == 400 
-def test_not_auth_user(clear,user1,user2):
+def test_not_auth_user_channel(clear,user1,user2):
     channel = rh.channels_create(user1["token"], "fake_guy_channel", True).json()
     message_id = rh.message_send(user1["token"],channel["channel_id"], "Hello").json()["message_id"]
     response = requests.post(f"{BASE_URL}/message/unreact/v1", json={"token" : user2["token"], "message_id": message_id, "react_id" : 1})
     assert response.status_code == 400
-    
+
+def test_not_auth_user_channel_dm(clear,user1,user2):
+    channel = rh.channels_create(user1["token"], "fake_guy_channel", True).json()
+    message_id = rh.message_send(user1["token"],channel["channel_id"], "Hello").json()["message_id"]
+    response = requests.post(f"{BASE_URL}/message/unreact/v1", json={"token" : user2["token"], "message_id": message_id, "react_id" : 1})
+    assert response.status_code == 400
+
+def test_not_reacted_to_channel(clear,user1):
+    channel = rh.channels_create(user1["token"], "fake_guy_channel", True).json()
+    message_id = rh.message_send(user1["token"],channel["channel_id"], "Hello").json()["message_id"]
+    response = requests.post(f"{BASE_URL}/message/unreact/v1", json={"token" : user1["token"], "message_id": message_id, "react_id" : 1})
+    assert response.status_code == 400
+
+def test_not_reacted_to_dm(clear,user1):
+    dm = rh.dm_create(user1["token"], []).json()
+    message_id = rh.message_senddm(user1["token"],dm["dm_id"], "Hello").json()["message_id"]
+    response = requests.post(f"{BASE_URL}/message/unreact/v1", json={"token" : user1["token"], "message_id": message_id, "react_id" : 1})
+    assert response.status_code == 400
+
+def test_successful_case_channel(clear,user1):
+    channel = rh.channels_create(user1["token"], "fake_guy_channel",True).json()
+    message_id = rh.message_send(user1["token"],channel["channel_id"], "Hello").json()["message_id"]
+    rh.message_react(user1["token"],message_id, 1)
+    response = requests.post(f"{BASE_URL}/message/unreact/v1", json={"token" : user1["token"], "message_id": message_id, "react_id" : 1})
+    assert response.status_code == 200
+def test_successful_case_dm(clear,user1):
+    dm = rh.dm_create(user1["token"], []).json()
+    message_id = rh.message_senddm(user1["token"],dm["dm_id"], "Hello").json()["message_id"]
+    rh.message_react(user1["token"],message_id, 1)
+    response = requests.post(f"{BASE_URL}/message/unreact/v1", json={"token" : user1["token"], "message_id": message_id, "react_id" : 1})
+    assert response.status_code == 200
+
+def test_unreact_edge_case_channel(clear,user1,user2):
+    channel = rh.channels_create(user1["token"], "fake_guy_channel", True).json()
+    rh.channel_join(user2["token"],channel["channel_id"])
+    message_id = rh.message_send(user1["token"],channel["channel_id"], "Hello").json()["message_id"]
+    rh.message_react(user1["token"],message_id, 1)
+    response = requests.post(f"{BASE_URL}/message/unreact/v1", json={"token" : user2["token"], "message_id": message_id, "react_id" : 1})
+    assert response.status_code == 400
+
+def test_unreact_edge_case_dm(clear,user1,user2):
+    dm = rh.dm_create(user1["token"], [user2["auth_user_id"]]).json()
+    message_id = rh.message_senddm(user1["token"],dm["dm_id"], "Hello").json()["message_id"]
+    rh.message_react(user1["token"],message_id, 1)
+    response = requests.post(f"{BASE_URL}/message/unreact/v1", json={"token" : user2["token"], "message_id": message_id, "react_id" : 1})
+    assert response.status_code == 400
+def test_not_in_dm(clear,user1,user2):
+    dm = rh.dm_create(user1["token"], []).json()
+    message_id = rh.message_senddm(user1["token"],dm["dm_id"], "Hello").json()["message_id"]
+    rh.message_react(user1["token"],message_id, 1)
+    response = requests.post(f"{BASE_URL}/message/unreact/v1", json={"token" : user2["token"], "message_id": message_id, "react_id" : 1})
+    assert response.status_code == 400

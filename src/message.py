@@ -694,6 +694,8 @@ def message_unreact_v1(auth_user_id, message_id, react_id):
         if auth_user_id not in channel["all_members"]:
             raise InputError("Not Authorised User")
         reaction = find_item(react_id,channel_msg[0]["reacts"],"react_id") 
+        if len(reaction) == 0 :
+            raise InputError("Not a valid react")
         if auth_user_id not in reaction[0]["u_ids"]:
             raise InputError("Not reacted to")
         reaction[0]["u_ids"].remove(auth_user_id)
@@ -704,6 +706,8 @@ def message_unreact_v1(auth_user_id, message_id, react_id):
         if auth_user_id not in dm["members"]:
             raise InputError("Not Authorised User")
         reaction = find_item(react_id,dm_msg[0]["reacts"],"react_id")
+        if len(reaction) == 0:
+            raise InputError("Not a valid react") 
         if auth_user_id not in reaction[0]["u_ids"]:
             raise InputError("Not reacted to")
         reaction[0]["u_ids"].remove(auth_user_id)
