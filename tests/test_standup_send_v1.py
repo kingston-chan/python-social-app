@@ -61,7 +61,7 @@ def test_standup_send_valid(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
     channel_1 = response.json()["channel_id"]
 
-    rh.standup_start(first_user_data["token"], channel_1, 5)
+    rh.standup_start(first_user_data["token"], channel_1, 1)
     response = rh.standup_send(first_user_data["token"], channel_1, "message")
     
     assert response.status_code == 200
@@ -71,7 +71,7 @@ def test_standup_send_from_second_channel(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_2", True)
     channel_2 = response.json()["channel_id"]
 
-    rh.standup_start(first_user_data["token"], channel_2, 5)
+    rh.standup_start(first_user_data["token"], channel_2, 1)
     response = rh.standup_send(first_user_data["token"], channel_2, "message")
     
     assert response.status_code == 200
