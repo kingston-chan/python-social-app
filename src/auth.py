@@ -3,6 +3,8 @@ from src.error import InputError
 from src import config
 from string import digits, ascii_letters
 from random import choice
+import urllib.request
+from src.config import url
 import hashlib, jwt, re, secrets, time
 
 # helper function to search the data store for duplicate items
@@ -191,7 +193,8 @@ def auth_register_v1(email, password, name_first, name_last):
                 'messages_sent': [{'num_messages_sent': 0, 'time_stamp': int(time.time())}], 
                 'involvement_rate': None
             },
-            'message_count': 0
+            'message_count': 0,
+            'profile_img_url': f"{url}/imgurl/default.jpg"
         }
         
         users.append(user_dict)
