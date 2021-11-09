@@ -14,7 +14,8 @@ def assign_user_info(user_data_placeholder):
         'email': user_data_placeholder['email'],
         'name_first': user_data_placeholder['name_first'],
         'name_last': user_data_placeholder['name_last'],
-        'handle_str':user_data_placeholder['handle']
+        'handle_str':user_data_placeholder['handle'],
+        'profile_img_url': user_data_placeholder['profile_img_url']
     }
 
 def check_user_reacted(react, user_id):

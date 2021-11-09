@@ -1,17 +1,7 @@
 from src.error import InputError, AccessError
 from src.data_store import data_store
 from src.user import users_stats_v1
-from src.channel import output_message
-
-def assign_user_info(user_data_placeholder):
-    """Assigns the user information with the appropriate key names required in the spec"""
-    return {
-        'u_id': user_data_placeholder['id'],
-        'email': user_data_placeholder['email'],
-        'name_first': user_data_placeholder['name_first'],
-        'name_last': user_data_placeholder['name_last'],
-        'handle_str':user_data_placeholder['handle']
-    }
+from src.channel import output_message, assign_user_info
 
 def output_dm(dm):
     """Change to required dm output format"""
