@@ -44,7 +44,8 @@ def test_dm_leave_multiple_dms_valid(clear, first_user_data, second_user_data):
                 'email': 'keefe@gmail.com',
                 'name_first': 'keefe',
                 'name_last': 'vuong',
-                'handle_str': 'keefevuong',     
+                'handle_str': 'keefevuong',
+                'profile_img_url': f"{url}/imgurl/default.jpg"    
             }
         ]
     }
@@ -102,7 +103,8 @@ def test_dm_leave_valid(clear, first_user_data, second_user_data):
                 'email': 'keefe@gmail.com',
                 'name_first': 'keefe',
                 'name_last': 'vuong',
-                'handle_str': 'keefevuong',     
+                'handle_str': 'keefevuong',
+                'profile_img_url': f"{url}/imgurl/default.jpg"     
             }
         ]
     }
@@ -128,7 +130,8 @@ def test_dm_leave_owner_leaves_dm(clear, first_user_data, second_user_data):
                 'email': 'eagle@gmail.com',
                 'name_first': 'team',
                 'name_last': 'eagle',
-                'handle_str': 'teameagle',     
+                'handle_str': 'teameagle',
+                'profile_img_url': f"{url}/imgurl/default.jpg"     
             }
         ]
     }
