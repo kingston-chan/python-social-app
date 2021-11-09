@@ -5,196 +5,18 @@ Functions to:
 - Update authorised user's first and last name
 - Update the authorised user's email address
 - Update the authorised user's handle (i.e. display name)
+- Update the authorised user's photo
+- Track the Streams workspace stats
 """
 
 from src.data_store import data_store
 from src.channel import assign_user_info
 from src.error import InputError
 import re, time
-
-def list_all_users():
-    """
-    List all users from the data store
-
-    Arguments:
-        None
-
-    Exceptions:
-        None
-    
-    Return Value
-        Returns a list of dictionaries containing information about all Stream users.
-        Each dictionary contains the user's id, email, first and last name and their 
-        handle given that their email and handle is not None. 
-    """
-    store = data_store.get()
-    users = store["users"]
-    user_list = []
-    for user in users:
-        if user["email"] is not None and user["handle"] is not None:
-            user_list.append(assign_user_info(user))
-    return { "users": user_list }
-
-def user_profile_v1(user_id):
-    """
-    Return the user info of the given user_id
-
-    Arguments:
-        user_id
-
-    Exceptions:
-        InputError when the user_id doesn't refer to a valid user
-    
-    Return Value
-        Returns a dictionary containing the following user information:
-        - u_id
-        - email
-        - name_first
-        - name_last
-        - handle_str
-    """
-
-    user_id = int(user_id)
-    store = data_store.get()
-    users = store["users"]
-    
-    for u in users:
-        if user_id == u["id"]:
-            user_dict = {"u_id": user_id, "email": u["email"], "name_first": u["name_first"], "name_last": u["name_last"], "handle_str": u["handle"]}
-            return user_dict
-        
-    raise InputError(description="u_id does not refer to a valid user")
-
-def user_profile_setname_v1(user_id, first_name, last_name):
-    """
-    Change the first and last name of the user given by user_id to the given names given by first_name and last_name
-
-    Arguments:
-        user_id, first_name, last_name
-
-    Exceptions:
-        InputError when the first or last name are too long or short
-    
-    Return Value
-        Doesn't return a value
-        Updates the data_store with the new first and last name
-    """
-    store = data_store.get()
-    users = store["users"]
-
-    if not 1 <= len(first_name) <= 50 or not 1 <= len(last_name) <= 50:
-        raise InputError(description="Name length is too long or short")
-    
-    for u in users:
-        if user_id == u["id"]:
-            u["name_first"] = first_name
-            u["name_last"] = last_name
-    
-    store["users"] = users
-    data_store.set(store)
-
-def user_profile_setemail_v1(user_id, user_email):
-    """
-    Change the email of the user given by user_id to the email given by user_email
-
-    Arguments:
-        user_id, user_email
-
-    Exceptions:
-        InputError when the email doesn't follow the specified format
-    
-    Return Value
-        Doesn't return a value
-        Updates the data_store with the new email
-    """
-
-    store = data_store.get()
-    users = store["users"]
-
-    if not re.match(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$', user_email):
-        raise InputError(description="Email is an invalid format")
-    
-    if dict_search(user_email, users, 'email'):
-        raise InputError(description='Email is already being used by another user')
-
-
-    for u in users:
-        if user_id == u["id"]:
-            u["email"] = user_email
-            
-    
-    store["users"] = users
-    data_store.set(store)
-
-
-def user_profile_sethandle_v1(auth_user_id, handle_str):
-    '''
-    Update the authorised user's handle (i.e. display name)
-    Arguements
-        - auth-user_id (integer)
-        - handle_str (string)
-    Excpetions
-        -InputError ==> length of handle_str is not between 3 and 20 characters inclusive
-        -InputError ==> handle_str contains characters that are not alphanumeric
-        -InputError ==> the handle is already used by another user
-    return type
-        - empty list 
-    '''
-    store = data_store.get()
-    for user in store["users"]:
-        if user["handle"] == handle_str:
-            raise InputError(description="Handle already being used")
-        if len(handle_str) > 20 or len(handle_str) < 3:
-            raise InputError(description="Handle is not valid")
-    if handle_str.isalnum():
-        for user in store["users"]:
-            if auth_user_id == user["id"]:
-                user["handle"] = handle_str
-    else:
-        raise InputError(description="invalid string")
-    return{}
-
-def users_stats_v1():
-    """
-    Updates the required statistics about the use of UNSW Streams.
-
-    Arguments:
-        None
-
-    Exceptions:
-        None
-    
-    Return Value
-        None
-    """
-    store = data_store.get()
-    
-    # Find the number of users that are in at least 1 channel or dm
-    num_users_in_channel_dm = 0
-    for user in store["users"]:
-        user_channels = len(list(filter(lambda channel: (user["id"] in channel["all_members"]), store["channels"])))
-        user_dms = len(list(filter(lambda dm: (user["id"] in dm["members"]), store["dms"])))
-        if user_channels or user_dms:
-            num_users_in_channel_dm += 1
-
-    # Find the number of valid users, i.e. non-deleted users
-    valid_users = len(list(filter(lambda user: (user["email"] and user["handle"]), store["users"])))
-    # Utilization rate: if no valid users, 0 else defined by num_users_in_channel_dm divided by valid_users
-    store["metrics"]["utilization_rate"] = num_users_in_channel_dm/valid_users
-
-    # Checks if each metric has at least 1 entry
-    if store["metrics"]["channels_exist"] and store["metrics"]["dms_exist"] and store["metrics"]["messages_exist"]:
-        # Number of channels changed
-        metric_changed("channels_exist", len(store["channels"]), store)
-        # Number of dms changed
-        metric_changed("dms_exist", len(store["dms"]), store)
-        # Number of messages changed
-        metric_changed("messages_exist", len(store["channel_messages"]) + len(store["dm_messages"]), store)
-    else:
-        # First user registered, no registered use
-        init_metrics("channels_exist", store)
-        init_metrics("dms_exist", store)
-        init_metrics("messages_exist", store)
+import urllib.request
+import urllib.error
+from PIL import Image
+from src.config import url
 
 
 def metric_changed(metric, metric_num, store):
@@ -214,8 +36,299 @@ def init_metrics(metric, store):
     })
     data_store.set(store)
 
+def is_in_channel_dm(user, channels, dms):
+    """Helper function to determine if user is at least in a channel or not"""
+    user_channels = len(list(filter(lambda channel: (user["id"] in channel["all_members"]), channels)))
+    user_dms = len(list(filter(lambda dm: (user["id"] in dm["members"]), dms)))
+    return bool(user_channels or user_dms)
 
-def dict_search(item, users, item_name):
-    for u in users:
-        if u[item_name] == item:
-            return 1
+def change_email(user, user_id, email):
+    """Helper function to change user_id's email"""
+    if user["id"] == user_id:
+        user["email"] = email
+    return user
+
+def change_handle(user, user_id, handle):
+    """Helper function to change user_id's handle"""
+    if user["id"] == user_id:
+        user["handle"] = handle
+    return user
+
+def output_user(user):
+    if user["email"] is not None and user["handle"] is not None:
+        return assign_user_info(user)
+
+def list_all_users():
+    """
+    List all users from the data store
+
+    Arguments:
+        None
+
+    Exceptions:
+        None
+    
+    Return Value
+        Returns a list of dictionaries containing information about all Stream users.
+        Each dictionary contains the user's id, email, first and last name and their 
+        handle given that their email and handle is not None. 
+    """
+    # Maps all valid users with correct output, then filter None values i.e. removed users
+    return { "users": list(filter(None, map(output_user, data_store.get()["users"]))) }
+
+def user_profile_v1(user_id):
+    """
+    Return the user info of the given user_id
+
+    Arguments:
+        user_id
+
+    Exceptions:
+        InputError when the user_id doesn't refer to a valid user
+    
+    Return Value
+        Returns a dictionary containing the following user information:
+        - u_id
+        - email
+        - name_first
+        - name_last
+        - handle_str
+    """
+    # Find user corresponding to user_id
+    valid_user = list(filter(lambda user: int(user_id) == user["id"], data_store.get()["users"]))
+    if valid_user:
+        return assign_user_info(valid_user[0])
+    # Invalid user_id
+    raise InputError("Invalid user")
+
+def user_profile_setname_v1(user_id, first_name, last_name):
+    """
+    Change the first and last name of the user given by user_id to the given names given by first_name and last_name
+
+    Arguments:
+        user_id, first_name, last_name
+
+    Exceptions:
+        InputError when the first or last name are too long or short
+    
+    Return Value
+        Doesn't return a value
+        Updates the data_store with the new first and last name
+    """
+    store = data_store.get()
+    # Raise appropriate errors
+    if not 1 <= len(first_name) <= 50 or not 1 <= len(last_name) <= 50:
+        raise InputError(description="Name length is too long or short")
+    # Find user corresponding to user_id
+    user = list(filter(lambda user: user_id == user["id"], store["users"]))[0]
+    user["name_first"] = first_name
+    user["name_last"] = last_name
+    
+    data_store.set(store)
+
+def user_profile_setemail_v1(user_id, user_email):
+    """
+    Change the email of the user given by user_id to the email given by user_email
+
+    Arguments:
+        user_id, user_email
+
+    Exceptions:
+        InputError when the email doesn't follow the specified format
+    
+    Return Value
+        Doesn't return a value
+        Updates the data_store with the new email
+    """
+
+    store = data_store.get()
+    users = store["users"]
+    # Raise appropriate errors
+    if not re.match(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$', user_email):
+        raise InputError(description="Email is an invalid format")
+    if list(filter(lambda user: user["email"] == user_email, users)):
+        raise InputError(description='Email is already being used by another user')        
+    # Change email of user_id
+    store["users"] = list(map(lambda user: change_email(user, user_id, user_email), users))
+    data_store.set(store)
+
+def user_profile_sethandle_v1(auth_user_id, handle_str):
+    '''
+    Update the authorised user's handle (i.e. display name)
+    Arguements
+        - auth-user_id (integer)
+        - handle_str (string)
+    Excpetions
+        -InputError ==> length of handle_str is not between 3 and 20 characters inclusive
+        -InputError ==> handle_str contains characters that are not alphanumeric
+        -InputError ==> the handle is already used by another user
+    return type
+        - empty list 
+    '''
+    store = data_store.get()
+    # Raise appropriate errors
+    if len(handle_str) > 20 or len(handle_str) < 3 or not handle_str.isalnum():
+        raise InputError(description="Handle is not valid")
+    if list(filter(lambda user: user["handle"] == handle_str, store["users"])):
+        raise InputError(description="Handle already being used")
+    # Change handle of auth_user_id
+    store["users"] = list(map(lambda user: change_handle(user, auth_user_id, handle_str), store["users"]))
+    data_store.set(store)
+    return {}
+
+def user_stats_v1(auth_user_id):
+    store = data_store.get()
+    users = store["users"]
+
+    for user in users:
+        if auth_user_id == user["id"]:
+            user_channels = len(list(filter(lambda channel: (user["id"] in channel["all_members"]), store["channels"])))
+            user_dms = len(list(filter(lambda dm: (user["id"] in dm["members"]), store["dms"])))
+            break
+
+    if user["user_metrics"]["channels_joined"][-1]["num_channels_joined"] != user_channels:
+        user["user_metrics"]["channels_joined"].append({'num_channels_joined': user_channels, 'time_stamp': int(time.time())})
+    elif user["user_metrics"]["dms_joined"][-1]["num_dms_joined"] != user_dms:
+        user["user_metrics"]["dms_joined"].append({'num_dms_joined': user_dms, 'time_stamp': int(time.time())})
+    elif user["user_metrics"]["messages_sent"][-1]["num_messages_sent"] != user["message_count"]:
+        user["user_metrics"]["messages_sent"].append({'num_messages_sent': user["message_count"], 'time_stamp': int(time.time())})
+        
+    num_channels_joined = user["user_metrics"]["channels_joined"][-1]["num_channels_joined"]
+    num_dms_joined = user["user_metrics"]["dms_joined"][-1]["num_dms_joined"]
+    num_messages_sent = user["user_metrics"]["messages_sent"][-1]["num_messages_sent"]
+
+    divisor = num_channels_joined + num_dms_joined + num_messages_sent
+
+    num_channels = store["metrics"]["channels_exist"][-1]["num_channels_exist"]
+    num_dms = store["metrics"]["dms_exist"][-1]["num_dms_exist"]
+    num_msgs = store["metrics"]["messages_exist"][-1]["num_messages_exist"]
+
+    denominator = num_channels + num_dms + num_msgs
+
+    involvement = 0 if denominator == 0 else divisor / denominator
+    
+    if involvement > 1:
+        involvement = 1
+    
+    user["user_metrics"]["involvement_rate"] = involvement
+
+    store["users"] = users
+    data_store.set(store)
+    return user["user_metrics"]
+
+def user_profile_uploadphoto_v1(auth_user_id, img_url, x_start, y_start, x_end, y_end):
+    """
+    Given a URL of an image on the internet, crops the image within bounds 
+    (x_start, y_start) and (x_end, y_end). 
+
+    Arguments: 
+        auth_user_id (integer) - id of user uploading the phone
+        img_url (string) - url of the image being uploaded
+        x_start (integer) - x start bound
+        x_end (integer) - x end bound
+        y_start (integer) - y start bound
+        y_end (integer) - y end bound
+
+    Exceptions:
+        InputError - Occurs when any of:
+                        - img_url returns an HTTP status other than 200
+                        - any of x_start, y_start, x_end, y_end are not 
+                          within the dimensions of the image at the URL
+                        - x_end is less than x_start or y_end is less than y_start
+                        - image uploaded is not a JPG
+
+    Return Value:
+        Returns an empty dictionary
+
+    """
+    
+   # Get variables from store
+    store = data_store.get()
+    users = store["users"]
+    img_count = store["img_count"]
+    
+    # Locate user
+    login_user = list(filter(lambda user: user["id"] == auth_user_id, users))
+    
+    # Check if img_url is a .jpeg/.jpg
+    if not img_url.endswith(".jpeg") and not img_url.endswith(".jpg"):
+        raise InputError("Image uploaded not a JPG.")
+
+    # Make image_string variable then url_retrieve it
+    # If it does not work, InputError
+    image_string = f"./imgurl/{img_count}.jpg"
+    try:
+        urllib.request.urlretrieve(img_url, image_string)
+    except Exception:
+        raise InputError("img_url returning HTTP status other than 200.") from InputError
+
+    # Open image after retrieval.
+    im = Image.open(image_string)
+    
+    # Check size of the image and if bounds are allowed
+    max_y, max_x = im.size
+    if x_start < 0 or x_start > max_x:
+        raise InputError("Invalid x_start.")
+    else:
+        if x_end < 0 or x_end > max_x or x_end < x_start:
+            raise InputError("Invalid x_end.")  
+    if y_start < 0 or y_start > max_y:
+        raise InputError("Invalid y_start.")
+    else:
+        if y_end < 0 or y_end > max_y or y_end < y_start:
+            raise InputError("Invalid y_end.")    
+    
+    # Crop and save image
+    cropped = im.crop((x_start, y_start, x_end, y_end))
+    cropped.save(image_string)
+
+    # Save imgurl onto the user's profile_img_url key
+    login_user[0]['profile_img_url'] = f"{url}/imgurl/{img_count}.jpg"
+    print(login_user[0]['profile_img_url'])
+
+    # Increment img_count and set data_store
+    store["img_count"] += 1
+    data_store.set(store)
+
+def users_stats_v1():
+    """
+    Updates the required statistics about the use of UNSW Streams.
+
+    Arguments:
+        None
+
+    Exceptions:
+        None
+    
+    Return Value
+        None
+    """
+    store = data_store.get()
+    users = store["users"]
+    channels = store["channels"]
+    dms = store["dms"]
+    # Go through each user, check if in a channel/dm or not
+    num_users_in_channel_dm = len(list(filter(lambda user: is_in_channel_dm(user, channels, dms), users)))
+
+    # Find the number of valid users, i.e. non-deleted users
+    valid_users = len(list(filter(lambda user: (user["email"] and user["handle"]), users)))
+    # Utilization rate: if no valid users, 0 else defined by num_users_in_channel_dm divided by valid_users
+    store["metrics"]["utilization_rate"] = num_users_in_channel_dm/valid_users
+
+    # Checks if each metric has at least 1 entry
+    if store["metrics"]["channels_exist"] and store["metrics"]["dms_exist"] and store["metrics"]["messages_exist"]:
+        # Number of channels changed
+        metric_changed("channels_exist", len(store["channels"]), store)
+        # Number of dms changed
+        metric_changed("dms_exist", len(store["dms"]), store)
+        # Number of messages changed
+        metric_changed("messages_exist", len(store["channel_messages"]) + len(store["dm_messages"]), store)
+    else:
+        # First user registered, no registered use
+        init_metrics("channels_exist", store)
+        init_metrics("dms_exist", store)
+        init_metrics("messages_exist", store)
+
+
+
+    

@@ -1,6 +1,6 @@
 import signal
 from json import dumps
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from src.error import AccessError
@@ -14,12 +14,12 @@ from src.other import clear_v1
 from src.channels import channels_listall_v1
 from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1
 from src.dm import dm_details_v1, dm_create_v1, dm_leave_v1, dm_messages_v1, dm_list_v1, dm_remove_v1
-from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1, user_profile_sethandle_v1, users_stats_v1
-from src.message import message_send_v1, message_edit_v1, message_remove_v1, message_senddm_v1, message_share_v1, message_sendlater_v1, message_sendlaterdm_v1, message_pin_v1, message_react_v1, message_unpin_v1
+from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1, user_profile_sethandle_v1, users_stats_v1, user_stats_v1, user_profile_uploadphoto_v1
+from src.message import message_send_v1, message_edit_v1, message_remove_v1, message_senddm_v1, message_share_v1, message_sendlater_v1, message_sendlaterdm_v1, message_pin_v1, message_react_v1, message_unpin_v1,message_unreact_v1
 from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
 from src.standup import standup_start_v1, standup_active_v1, standup_send_v1
 from src.search import search_v1
-
+from src.notifications import notifications_v1
 
 def quit_gracefully(*args):
     '''For coverage'''
@@ -51,6 +51,7 @@ APP.config['MAIL_PASSWORD'] = 'h13beaglestreams'
 APP.config['MAIL_USE_TLS'] = False
 APP.config['MAIL_USE_SSL'] = True
 mail = Mail(APP)
+APP.static_url_path = "../imgurl"
 
 def save():
     store = data_store.get()
@@ -104,7 +105,6 @@ def auth_register():
     save()
     return dumps(user_info)
 
-
 # auth/logout/v1
 @APP.route("/auth/logout/v1", methods=['POST'])
 def auth_logout():
@@ -143,6 +143,7 @@ def channels_create():
     user_id = check_valid_token_and_session(data["token"])
     new_channel = channels_create_v1(user_id, data["name"], data["is_public"])
     users_stats_v1()
+    user_stats_v1(user_id)
     save()
     return dumps(new_channel)
 
@@ -182,6 +183,8 @@ def channel_join():
     user_id = check_valid_token_and_session(data["token"])
     channel_join_v1(user_id, data["channel_id"])
     users_stats_v1()
+    user_stats_v1(user_id)
+
     save()
     return dumps({})
 
@@ -192,6 +195,8 @@ def channel_invite():
     user_info = check_valid_token_and_session(data["token"])
     channel_invite_v1(user_info, data["channel_id"], data["u_id"])
     users_stats_v1()
+    user_stats_v1(data["u_id"])
+
     save()
     return dumps({})
 
@@ -211,6 +216,7 @@ def channel_leave():
     user_id = check_valid_token_and_session(data["token"])
     channel_leave_v1(user_id, data["channel_id"])
     users_stats_v1()
+    user_stats_v1(user_id)
     save()
     return dumps({})
 
@@ -240,7 +246,14 @@ def message_send():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     new_message = message_send_v1(user_id, data["channel_id"], data["message"])
+    store = data_store.get()
+    for user in store["users"]:
+        if user_id == user["id"]:
+            user["message_count"] += 1
+            break
+    data_store.set(store)
     users_stats_v1()
+    user_stats_v1(user_id)
     save()
     return dumps(new_message)
 
@@ -251,6 +264,7 @@ def message_edit():
     user_id = check_valid_token_and_session(data["token"])
     message_edit_v1(user_id, data["message_id"], data["message"])
     users_stats_v1()
+    user_stats_v1(user_id)
     save()
     return dumps({})
 
@@ -270,7 +284,14 @@ def message_senddm():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     new_dm_message = message_senddm_v1(user_id, data["dm_id"], data["message"])
+    store = data_store.get()
+    for user in store["users"]:
+        if user_id == user["id"]:
+            user["message_count"] += 1
+            break
+    data_store.set(store)
     users_stats_v1()
+    user_stats_v1(user_id)
     save()
     return dumps(new_dm_message)
 
@@ -313,7 +334,14 @@ def message_share():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     shared_message_id = message_share_v1(user_id, data["og_message_id"], data["message"], data["channel_id"], data["dm_id"])
+    store = data_store.get()
+    for user in store["users"]:
+        if user_id == user["id"]:
+            user["message_count"] += 1
+            break
+    data_store.set(store)
     users_stats_v1()
+    user_stats_v1(user_id)
     save()
     return dumps(shared_message_id)
 
@@ -323,6 +351,14 @@ def message_react():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     message_react_v1(user_id, data["message_id"],data["react_id"])
+    save()
+    return dumps({})
+#message/unreact/v1
+@APP.route("/message/unreact/v1", methods=['POST'])
+def message_unreact():
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    message_unreact_v1(user_id, data["message_id"],data["react_id"])
     save()
     return dumps({})
 
@@ -337,6 +373,7 @@ def dm_create():
     user_id = check_valid_token_and_session(user_token)
     dm_id = dm_create_v1(user_id, user_lists)
     users_stats_v1()
+    user_stats_v1(user_id)
     save()
     return dumps(dm_id)
                                                         
@@ -359,6 +396,7 @@ def dm_remove():
     dm_id = data["dm_id"]
     dm_remove_v1(user_id, dm_id)
     users_stats_v1()
+    user_stats_v1(user_id)
     save()
     return dumps({})
 
@@ -378,6 +416,7 @@ def dm_leave():
     user_id = check_valid_token_and_session(response["token"])
     dm_leave_v1(user_id, response["dm_id"])
     users_stats_v1()
+    user_stats_v1(user_id)
     save()
     return dumps({})
 
@@ -422,7 +461,6 @@ def user_profile_setname():
     save()
     return dumps({})
 
-
 # user/profile/setemail/v1
 @APP.route("/user/profile/setemail/v1", methods=['PUT'])
 def user_profile_setemail():
@@ -442,6 +480,23 @@ def user_profile_sethandle():
     user_profile_sethandle_v1(user_id, new_handle)
     save()
     return dumps({})
+
+# user/profile/uploadphoto/v1
+@APP.route("/user/profile/uploadphoto/v1", methods=['POST'])
+def user_profile_uploadphoto():
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    user_profile_uploadphoto_v1(user_id, data["img_url"], data["x_start"], data["y_start"], data["x_end"], data["y_end"])
+    save()
+    return dumps({})
+
+# user/stats/v1
+@APP.route("/user/stats/v1", methods=['GET'])
+def user_stats():
+    auth_user_id = check_valid_token_and_session(request.args.get("token"))
+    user_metrics = user_stats_v1(auth_user_id)
+    print(user_metrics)
+    return dumps({"user_stats": user_metrics})
 
 # users/stats/v1
 @APP.route("/users/stats/v1", methods=['GET'])
@@ -493,6 +548,7 @@ def standup_send():
     data = request.get_json()
     auth_user_id = check_valid_token_and_session(data["token"])
     standup_send_v1(auth_user_id, data["channel_id"], data["message"])
+    user_stats_v1(auth_user_id)
     save()
     return dumps({})
 
@@ -503,6 +559,13 @@ def search():
     messages = search_v1(auth_user_id, request.args.get("query_str"))
     return dumps(messages)
 
+#==== notifications.py ====#
+@APP.route("/notifications/get/v1", methods=['GET'])
+def notifications_get_v1():
+    token = request.args.get("token")
+    auth_user_id = check_valid_token_and_session(token)
+    return dumps({"notifications" : notifications_v1(auth_user_id)})
+
 #===== other.py =====#
 
 # clear/v1
@@ -512,6 +575,12 @@ def clear():
     save()
     return dumps({})
 
+#===== other routes=====#
+# imgurl route 
+@APP.route('/imgurl/<path:path>', methods=["GET"])
+def send_js(path):
+    print(path)
+    return send_from_directory(APP.static_url_path, path)
 
 
 #### NO NEED TO MODIFY BELOW THIS POINT
@@ -519,3 +588,4 @@ def clear():
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, quit_gracefully) # For coverage
     APP.run(port=config.port) # Do not edit this port
+
