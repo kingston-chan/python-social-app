@@ -40,14 +40,16 @@ def test_dm_details_multiple_users(clear, first_user_data, second_user_data, thi
                 'email': 'keefe@gmail.com',
                 'name_first': 'keefe',
                 'name_last': 'vuong',
-                'handle_str': 'keefevuong',    
+                'handle_str': 'keefevuong',
+                'profile_img_url': f"{url}/imgurl/default.jpg"
             },
             {
                 'u_id': second_user_data["auth_user_id"],
                 'email': 'eagle@gmail.com',
                 'name_first': 'team',
                 'name_last': 'eagle',
-                'handle_str': 'teameagle',  
+                'handle_str': 'teameagle',
+                'profile_img_url': f"{url}/imgurl/default.jpg" 
             }
         ]
     }
@@ -92,14 +94,16 @@ def test_dm_details_valid(clear, first_user_data, second_user_data):
                 'email': 'keefe@gmail.com',
                 'name_first': 'keefe',
                 'name_last': 'vuong',
-                'handle_str': 'keefevuong',    
+                'handle_str': 'keefevuong',
+                'profile_img_url': f"{url}/imgurl/default.jpg"    
             },
             {
                 'u_id': second_user_data["auth_user_id"],
                 'email': 'eagle@gmail.com',
                 'name_first': 'team',
                 'name_last': 'eagle',
-                'handle_str': 'teameagle',  
+                'handle_str': 'teameagle',
+                'profile_img_url': f"{url}/imgurl/default.jpg"  
             }
         ]
     }
