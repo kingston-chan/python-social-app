@@ -69,7 +69,7 @@ def standup_active_v1(auth_user_id, channel_id):
     store['channels'] = channels
     data_store.set(store)
 
-    return {'is_active': status, 'time_finish': time_finish}
+    return {'is_active': status, 'time_finish': int(time_finish)}
 
 def standup_send_v1(auth_user_id, channel_id, message):
     store = data_store.get()
