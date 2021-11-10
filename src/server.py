@@ -373,7 +373,6 @@ def dm_create():
     user_id = check_valid_token_and_session(user_token)
     dm_id = dm_create_v1(user_id, user_lists)
     users_stats_v1()
-    user_stats_v1(user_id)
     save()
     return dumps(dm_id)
                                                         
@@ -396,7 +395,6 @@ def dm_remove():
     dm_id = data["dm_id"]
     dm_remove_v1(user_id, dm_id)
     users_stats_v1()
-    user_stats_v1(user_id)
     save()
     return dumps({})
 
@@ -495,7 +493,6 @@ def user_profile_uploadphoto():
 def user_stats():
     auth_user_id = check_valid_token_and_session(request.args.get("token"))
     user_metrics = user_stats_v1(auth_user_id)
-    print(user_metrics)
     return dumps({"user_stats": user_metrics})
 
 # users/stats/v1
@@ -548,7 +545,6 @@ def standup_send():
     data = request.get_json()
     auth_user_id = check_valid_token_and_session(data["token"])
     standup_send_v1(auth_user_id, data["channel_id"], data["message"])
-    user_stats_v1(auth_user_id)
     save()
     return dumps({})
 

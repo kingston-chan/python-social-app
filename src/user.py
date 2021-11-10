@@ -18,6 +18,13 @@ import urllib.error
 from PIL import Image
 from src.config import url
 
+def find_item(find_id, lst, id_name):
+    """Helper function for filtering channel/message/dm"""
+    return list(filter(lambda item: is_id(find_id, item, id_name), lst))
+
+def is_id(find_id, item, id_name):
+    """Check if item corresponds to id"""
+    return item[id_name] == find_id
 
 def metric_changed(metric, metric_num, store):
     """Helper function to check metric and append new timestamp if changed"""
@@ -180,11 +187,9 @@ def user_stats_v1(auth_user_id):
     store = data_store.get()
     users = store["users"]
 
-    for user in users:
-        if auth_user_id == user["id"]:
-            user_channels = len(list(filter(lambda channel: (user["id"] in channel["all_members"]), store["channels"])))
-            user_dms = len(list(filter(lambda dm: (user["id"] in dm["members"]), store["dms"])))
-            break
+    user = find_item(auth_user_id, users, "id")[0]
+    user_channels = len(list(filter(lambda channel: (user["id"] in channel["all_members"]), store["channels"])))
+    user_dms = len(list(filter(lambda dm: (user["id"] in dm["members"]), store["dms"])))
 
     if user["user_metrics"]["channels_joined"][-1]["num_channels_joined"] != user_channels:
         user["user_metrics"]["channels_joined"].append({'num_channels_joined': user_channels, 'time_stamp': int(time.time())})
@@ -199,9 +204,9 @@ def user_stats_v1(auth_user_id):
 
     divisor = num_channels_joined + num_dms_joined + num_messages_sent
 
-    num_channels = store["metrics"]["channels_exist"][-1]["num_channels_exist"]
-    num_dms = store["metrics"]["dms_exist"][-1]["num_dms_exist"]
-    num_msgs = store["metrics"]["messages_exist"][-1]["num_messages_exist"]
+    num_channels = len(store["channels"])
+    num_dms = len(store["dms"])
+    num_msgs = len(store["dm_messages"]) + len(store["channel_messages"])
 
     denominator = num_channels + num_dms + num_msgs
 
@@ -253,7 +258,8 @@ def user_profile_uploadphoto_v1(auth_user_id, img_url, x_start, y_start, x_end, 
     # Check if img_url is a .jpeg/.jpg
     if not img_url.endswith(".jpeg") and not img_url.endswith(".jpg"):
         raise InputError("Image uploaded not a JPG.")
-
+    if img_url.startswith("https"):
+        raise InputError("img_url returning HTTP status other than 200.")
     # Make image_string variable then url_retrieve it
     # If it does not work, InputError
     image_string = f"./imgurl/{img_count}.jpg"

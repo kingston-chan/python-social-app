@@ -1,7 +1,7 @@
 from src.data_store import data_store
 from src.error import InputError, AccessError
 from src.message import message_send_v1, find_item
-from src.user import users_stats_v1
+from src.user import users_stats_v1, user_stats_v1
 import time
 import threading
 
@@ -120,6 +120,7 @@ def standup_thread_send_msg(auth_user_id, channel_id):
     store['users'] = users
     store['channels'] = channels
     data_store.set(store)
-
+    users_stats_v1()
+    user_stats_v1(auth_user_id)
     return
     
