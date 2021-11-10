@@ -184,7 +184,7 @@ def message_sendlater(auth_user_id, group_id, message, time_sent, group):
     """Helper function to send messages later"""
     store = data_store.get()
     time_now = time.time()
-    time_difference = int(time_sent - time_now)
+    time_difference = time_sent - time_now
     # Switch id name between channel and dm
     id_name = "id" if group == CHANNEL else "dm_id"
     # Locate the channel/dm
