@@ -1,4 +1,5 @@
 import pytest
+from src.config import url
 import tests.route_helpers as rh
 
 @pytest.fixture
@@ -33,6 +34,10 @@ def test_list_all_users(clear_and_register):
     assert all_users[0]["name_first"] == "John"
     assert all_users[1]["name_first"] == "Bob"
     assert all_users[2]["name_first"] == "Dan"
+    
+    assert all_users[0]["profile_img_url"] == f"{url}/imgurl/default.jpg"
+    assert all_users[1]["profile_img_url"] == f"{url}/imgurl/default.jpg"
+    assert all_users[2]["profile_img_url"] == f"{url}/imgurl/default.jpg"
 
 # Lists all valid users, i.e. not removed
 def test_list_valid_users(clear_and_register):
