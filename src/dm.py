@@ -1,6 +1,6 @@
 from src.error import InputError, AccessError
 from src.data_store import data_store
-from src.user import users_stats_v1
+from src.user import users_stats_v1, user_stats_v1
 from src.channel import output_message, assign_user_info
 
 def output_dm(dm):
@@ -60,7 +60,6 @@ def dm_create_v1(auth_user_id, u_ids):
 
     store["dms"].append(new_dm)
 
-
     user_creating = list(filter(lambda x : auth_user_id == x["id"], store["users"]))
 
     notif_string = "{} added you to {}".format(user_creating[0]["handle"],new_dm["name"])
@@ -73,7 +72,10 @@ def dm_create_v1(auth_user_id, u_ids):
             store["notifications"][users] = [notification]
 
     data_store.set(store)
-
+    
+    for id in u_ids:
+        user_stats_v1(id)
+    
     return {"dm_id" : new_dm_id}
 
 def dm_leave_v1(auth_user_id, dm_id):
@@ -235,18 +237,20 @@ def dm_remove_v1(auth_user_id, dm_id):
     store = data_store.get()
 
     valid_dm = list(filter(lambda dm: dm["dm_id"] == dm_id, store["dms"]))
-
+    
     # Check if dm_id is valid
     if not valid_dm:
         raise InputError(description="DM does not exist")
     # Check if auth_user_id is owner
     if valid_dm[0]["owner_of_dm"] != auth_user_id:
         raise AccessError(description="Not owner of DM")
-
+    users = valid_dm[0]["members"]
     store["dms"].remove(valid_dm[0])
     store["dm_messages"] = list(filter(lambda msg: remove_msg(msg, dm_id), store["dm_messages"]))
     users_stats_v1()
     data_store.set(store)
+    for user in users:
+        user_stats_v1(user)
     return {}
 
 
