@@ -34,7 +34,7 @@ def standup_start_v1(auth_user_id, channel_id, length):
     store['channels'] = channels
     data_store.set(store)
 
-    return {'time_finish': time_finish}
+    return {'time_finish': int(time_finish)}
 
 def standup_active_v1(auth_user_id, channel_id):
     
@@ -45,31 +45,23 @@ def standup_active_v1(auth_user_id, channel_id):
         channel_id = int(channel_id)
     except ValueError:
         raise InputError(description="Channel doesn't exist") from InputError
+    
+    valid_channel = find_item(channel_id, channels, "id")
 
-        
-    status = False
-    channel_exist = False
-    time_finish = None
-
-    for channel in channels:
-        if channel["id"] == channel_id:
-            if channel["standup"]["active"] == True:
-                status = True
-                time_finish = channel["standup"]["time_finish"]
-            
-            channel_exist = True
-            break
-
-    if not channel_exist:
+    if not valid_channel:
         raise InputError(description="Channel doesn't exist")
     
-    if auth_user_id not in channel['all_members']:
+    if auth_user_id not in valid_channel[0]['all_members']:
         raise AccessError(description="This user is not a member of this channel.")
     
-    store['channels'] = channels
+    time_finish = valid_channel[0]["standup"]["time_finish"]
+    
     data_store.set(store)
 
-    return {'is_active': status, 'time_finish': int(time_finish)}
+    return {
+        'is_active': valid_channel[0]["standup"]["active"],
+        'time_finish': int(time_finish) if time_finish else None 
+    }
 
 def standup_send_v1(auth_user_id, channel_id, message):
     store = data_store.get()
@@ -112,10 +104,12 @@ def standup_thread_send_msg(auth_user_id, channel_id):
     for channel in channels:
         if channel["id"] == channel_id:
             message = "\n".join(channel["standup_queue"])
-            message_send_v1(auth_user_id, channel_id, message)
-            users_stats_v1()
             channel["standup"]["active"] = False
+            channel["standup"]["time_finish"] = None
             channel["standup_queue"] = []
+            if not message:
+                break
+            message_send_v1(auth_user_id, channel_id, message)
             break
     store['users'] = users
     store['channels'] = channels
