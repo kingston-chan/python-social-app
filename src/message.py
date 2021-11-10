@@ -174,10 +174,10 @@ def sendlater(auth_user_id, message_id, message, time_sent, message_type, group_
     tagged_message_notification(auth_user_id, group_id, message,group,group_name)
     store[message_type].append(new_message)
     user = find_item(auth_user_id,store["users"], "id")
-    user[0]["message_count"] += 1 
+    user[0]["message_count"] += 1
+    data_store.set(store)
     users_stats_v1()
     user_stats_v1(auth_user_id)
-    data_store.set(store)
     save()
 
 def message_sendlater(auth_user_id, group_id, message, time_sent, group):
