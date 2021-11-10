@@ -18,12 +18,17 @@ def dm_id_count():
     data_store.set(store)
     return dms_id
 
-def remove_msg(msg, dm_id):
+def remove_msg(dm_id, store):
     """Helper function to remove msgs when removing dm"""
-    users_stats_v1()
-    if msg["dm_id"] != dm_id:
-        return True
-    return False
+    idx = 0
+    while idx < len(store["dm_messages"]):
+        if store["dm_messages"][idx]["dm_id"] == dm_id:
+            store["dm_messages"].remove(store["dm_messages"][idx])
+            data_store.set(store)
+            users_stats_v1()
+        else:
+            idx += 1
+    
 
 def valid_user(user):
     """Check if removed user"""
@@ -246,8 +251,7 @@ def dm_remove_v1(auth_user_id, dm_id):
         raise AccessError(description="Not owner of DM")
     users = valid_dm[0]["members"]
     store["dms"].remove(valid_dm[0])
-    store["dm_messages"] = list(filter(lambda msg: remove_msg(msg, dm_id), store["dm_messages"]))
-    users_stats_v1()
+    remove_msg(dm_id, store)
     data_store.set(store)
     for user in users:
         user_stats_v1(user)
