@@ -1,12 +1,7 @@
 from src.data_store import data_store
 from src.error import InputError, AccessError
-<<<<<<< HEAD
-from src.message import message_send_v1
-from src.user import user_stats_v1, users_stats_v1
-=======
 from src.message import message_send_v1, find_item
-from src.user import users_stats_v1
->>>>>>> a8cc42022508ed2f5fbfe7d4c2b078e3304099fd
+from src.user import users_stats_v1, user_stats_v1
 import time
 import threading
 
