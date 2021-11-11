@@ -210,10 +210,10 @@ def user_stats_v1(auth_user_id):
 
     denominator = num_channels + num_dms + num_msgs
 
-    involvement = 0 if denominator == 0 else divisor / denominator
+    involvement = 0.0 if denominator == 0 else divisor / denominator
     
     if involvement > 1:
-        involvement = 1
+        involvement = 1.0
     
     user["user_metrics"]["involvement_rate"] = involvement
 

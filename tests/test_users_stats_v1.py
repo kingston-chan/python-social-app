@@ -48,6 +48,7 @@ def test_first_user_join_channel_dm(clear_and_register, create_channel, create_d
     assert len(workspace["messages_exist"]) == 1
     
     assert workspace["utilization_rate"] == 1
+    assert type(workspace["utilization_rate"]) is float
 
 # Metrics for messages works
 def test_workspace_messages_metrics(clear_and_register, create_channel):

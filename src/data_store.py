@@ -42,7 +42,7 @@ initial_object = {
         'channels_exist': [],
         'dms_exist': [],
         'messages_exist': [],
-        'utilization_rate': 0
+        'utilization_rate': 0.0
     }
 }
 ## YOU SHOULD MODIFY THIS OBJECT ABOVE
