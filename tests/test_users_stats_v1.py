@@ -102,6 +102,7 @@ def test_num_dms_messages_decrease(clear_and_register, create_dm, create_channel
 
     workspace = rh.users_stats(clear_and_register).json()["workspace_stats"]
     assert workspace["dms_exist"][-1]["num_dms_exist"] == 0
+    assert len(workspace["messages_exist"]) == 11
     assert workspace["messages_exist"][-1]["num_messages_exist"] == 2
 
 # Utilization increases if removed user is not in a dm/channel

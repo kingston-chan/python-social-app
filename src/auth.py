@@ -191,7 +191,7 @@ def auth_register_v1(email, password, name_first, name_last):
                 'channels_joined': [{'num_channels_joined': 0, 'time_stamp': int(time.time())}],
                 'dms_joined': [{'num_dms_joined': 0, 'time_stamp': int(time.time())}], 
                 'messages_sent': [{'num_messages_sent': 0, 'time_stamp': int(time.time())}], 
-                'involvement_rate': None
+                'involvement_rate': 0
             },
             'message_count': 0,
             'profile_img_url': f"{url}/imgurl/default.jpg"
