@@ -77,7 +77,7 @@ def test_message_sendlater_valid(clear, first_user_data):
     assert response.status_code == 200
     assert response.json()["message_id"] == 1
 
-    time.sleep(1)
+    time.sleep(2)
 
     response = rh.channel_messages(first_user_data["token"], channel_1, 0)
     response_data = response.json()
