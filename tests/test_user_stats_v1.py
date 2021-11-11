@@ -130,11 +130,11 @@ def test_user_stats_num_dms_messages_decrease(clear_and_register, create_dm, cre
 # user changes only when messages are sent
 def test_user_stats_with_delayed_messages(clear_and_register, create_channel, create_dm):
     # Send a message in the dm and channel in three seconds
-    rh.message_sendlater(clear_and_register, create_channel, "hello", int(time.time()) + 2)
-    rh.message_sendlaterdm(clear_and_register, create_dm, "hello", int(time.time()) + 3)
+    rh.message_sendlater(clear_and_register, create_channel, "hello", int(time.time()) + 1)
+    rh.message_sendlaterdm(clear_and_register, create_dm, "hello", int(time.time()) + 1)
     assert len(rh.user_stats(clear_and_register).json()["user_stats"]["messages_sent"]) == 1
     assert rh.user_stats(clear_and_register).json()["user_stats"]["messages_sent"][-1]["num_messages_sent"] == 0
-    time.sleep(4)
+    time.sleep(1.1)
     print(rh.user_stats(clear_and_register).json()["user_stats"])
     assert len(rh.user_stats(clear_and_register).json()["user_stats"]["messages_sent"]) == 3
     assert rh.user_stats(clear_and_register).json()["user_stats"]["messages_sent"][-1]["num_messages_sent"] == 2
