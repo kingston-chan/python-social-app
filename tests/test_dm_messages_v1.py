@@ -231,11 +231,11 @@ def test_start_0_total_55(clear, user1, user2):
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
         assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
 
-def test_start_100_total_150(clear, user1, user2):
+def test_start_5_total_55(clear, user1, user2):
     dm_id = rh.dm_create(user1['token'], [user2['auth_user_id']]).json()['dm_id']
-    start = 100
-    end = 150
-    messages_total = 150
+    start = 5
+    end = 55
+    messages_total = 55
     
     message_list = send_mass_dm_messages(user1, messages_total, dm_id)
     expected_result = make_mass_expected_results(start, end, messages_total, message_list)

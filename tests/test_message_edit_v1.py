@@ -283,27 +283,6 @@ def test_global_owner_edits_another_users_message(clear, user1, user2, user3):
     message_response = rh.message_edit(user1['token'], message_id, "Hello again.")
     assert message_response.status_code == 200
 
-def test_one_user_edits_one_message_in_private_and_public_channel(clear, user1):
-    channel_id1 = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
-    channel_id2 = rh.channels_create(user1['token'], "chan_name2", False).json()['channel_id']
-
-    message_response = rh.message_send(user1['token'], channel_id1, "Hello")
-    response_data = message_response.json()
-    assert message_response.status_code == 200
-    assert response_data['message_id'] == 1
-    message_id1 = response_data['message_id']
-
-    message_response = rh.message_send(user1['token'], channel_id2, "Hello")
-    response_data = message_response.json()
-    assert message_response.status_code == 200
-    assert response_data['message_id'] == 2
-    message_id2 = response_data['message_id']
-
-    message_response = rh.message_edit(user1['token'], message_id1, "Hello again.")
-    assert message_response.status_code == 200
-    message_response = rh.message_edit(user1['token'], message_id2, "Hello again.")
-    assert message_response.status_code == 200
-
 def test_one_user_invited_edits_one_messages_in_private_channel(clear, user1, user2):
     channel_id = rh.channels_create(user1['token'], "chan_name2", False).json()['channel_id']
     rh.channel_invite(user1['token'], channel_id, user2['auth_user_id'])
@@ -605,7 +584,6 @@ def test_owner_edits_another_users_dm_message(clear, user1, user2):
         assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
         assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
 
-def test_one_user_edits_in_channel_and_dm(clear, user1, user2, user3):
     # Edits in channel
     channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
     message_response = rh.message_send(user1['token'], channel_id, "Hello")
