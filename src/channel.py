@@ -6,6 +6,7 @@ of the channel, leaving the channel and adding/removing owners
 
 from src.error import InputError, AccessError
 from src.data_store import data_store
+from src.notifications import store_notif
 
 def assign_user_info(user_data_placeholder):
     """Assigns the user information with the appropriate key names required in the spec"""
@@ -88,12 +89,8 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     notif_string = "{} added you to {}".format(user_inviting[0]["handle"],channel[0]["name"])
     notification = {"channel_id" : channel_id, "dm_id": -1, "notification_message": notif_string}
     
-    # Check if invitee already has notifications
-    if u_id in store["notifications"]:
-        store["notifications"][u_id].append(notification)
-    else:
-        store["notifications"][u_id] = [notification]
-
+    store_notif(u_id, notification)
+    
     data_store.set(store)
     
     return {}
