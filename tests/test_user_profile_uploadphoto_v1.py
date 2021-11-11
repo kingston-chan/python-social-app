@@ -8,7 +8,7 @@ BASE_URL = url
 SAMPLE_JPEG_IMG_LINK = "http://adaptive-images.com/content/images/winter.jpg"
 SAMPLE_JPEG_IMG_LINK2 = "http://adaptive-images.com/content/images/sunset.jpg"
 SAMPLE_PNG_IMG_LINK = "http://www.libjpg.org/pub/jpg/img_jpg/jpglogo--povray-3.7--black826--800x600.png"
-
+SAMPLE_HTTPS_JPEG_LINK = "https://res.cloudinary.com/demo/image/upload/q_90/happy_dog.jpg"
 ## =====[ test_user_profile_uploadphoto_v1.py ]===== ##
 
 # ==== Fixtures ==== #
@@ -32,6 +32,10 @@ def user3():
 ## Input Error - 400 ##
 def test_img_url_fake_website(clear, user1):
     response = rh.user_profile_uploadphoto(user1['token'], "http://www.fdsagas2134134fbsafbs.com/img", 0, 0, 700, 700)
+    assert response.status_code == 400
+
+def test_img_url_https(clear, user1):
+    response = rh.user_profile_uploadphoto(user1['token'], SAMPLE_HTTPS_JPEG_LINK, 0, 0, 700, 700)
     assert response.status_code == 400
 
 def test_img_url_fake_website_img(clear, user1):
@@ -65,6 +69,7 @@ def test_y_end_less_than_y_start(clear, user1):
 def test_image_not_jpeg(clear, user1):
     response = rh.user_profile_uploadphoto(user1['token'], SAMPLE_PNG_IMG_LINK, 0, 0, 700, 700)
     assert response.status_code == 400
+
 
 # ==== Tests - Valids ==== #
 def test_default_photo(clear, user1):
