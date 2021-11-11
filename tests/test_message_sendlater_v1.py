@@ -72,12 +72,12 @@ def test_message_sendlater_valid(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
     channel_1 = response.json()["channel_id"]
 
-    response = rh.message_sendlater(first_user_data["token"], channel_1, "Hello", int(time.time()) + 5)
+    response = rh.message_sendlater(first_user_data["token"], channel_1, "Hello", int(time.time()) + 1)
 
     assert response.status_code == 200
     assert response.json()["message_id"] == 1
 
-    time.sleep(8)
+    time.sleep(1)
 
     response = rh.channel_messages(first_user_data["token"], channel_1, 0)
     response_data = response.json()
