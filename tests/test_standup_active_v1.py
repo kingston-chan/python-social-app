@@ -54,7 +54,7 @@ def test_standup_active_valid(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
     channel_1 = response.json()["channel_id"]
 
-    rh.standup_start(first_user_data["token"], channel_1, 5)
+    rh.standup_start(first_user_data["token"], channel_1, 1)
     current_time = time.time()
 
     response = rh.standup_active(first_user_data["token"], channel_1)
@@ -63,7 +63,7 @@ def test_standup_active_valid(clear, first_user_data):
     
     assert response.status_code == 200
     assert response_data["is_active"] == True
-    assert response_data["time_finish"] >= current_time + 3 and response_data["time_finish"] <= current_time + 7
+    assert response_data["time_finish"] >= current_time and response_data["time_finish"] <= current_time + 2
 
     
 

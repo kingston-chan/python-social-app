@@ -52,8 +52,8 @@ def test_standup_start_already_active(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
     channel_1 = response.json()["channel_id"]
 
-    rh.standup_start(first_user_data["token"], channel_1, 2)
-    response = rh.standup_start(first_user_data["token"], channel_1, 2)
+    rh.standup_start(first_user_data["token"], channel_1, 1)
+    response = rh.standup_start(first_user_data["token"], channel_1, 1)
 
     assert response.status_code == 400
 
@@ -62,13 +62,13 @@ def test_standup_start_valid(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
     channel_1 = response.json()["channel_id"]
 
-    response = rh.standup_start(first_user_data["token"], channel_1, 2)
+    response = rh.standup_start(first_user_data["token"], channel_1, 1)
     response_data = response.json()
     current_time = time.time()
     
     assert response.status_code == 200
-    assert response_data["time_finish"] >= current_time and response_data["time_finish"] <= current_time + 4
-    time.sleep(3)
+    assert response_data["time_finish"] >= current_time and response_data["time_finish"] <= current_time + 3
+    time.sleep(1)
 
     
 
