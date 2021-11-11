@@ -26,6 +26,7 @@ def test_first_user_registers(clear_and_register):
     assert len(workspace_1["messages_exist"]) == 1
     assert workspace_1["messages_exist"][-1]["num_messages_exist"] == 0
     assert workspace_1["utilization_rate"] == 0
+    assert type(workspace_1["utilization_rate"]) is float
 
     # test time stamp does not change if nothing changes i.e. no new channels, dms, messages
     workspace_2 = rh.users_stats(clear_and_register).json()["workspace_stats"]
@@ -47,6 +48,7 @@ def test_first_user_join_channel_dm(clear_and_register, create_channel, create_d
     assert len(workspace["messages_exist"]) == 1
     
     assert workspace["utilization_rate"] == 1
+    assert type(workspace["utilization_rate"]) is float
 
 # Metrics for messages works
 def test_workspace_messages_metrics(clear_and_register, create_channel):
