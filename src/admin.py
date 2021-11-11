@@ -8,16 +8,19 @@ from src.data_store import data_store
 from src.error import InputError, AccessError
 
 def change_msg(msg, user_id):
+    """Helper function to change message to 'Removed user'"""
     if msg["u_id"] == user_id:
         msg["message"] = "Removed user"
     return msg
 
 def remove_from_dm(dm, user_id):
+    """Helper function to remove a user from a DM"""
     if user_id in dm["members"]:
         dm["members"].remove(user_id)
     return dm
 
 def remove_from_channel(channel, user_id):
+    """Helper function to completely remove user from channel"""
     if user_id in channel["all_members"]:
         channel["all_members"].remove(user_id)
     if user_id in channel["owner_permissions"]:
@@ -27,11 +30,13 @@ def remove_from_channel(channel, user_id):
     return channel
 
 def give_permissions(channel, user_id):
+    """Helper function to give user owner_permissions in channels they are currently in"""
     if user_id in channel["all_members"] and user_id not in channel["owner_permissions"]:
         channel["owner_permissions"].append(user_id)
     return channel
 
 def revoke_permissions(channel, user_id):
+    """Helper function to revoke owner_permissions in channels they are currently in"""
     if user_id in channel["owner_permissions"] and user_id not in channel["owner_members"]:
         channel["owner_permissions"].remove(user_id)
     return channel
