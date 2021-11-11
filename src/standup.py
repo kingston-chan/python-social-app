@@ -96,10 +96,6 @@ def standup_thread_send_msg(auth_user_id, channel_id):
     channels = store['channels']
     users = store['users']
     store = data_store.get()
-    for user in users:
-        if auth_user_id == user["id"]:
-            user["message_count"] += 1
-            break
 
     for channel in channels:
         if channel["id"] == channel_id:
@@ -110,6 +106,10 @@ def standup_thread_send_msg(auth_user_id, channel_id):
             if not message:
                 break
             message_send_v1(auth_user_id, channel_id, message)
+            for user in users:
+                if auth_user_id == user["id"]:
+                    user["message_count"] += 1
+                    break
             break
     store['users'] = users
     store['channels'] = channels
