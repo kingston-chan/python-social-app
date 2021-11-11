@@ -8,7 +8,7 @@ BASE_URL = url
 SAMPLE_JPEG_IMG_LINK = "http://adaptive-images.com/content/images/winter.jpg"
 SAMPLE_JPEG_IMG_LINK2 = "http://adaptive-images.com/content/images/sunset.jpg"
 SAMPLE_PNG_IMG_LINK = "http://www.libjpg.org/pub/jpg/img_jpg/jpglogo--povray-3.7--black826--800x600.png"
-SAMPLE_HTTPS_JPEG_LINK = "https://www.unsw.edu.au/etc/clientlibs/unsw-common/unsw-assets/img/social/UNSWlogo-opengraph-squaresafe.png"
+SAMPLE_HTTPS_JPEG_LINK = "https://res.cloudinary.com/demo/image/upload/q_90/happy_dog.jpg"
 ## =====[ test_user_profile_uploadphoto_v1.py ]===== ##
 
 # ==== Fixtures ==== #
