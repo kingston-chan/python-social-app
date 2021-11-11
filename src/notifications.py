@@ -22,7 +22,7 @@ def notifications_v1(auth_user_id):
         return []
 
 def store_notif(u_id, notification):
-    """Check if invitee already has notifications"""
+    """Helper function to store the notification for the user"""
     store = data_store.get()
     if u_id in store["notifications"]:
         store["notifications"][u_id].append(notification)
