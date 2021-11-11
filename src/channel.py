@@ -4,9 +4,9 @@ returning the details of the channel, joining channels, returning messages
 of the channel, leaving the channel and adding/removing owners
 """
 
-from src import notifications
 from src.error import InputError, AccessError
 from src.data_store import data_store
+
 def assign_user_info(user_data_placeholder):
     """Assigns the user information with the appropriate key names required in the spec"""
     return {
@@ -19,6 +19,7 @@ def assign_user_info(user_data_placeholder):
     }
 
 def check_user_reacted(react, user_id):
+    """Helper function for correctly mapping if user has reacted to message"""
     react["is_this_user_reacted"] = user_id in react["u_ids"]
     return react
 
@@ -79,9 +80,8 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     if valid_user[0]['permission'] == 1:
         valid_channel[0]['owner_permissions'].append(u_id)
     
-
-    user_inviting = list(filter(lambda x : auth_user_id == x["id"], store["users"]))
-    channel = list(filter(lambda x : channel_id == x["id"], store["channels"]))
+    user_inviting = list(filter(lambda user : auth_user_id == user["id"], store["users"]))
+    channel = list(filter(lambda user: channel_id == user["id"], store["channels"]))
 
     notif_string = "{} added you to {}".format(user_inviting[0]["handle"],channel[0]["name"])
     notification = {"channel_id" : channel_id, "dm_id": -1, "notification_message": notif_string}
