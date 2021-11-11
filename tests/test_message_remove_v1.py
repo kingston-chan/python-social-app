@@ -339,52 +339,6 @@ def test_channel_messages_interaction(clear, user1):
     response_data = message_response.json()
     assert message_response.status_code == 200
     assert response_data['message_id'] == 1
-    message_id = response_data['message_id']
-
-    messages_response = rh.channel_messages(user1['token'], channel_id, 0)
-    response_data = messages_response.json()
-    expected_result = {
-        "messages": [
-            {
-                "message_id": 1,
-                "u_id": user1['auth_user_id'],
-                "message": "Hello",
-                "time_created": int(time.time()),
-                "reacts": [],
-                "is_pinned": False
-            }
-        ],
-        "start": 0,
-        "end": -1,
-    }
-    assert response_data['start'] == expected_result['start']
-    assert response_data['end'] == expected_result['end']
-    for x in range(len(response_data['messages'])):
-        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
-        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
-        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
-        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
-        assert response_data['messages'][x]['reacts'] == expected_result['messages'][x]['reacts']
-        assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
-
-    message_response = rh.message_remove(user1['token'], message_id)
-    assert message_response.status_code == 200
-
-    messages_response = rh.channel_messages(user1['token'], channel_id, 0)
-    response_data = messages_response.json()
-    expected_result = {
-        "messages": [],
-        "start": 0,
-        "end": -1,
-    }
-    assert response_data == expected_result
-
-def test_channel_messages_interaction2(clear, user1):
-    channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
-    message_response = rh.message_send(user1['token'], channel_id, "Hello")
-    response_data = message_response.json()
-    assert message_response.status_code == 200
-    assert response_data['message_id'] == 1
     message_id1 = response_data['message_id']
     time_created1 = int(time.time())
 

@@ -283,17 +283,6 @@ def test_global_owner_edits_another_users_message(clear, user1, user2, user3):
     message_response = rh.message_edit(user1['token'], message_id, "Hello again.")
     assert message_response.status_code == 200
 
-def test_one_user_edits_one_message_in_private_channel(clear, user1):
-    channel_id = rh.channels_create(user1['token'], "chan_name", False).json()['channel_id']
-    message_response = rh.message_send(user1['token'], channel_id, "Hello")
-    response_data = message_response.json()
-    assert message_response.status_code == 200
-    assert response_data['message_id'] == 1
-    message_id = response_data['message_id']
-
-    message_response = rh.message_edit(user1['token'], message_id, "Hello again.")
-    assert message_response.status_code == 200
-
 def test_one_user_edits_one_message_in_private_and_public_channel(clear, user1):
     channel_id1 = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
     channel_id2 = rh.channels_create(user1['token'], "chan_name2", False).json()['channel_id']
@@ -344,65 +333,6 @@ def test_user_becomes_owner_removes(clear, user1, user2):
     assert message_response.status_code == 200
 
 def test_channel_messages_interaction(clear, user1):
-    channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
-    message_response = rh.message_send(user1['token'], channel_id, "Hello")
-    response_data = message_response.json()
-    assert message_response.status_code == 200
-    assert response_data['message_id'] == 1
-    message_id = response_data['message_id']
-
-    messages_response = rh.channel_messages(user1['token'], channel_id, 0)
-    response_data = messages_response.json()
-    expected_result = {
-        "messages": [
-            {
-                "message_id": 1,
-                "u_id": user1['auth_user_id'],
-                "message": "Hello",
-                "time_created": int(time.time()),
-                "reacts": [],
-                "is_pinned": False,
-            }
-        ],
-        "start": 0,
-        "end": -1,
-    }
-    assert response_data['start'] == expected_result['start']
-    assert response_data['end'] == expected_result['end']
-    for x in range(len(response_data['messages'])):
-        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
-        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
-        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
-        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
-        assert response_data['messages'][x]['reacts'] == expected_result['messages'][x]['reacts']
-        assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
-
-    message_response = rh.message_edit(user1['token'], message_id, "Hello again.")
-    assert message_response.status_code == 200
-
-    messages_response = rh.channel_messages(user1['token'], channel_id, 0)
-    response_data = messages_response.json()
-    expected_result = {
-        "messages": [
-            {
-                "message_id": 1,
-                "u_id": user1['auth_user_id'],
-                "message": "Hello again.",
-                "time_created": int(time.time()) 
-            }
-        ],
-        "start": 0,
-        "end": -1,
-    }
-    assert response_data['start'] == expected_result['start']
-    assert response_data['end'] == expected_result['end']
-    for x in range(len(response_data['messages'])):
-        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
-        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
-        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
-        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
-
-def test_channel_messages_interaction2(clear, user1):
     channel_id = rh.channels_create(user1['token'], "chan_name", True).json()['channel_id']
     message_response = rh.message_send(user1['token'], channel_id, "Hello")
     response_data = message_response.json()

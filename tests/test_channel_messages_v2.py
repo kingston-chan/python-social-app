@@ -344,27 +344,6 @@ def test_ch_mess_start_100_total_150(clear, user1):
         assert response_data['messages'][x]['reacts'] == expected_result['messages'][x]['reacts']
         assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
 
-def test_ch_mess_start_60_total_110(clear, user1):
-    channel_id = rh.channels_create(user1['token'], "channel_name", True).json()['channel_id']
-    start = 60
-    end = 110
-    messages_total = 110
-    
-    message_list = send_mass_messages(user1, messages_total, channel_id)
-    expected_result = make_mass_expected_results(start, end, messages_total, message_list)
-    response_data = rh.channel_messages(user1['token'], channel_id, start).json()
-
-    assert response_data['start'] == expected_result['start']
-    assert response_data['end'] == expected_result['end']
-    for x in range(len(response_data['messages'])):
-        print(f"message:={x}")
-        assert response_data['messages'][x]['message_id'] == expected_result['messages'][x]['message_id']
-        assert response_data['messages'][x]['u_id'] == expected_result['messages'][x]['u_id']
-        assert response_data['messages'][x]['message'] == expected_result['messages'][x]['message']
-        assert abs(response_data['messages'][x]['time_created'] - expected_result['messages'][x]['time_created']) < 2
-        assert response_data['messages'][x]['reacts'] == expected_result['messages'][x]['reacts']
-        assert response_data['messages'][x]['is_pinned'] == expected_result['messages'][x]['is_pinned']
-
 def test_ch_mess_shows_correct_reacts(clear, user1, user2):
     channel_id = rh.channels_create(user1['token'], "channel_name", True).json()['channel_id']
     rh.channel_join(user2["token"], channel_id)
