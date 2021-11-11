@@ -1,3 +1,12 @@
+"""
+Functions to:
+- Register a user to streams
+- Login a existing user to streams
+- Logout a existing user from streams
+- Request a password reset for a registered email of streams
+- Reset a password for a registered email of streams
+"""
+
 from src.data_store import data_store
 from src.error import InputError
 from src import config
@@ -7,19 +16,19 @@ import urllib.request
 from src.config import url
 import hashlib, jwt, re, secrets, time
 
-# helper function to search the data store for duplicate items
 def dict_search(item, users, item_name):
+    """Helper function to search the data store for duplicate items"""
     return len(list(filter(lambda user: user[item_name] == item, users)))
 
-# helper fucntion to create a session for the user
 def create_session():
+    """Helper fucntion to create a session for the user"""
     store = data_store.get()
     store["session_count"] += 1
     data_store.set(store)
     return store["session_count"]
 
-# helper function to create a jwt for the user given their u_id
 def create_jwt(u_id):
+    """Helper function to create a jwt for the user given their u_id"""
     store = data_store.get()
     session_id = create_session()
     token_id = secrets.token_urlsafe()
