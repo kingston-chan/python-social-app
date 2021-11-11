@@ -35,7 +35,7 @@ def test_user_stats_register_user(clear_and_register):
     user_1 = rh.user_stats(clear_and_register).json()["user_stats"]
     assert len(user_1["channels_joined"]) == 1
     assert user_1["channels_joined"][-1]["num_channels_joined"] == 0
-    
+    assert type(user_1["involvement_rate"]) is float
 
 # Metrics for channels and dms work
 def test_user_stats_join_channel_dm(clear_and_register, create_channel, create_dm):
@@ -50,6 +50,7 @@ def test_user_stats_join_channel_dm(clear_and_register, create_channel, create_d
     assert len(user["messages_sent"]) == 1
     
     assert user["involvement_rate"] == 1
+    assert type(user["involvement_rate"]) is float
 
 # Metrics for messages works
 def test_user_stats_messages_metrics(clear, first_user_data):
