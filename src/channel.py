@@ -80,12 +80,15 @@ def channel_invite_v1(auth_user_id, channel_id, u_id):
     if valid_user[0]['permission'] == 1:
         valid_channel[0]['owner_permissions'].append(u_id)
     
+    # Find channel name and inviter handle
     user_inviting = list(filter(lambda user : auth_user_id == user["id"], store["users"]))
     channel = list(filter(lambda user: channel_id == user["id"], store["channels"]))
 
+    # Create notification format
     notif_string = "{} added you to {}".format(user_inviting[0]["handle"],channel[0]["name"])
     notification = {"channel_id" : channel_id, "dm_id": -1, "notification_message": notif_string}
     
+    # Check if invitee already has notifications
     if u_id in store["notifications"]:
         store["notifications"][u_id].append(notification)
     else:
