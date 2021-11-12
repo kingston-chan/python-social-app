@@ -11,9 +11,9 @@ Functions to:
 from src.error import InputError, AccessError
 from src.data_store import data_store
 from src.user import users_stats_v1, user_stats_v1
+from src.notifications import store_notif
 from src.other import save
-import time
-import threading
+import time, threading, re
 
 CHANNEL = 1
 DM = 2
@@ -22,9 +22,51 @@ DM = 2
 #################################### ====== Helper functions ======= ####################################
 #########################################################################################################
 
+def format_handle(tag):
+    """Helper function to trim leading characters and trailing non alphanumeric characters"""
+    # Check if single @
+    if len(tag) == 1:
+        return None
+    
+    # Locate @, and the find the starting character of handle
+    tag_idx = tag.index('@')+1
+    
+    # Find first non-alphanumeric character
+    stop_idx = re.search(r'\W+', tag[tag_idx:])
+    stop_idx = stop_idx.start() if stop_idx else stop_idx
+    # Return possible handle
+    return tag[tag_idx:][:stop_idx]
+
+def find_handle_uid(handle, users):
+    """Helper function to find user id corresponding to handle"""
+    return find_item(handle, users, "handle")[0]["id"]
+
+def create_react_notif(handle, group_name, channel_id, dm_id):
+    """Helper function to create a notification for user if someone reacts to their message"""
+    return {
+        "channel_id": channel_id,
+        "dm_id": dm_id,
+        "notification_message": f"{handle} reacted to your message in {group_name}"
+    }
+
 def find_item(find_id, lst, id_name):
     """Helper function for filtering channel/message/dm"""
     return list(filter(lambda item: is_id(find_id, item, id_name), lst))
+
+def create_tagged_notif(inviter, group_name, message, channel_id, dm_id):
+    return {
+        "channel_id": channel_id,
+        "dm_id": dm_id,
+        "notification_message": f"{inviter} tagged you in {group_name}: {message}"
+    }
+
+def store_tagged_notif(inviter, group_name, message, group_id, group, uid):
+    """Helper function to store tagging notifications"""
+    if group == CHANNEL:
+        store_notif(uid, create_tagged_notif(inviter, group_name, message, group_id, -1))
+    else:
+        store_notif(uid, create_tagged_notif(inviter, group_name, message, -1, group_id))
+    return
 
 def is_id(find_id, item, id_name):
     """Check if item corresponds to id"""
@@ -37,14 +79,17 @@ def check_pin_unpin(message, function):
     """
     if function == "pin" and message["is_pinned"]:
         raise InputError(description="Message is already pinned")
+    
     if function == "unpin" and not message["is_pinned"]:
         raise InputError(description="This message id is already unpinned.")
+    
     message["is_pinned"] = True if function == "pin" else False
     
 def check_user_pin_unpin_channel_msg(auth_user_id, message, channels, function):
     """Helper function to check if user can do function for the channel message"""
     # Locate channel
     valid_channel = find_item(message["channel_id"], channels, "id")[0]
+    
     # If user not in channel, InputError
     if auth_user_id not in valid_channel['all_members']:
         raise InputError(description="This user is not a member of this channel.")
@@ -56,6 +101,7 @@ def check_user_pin_unpin_dm_msg(auth_user_id, message, dms, function):
     """Helper function to check if user can do function for the dm message"""
     # Locate DM
     valid_dm = find_item(message["dm_id"], dms, "dm_id")[0]
+    
     # If user not in DM, InputError
     if auth_user_id not in valid_dm['members']:
         raise InputError(description="This user is not a member of this DM.")
@@ -70,7 +116,7 @@ def pin_unpin_message(auth_user_id, message_id, store, function):
     # Locate message in DMs
     valid_dm_msg = find_item(message_id, store["dm_messages"], "message_id")
 
-    # If message in channel
+    # Check if valid channel/dm msg
     if valid_channel_msg:
         check_user_pin_unpin_channel_msg(auth_user_id, valid_channel_msg[0], store["channels"], function)
         check_pin_unpin(valid_channel_msg[0], function)
@@ -85,9 +131,11 @@ def check_user_edit_remove_channel_msg(auth_user_id, message, channels, function
     """Helper function to check if user can do function for the channel message"""
     # There must be a channel that contains this message if message_id is valid
     valid_channel = find_item(message["channel_id"], channels, "id")[0]
+    
     # Check auth user id is in channel
     if auth_user_id not in valid_channel["all_members"]:
         raise InputError(description="This user is not a member of this channel.")
+    
     # Check auth user id is the message sender or a channel owner
     if auth_user_id != message["u_id"] and auth_user_id not in valid_channel["owner_permissions"]:
         raise AccessError(description=f"This user is not allowed to {function} this message.")
@@ -96,9 +144,11 @@ def check_user_edit_remove_dm_msg(auth_user_id, message, dms, function):
     """Helper function to check if user can do function for the dm message"""
     # There must be a dm that contains this message if message_id is valid
     valid_dm = find_item(message["dm_id"], dms, "dm_id")[0]
+    
     # Check auth user id is in dm
     if auth_user_id not in valid_dm["members"]:
         raise InputError(description="This user is not a member of this DM.")
+    
     # Check auth user id is the message sender or owner of dm
     if auth_user_id != message["u_id"] and auth_user_id != valid_dm["owner_of_dm"]:
         raise AccessError(description=f"This user is not allowed to {function} this message.")
@@ -108,6 +158,7 @@ def update_message(new_message, message_list, old_message):
     # If message too long, InputError
     if len(new_message) > 1000:
         raise InputError(description="Invalid message length")
+    
     # Remove channel message if empty message
     if new_message == "":
         message_list.remove(old_message)
@@ -118,13 +169,14 @@ def edit_remove_msg(auth_user_id, message_id, store, function, message):
     """Helper function to edit/remove message"""
     # Locate message in channel messages
     valid_channel_msg = find_item(message_id, store["channel_messages"], "message_id")
+    
     # Locate message in dm messages
     valid_dm_msg = find_item(message_id, store["dm_messages"], "message_id")
-    # Message belongs to a channel
+    
+    # Check if message belongs to a channel/dm
     if valid_channel_msg:
         check_user_edit_remove_channel_msg(auth_user_id, valid_channel_msg[0], store["channels"], function)
         update_message(message, store["channel_messages"], valid_channel_msg[0])
-    # Message belongs to a DM
     elif valid_dm_msg:
         check_user_edit_remove_dm_msg(auth_user_id, valid_dm_msg[0], store["dms"], function)
         update_message(message, store["dm_messages"], valid_dm_msg[0])
@@ -158,6 +210,7 @@ def react_message(message, reaction):
 def sendlater(auth_user_id, message_id, message, time_sent, message_type, group_id, group_id_name):
     """Threading function to send message when designated time is reached"""
     store = data_store.get()
+    # Create a new message with info
     new_message = {
         "message_id": message_id,
         "u_id": auth_user_id,
@@ -167,15 +220,29 @@ def sendlater(auth_user_id, message_id, message, time_sent, message_type, group_
         'reacts': [],
         'is_pinned': False,
     }
+    # Find group
     group = CHANNEL if group_id_name == "channel_id" else DM
+    
+    # Find group type
     group_type = "channels" if group == CHANNEL else "dms"
+    
+    # Find group id type
     group_id_type = "id" if group == CHANNEL else "dm_id"
-    group_name = find_item(group_id,store[group_type],group_id_type)[0]["name"]
-    tagged_message_notification(auth_user_id, group_id, message,group,group_name)
+    
+    # Find the group name
+    group_name = find_item(group_id, store[group_type], group_id_type)[0]["name"]
+    
+    tagged_message_notification(auth_user_id, group_id, message, group, group_name)
+    
     store[message_type].append(new_message)
+    
+    # Find user who sent message
     user = find_item(auth_user_id,store["users"], "id")
     user[0]["message_count"] += 1
+    
     data_store.set(store)
+    
+    # Track stats
     users_stats_v1()
     user_stats_v1(auth_user_id)
     save()
@@ -185,71 +252,78 @@ def message_sendlater(auth_user_id, group_id, message, time_sent, group):
     store = data_store.get()
     time_now = time.time()
     time_difference = time_sent - time_now
+    
     # Switch id name between channel and dm
     id_name = "id" if group == CHANNEL else "dm_id"
+    
     # Locate the channel/dm
     valid_group = find_item(group_id, store["channels" if group == CHANNEL else "dms"], id_name)
     group_name = "channel" if group == CHANNEL else "DM"
+    
     # Check if valid dm id
     if not valid_group:
         raise InputError(description=f"Given {group_name} doesn't exist")
+    
     # Check if user is part of dm
     if auth_user_id not in valid_group[0]["all_members" if group == CHANNEL else "members"]:
         raise AccessError(description=f"User is not apart of the {group_name}")
+    
     # Check valid message length
     if len(message) > 1000:
         raise InputError(description="Message is too long")
+    
     # Check if time_send is a time in the past
     if time_difference < 0:
         raise InputError(description="Time set is in the past")
+    
     # Change id name for messages
     id_name = "channel_id" if group == CHANNEL else "dm_id"
     store['message_id_gen'] += 1
+    
     # Depending whether its sendlater or sendlaterdm, need to switch between the message types
     message_type = "channel_messages" if group == CHANNEL else "dm_messages"
     arguments = [auth_user_id, store['message_id_gen'], message, time_sent, message_type, group_id, id_name]
     thread = threading.Timer(time_difference, sendlater, arguments)
     thread.start()
 
-
     data_store.set(store)
     return {
         "message_id": store['message_id_gen']
     }
 
-def tagged_message_notification(auth_user_id, group_id, message,group, group_name):
+def tagged_message_notification(auth_user_id, group_id, message, group, group_name):
+    """Helper function to handle tagging in messages"""
     store = data_store.get()
-    i = 0
-    check_handle = []
-    for i in range(len(message)):
-        if message[i] == '@':
-            string_list = ''
-            while i+1 < len(message) and message[i+1].isalnum():
-                string_list += message[i+1]
-                i += 1
-            x = find_item(string_list,store["users"],'handle')  
-            if len(x) > 0 and x[0]["handle"] not in check_handle:
-                if group == CHANNEL:
-                    select_channel = find_item(group_id,store["channels"], "id")
-                    if x[0]["id"] not in select_channel[0]["all_members"]:
-                        break
-                else:
-                    select_dm = find_item(group_id,store["dms"], "dm_id")
-                    if x[0]["id"] not in select_dm[0]["members"]:
-                        break
-                y = find_item(auth_user_id,store["users"],'id') 
-                notif_string = "{} tagged you in {}: {}".format(y[0]["handle"], group_name,message[:20])
-                if x[0]["id"] in store["notifications"]:
-                    if group == CHANNEL:
-                        store["notifications"][x[0]["id"]].append({"channel_id" : group_id, "dm_id": -1, "notification_message": notif_string})
-                    else:
-                        store["notifications"][x[0]["id"]].append({"channel_id" : -1, "dm_id": group_id, "notification_message": notif_string})
-                else :
-                    if group == CHANNEL:
-                        store["notifications"][x[0]["id"]]= [{"channel_id" : group_id, "dm_id": -1, "notification_message": notif_string}]
-                    else:
-                        store["notifications"][x[0]["id"]] = [{"channel_id" : -1, "dm_id": group_id, "notification_message": notif_string}]
-                check_handle.append(x[0]["handle"])
+    msg_words = message.split()
+    channels = store["channels"]
+    dms = store["dms"]
+    
+    # Find tags in message
+    tags = list(filter(lambda word: '@' in word, msg_words))
+    
+    # Format tags into possible handles, removes single @s
+    possible_handles = list(filter(None, map(format_handle, tags)))
+    
+    # Get all handles of valid existing users
+    valid_handles = list(filter(None, map(lambda user: user["handle"], store["users"])))
+    
+    # Get all valid tagged handles
+    valid_tagged_handle = list(filter(lambda handle: handle in valid_handles, possible_handles))
+    
+    # Get ids belonging to tagged handles and remove duplicates i.e. tagged more than once
+    tagged_uids = list(map(lambda handle: find_handle_uid(handle, store["users"]), valid_tagged_handle))
+    tagged_uids = list(dict.fromkeys(tagged_uids))
+    
+    # Get tagged ids that are in group
+    members = find_item(group_id, channels, "id")[0]["all_members"] if group == CHANNEL else find_item(group_id, dms, "dm_id")[0]["members"]
+    valid_tagged_ids = list(filter(lambda id: id in members, tagged_uids))
+    
+    # Find handle of auth_user_id
+    inviter = find_item(auth_user_id, store["users"], "id")[0]["handle"]
+    list(map(lambda id: store_tagged_notif(inviter, group_name, message[:20], group_id, group, id), valid_tagged_ids))
+    
+    data_store.set(store)
+                
 
 def send_message(auth_user_id, group_id, message, group):
     """Helper function to send a message from channel or dm"""
@@ -287,9 +361,8 @@ def send_message(auth_user_id, group_id, message, group):
         'is_pinned': False,
     }
     group_messages.append(new_message)
-    tagged_message_notification(auth_user_id, group_id, message,group, valid_group[0]["name"])
     
-
+    tagged_message_notification(auth_user_id, group_id, message,group, valid_group[0]["name"])
     
     # Store data into data_store and return dictionary with the message_id
     data_store.set(store)
@@ -373,14 +446,17 @@ def message_edit_v1(auth_user_id, message_id, message):
     # Get variables from store
     store = data_store.get()
     edit_remove_msg(auth_user_id, message_id, store, "edit", message)
-    channel_message_list = find_item(message_id, store["channel_messages"], "message_id")
-    dm_message_list = find_item(message_id, store["dm_messages"], "message_id")
-    if len(channel_message_list) > 0:
-        channel_name = find_item(channel_message_list[0]["channel_id"],store["channels"], "id")[0]["name"]
-        tagged_message_notification(channel_message_list[0]["u_id"], channel_message_list[0]["channel_id"], message, CHANNEL, channel_name)
-    elif len(dm_message_list) > 0:
-        dm_name = find_item(dm_message_list[0]["dm_id"],store["dms"], "dm_id")[0]["name"]
-        tagged_message_notification(dm_message_list[0]["u_id"], dm_message_list[0]["dm_id"], message, DM, dm_name)       
+    
+    # Find message (edit can remove)
+    channel_msg = find_item(message_id, store["channel_messages"], "message_id")
+    dm_msg = find_item(message_id, store["dm_messages"], "message_id")
+    
+    if channel_msg:
+        channel_name = find_item(channel_msg[0]["channel_id"],store["channels"], "id")[0]["name"]
+        tagged_message_notification(channel_msg[0]["u_id"], channel_msg[0]["channel_id"], message, CHANNEL, channel_name)
+    elif dm_msg:
+        dm_name = find_item(dm_msg[0]["dm_id"], store["dms"], "dm_id")[0]["name"]
+        tagged_message_notification(dm_msg[0]["u_id"], dm_msg[0]["dm_id"], message, DM, dm_name)       
     
     # Store data into data_store and return empty dictionary
     data_store.set(store)
@@ -555,32 +631,46 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     # Locate channel/dm
     valid_channel = find_item(channel_id, store["channels"], "id")
     valid_dm = find_item(dm_id, store["dms"], "dm_id")
+    
     # Check if both channel/dm id are invalid
     if not valid_channel and not valid_dm:
         raise InputError(description="Channel/DM does not exist")
+    
     # Check if both channel/dm id are valid i.e. neither channel_id nor dm_id are -1
     if valid_channel and valid_dm:
         raise InputError(description="Neither channel_id nor dm_id are -1")
+    
     # Check if user is in channel/dm given that one of them is valid
     if auth_user_id not in (valid_channel[0]["all_members"] if valid_channel else valid_dm[0]["members"]):
         raise AccessError(description="The authorised user has not joined the channel/DM they are trying to share the message to")
+    
+    # Find message corresponding to og_message_id 
     valid_og_message = get_message(og_message_id, channel_messages, dm_messages)
+    
     # Message id does not refer to any message id
     if valid_og_message == ([], []):
         raise InputError(description="Message ID does not refer to a valid message within a channel/dm user has joined")
+    
+    # Get valid og message
     valid_og_message = valid_og_message[0][0] if valid_og_message[0] else valid_og_message[1][0]
+    
     # Check for the message id refers to a valid message that refers to a message within a channel/dm the auth_user has joined
     if "channel_id" in valid_og_message:
         # Find which channel the og channel message belongs to (Channels cannot be deleted so can always find one)
         channel_og_message = find_item(valid_og_message["channel_id"], store["channels"], "id")[0]
+        
+        # Check if user belongs to the channel where the og message originated from
         if auth_user_id not in channel_og_message["all_members"]:
             raise InputError(description="Message ID does not refer to a valid message within a channel/dm user has joined")
     else:
         # Find which DM the og dm message belongs to (Deleting DMs also deletes its messages, so if message is still valid, dm is still valid)
         dm_og_message = find_item(valid_og_message["dm_id"], store["dms"], "dm_id")[0]
+        
+        # Check if user belongs to the dm where the og message originated from
         if auth_user_id not in dm_og_message["members"]:
             raise InputError(description="Message ID does not refer to a valid message within a channel/dm user has joined")
     
+    # Optional message is too long
     if len(message) > 1000:
         raise InputError(description="Message is too long")
 
@@ -599,11 +689,11 @@ def message_share_v1(auth_user_id, og_message_id, message, channel_id, dm_id):
     if valid_channel:
         new_message["channel_id"] = channel_id
         channel_messages.append(new_message)
-        tagged_message_notification(auth_user_id, channel_id,shared_message,CHANNEL,valid_channel[0]["name"])
+        tagged_message_notification(auth_user_id, channel_id, shared_message, CHANNEL, valid_channel[0]["name"])
     else:
         new_message["dm_id"] = dm_id
         dm_messages.append(new_message)
-        tagged_message_notification(auth_user_id, dm_id,shared_message,DM,valid_dm[0]["name"])
+        tagged_message_notification(auth_user_id, dm_id, shared_message, DM, valid_dm[0]["name"])
 
 
     data_store.set(store)
@@ -642,24 +732,17 @@ def message_react_v1(auth_user_id, message_id, react_id):
     if channel_msg:
         # If channel message is valid then channel must be valid
         channel = find_item(channel_msg[0]["channel_id"], store["channels"], "id")[0]
+        
         # Check if message id refers to a channel message such that user has joined that channel
         if auth_user_id not in channel["all_members"]:
             raise InputError("Not Authorised User")
         react_message(channel_msg[0], reaction)
-        '''
-        for user in store["users"]:
-            if user["id"] == auth_user_id:
-                notif_string = "{} reacted to your message in {}".format(user["handle"], channel["name"])
-                notification_dict = {"channel_id" : channel["id"], "dm_id" : -1, "notification_message" : notif_string}
-                break
-        '''
+        
+        # Find handle of user who reacted to message
         user = find_item(auth_user_id,store["users"], "id")
-        notif_string = "{} reacted to your message in {}".format(user[0]["handle"], channel["name"])
-        notification_dict = {"channel_id" : channel["id"], "dm_id" : -1, "notification_message" : notif_string}
-        if channel_msg[0]["u_id"] in store["notifications"]: 
-            store["notifications"][channel_msg[0]["u_id"]].append(notification_dict) 
-        else:
-            store["notifications"][channel_msg[0]["u_id"]] = [notification_dict]
+               
+        # Store notification
+        store_notif(channel_msg[0]["u_id"], create_react_notif(user[0]["handle"], channel["name"], channel["id"], -1))
     elif dm_msg:
         # If dm_message is valid then dm must be valid
         dm = find_item(dm_msg[0]["dm_id"], store["dms"], "dm_id")[0]
@@ -667,22 +750,23 @@ def message_react_v1(auth_user_id, message_id, react_id):
         if auth_user_id not in dm["members"]:
             raise InputError("Not Authorised User")
         react_message(dm_msg[0], reaction)
-        user = find_item(auth_user_id,store["users"], "id")
-        notif_string = "{} reacted to your message in {}".format(user[0]["handle"], dm["name"])
-        notification_dict = {"channel_id" : -1, "dm_id" : dm["dm_id"], "notification_message" : notif_string}
-        if dm_msg[0]["u_id"] in store["notifications"]:
-            store["notifications"][dm_msg[0]["u_id"]].append(notification_dict) 
-        else:
-            store["notifications"][dm_msg[0]["u_id"]] = [notification_dict]
+        
+        # Find handle of user who reacted to message
+        user = find_item(auth_user_id, store["users"], "id")
+        
+        # Store notification
+        store_notif(dm_msg[0]["u_id"], create_react_notif(user[0]["handle"], dm["name"], -1, dm["dm_id"]))
     else:
         raise InputError("Not a valid message ID")
-         
+    
+    data_store.set(store)
     return {}
 
 def message_unreact_v1(auth_user_id, message_id, react_id):
     store = data_store.get()
-    dm_msg = find_item(message_id,store["dm_messages"],"message_id")
-    channel_msg = find_item(message_id,store["channel_messages"],"message_id")
+    # Find channel/dm msg belonging to message_id
+    dm_msg = find_item(message_id, store["dm_messages"],"message_id")
+    channel_msg = find_item(message_id, store["channel_messages"],"message_id")
 
     if react_id != 1:
         raise InputError("Invalid react ID")
@@ -690,30 +774,43 @@ def message_unreact_v1(auth_user_id, message_id, react_id):
     if channel_msg:
         # If channel message is valid then channel must be valid
         channel = find_item(channel_msg[0]["channel_id"], store["channels"], "id")[0]
+        
         # Check if message id refers to a channel message such that user has joined that channel
         if auth_user_id not in channel["all_members"]:
             raise InputError("Not Authorised User")
-        reaction = find_item(react_id,channel_msg[0]["reacts"],"react_id") 
-        if len(reaction) == 0 :
-            raise InputError("Not a valid react")
+        reaction = find_item(react_id, channel_msg[0]["reacts"], "react_id")
+        
+        # Check if reacted
+        if not reaction:
+            raise InputError("Not reacted to")
         if auth_user_id not in reaction[0]["u_ids"]:
             raise InputError("Not reacted to")
+        
+        # Unreact user
         reaction[0]["u_ids"].remove(auth_user_id)
     elif dm_msg:
         # If dm_message is valid then dm must be valid
         dm = find_item(dm_msg[0]["dm_id"], store["dms"], "dm_id")[0]
+        
         # Check if message id refers to a dm message such that user has joined that dm
         if auth_user_id not in dm["members"]:
             raise InputError("Not Authorised User")
-        reaction = find_item(react_id,dm_msg[0]["reacts"],"react_id")
-        if len(reaction) == 0:
-            raise InputError("Not a valid react") 
+        
+        # Find if react exists
+        reaction = find_item(react_id, dm_msg[0]["reacts"], "react_id")
+        
+        # Check if reacted
+        if not reaction:
+            raise InputError("Not reacted to") 
         if auth_user_id not in reaction[0]["u_ids"]:
             raise InputError("Not reacted to")
+        
+        # Unreact
         reaction[0]["u_ids"].remove(auth_user_id)
     else:
         raise InputError("Not a valid message ID")
-      
+    
+    data_store.set(store)
     return {}
 
 

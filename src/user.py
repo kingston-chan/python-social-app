@@ -184,40 +184,71 @@ def user_profile_sethandle_v1(auth_user_id, handle_str):
     return {}
 
 def user_stats_v1(auth_user_id):
+    """
+    Updates the required statistics about the use of UNSW Streams of auth_user.
+
+    Arguments:
+        auth_user_id (integer) - ID of the user being their stats updated
+
+    Exceptions:
+        None
+            
+    Return Value
+        Returns a dictionary of the auth user's timestamped metrics (channels_joined, dms_joined and messages sent)
+    """
     store = data_store.get()
     users = store["users"]
 
+    # Find user corresponding to auth user id
     user = find_item(auth_user_id, users, "id")[0]
-    user_channels = len(list(filter(lambda channel: (user["id"] in channel["all_members"]), store["channels"])))
-    user_dms = len(list(filter(lambda dm: (user["id"] in dm["members"]), store["dms"])))
+    
+    # Find all the channels/dms the user is currently apart of
+    user_channels = len(list(filter(lambda channel: (auth_user_id in channel["all_members"]), store["channels"])))
+    user_dms = len(list(filter(lambda dm: (auth_user_id in dm["members"]), store["dms"])))
 
-    if user["user_metrics"]["channels_joined"][-1]["num_channels_joined"] != user_channels:
-        user["user_metrics"]["channels_joined"].append({'num_channels_joined': user_channels, 'time_stamp': int(time.time())})
-    elif user["user_metrics"]["dms_joined"][-1]["num_dms_joined"] != user_dms:
-        user["user_metrics"]["dms_joined"].append({'num_dms_joined': user_dms, 'time_stamp': int(time.time())})
-    elif user["user_metrics"]["messages_sent"][-1]["num_messages_sent"] != user["message_count"]:
-        user["user_metrics"]["messages_sent"].append({'num_messages_sent': user["message_count"], 'time_stamp': int(time.time())})
-        
-    num_channels_joined = user["user_metrics"]["channels_joined"][-1]["num_channels_joined"]
-    num_dms_joined = user["user_metrics"]["dms_joined"][-1]["num_dms_joined"]
-    num_messages_sent = user["user_metrics"]["messages_sent"][-1]["num_messages_sent"]
+    # Update the user's metrics if they have changed
+    user_metrics = user["user_metrics"]
+    if user_metrics["channels_joined"][-1]["num_channels_joined"] != user_channels:
+        user["user_metrics"]["channels_joined"].append({
+            'num_channels_joined': user_channels,
+            'time_stamp': int(time.time())
+        })
+    elif user_metrics["dms_joined"][-1]["num_dms_joined"] != user_dms:
+        user["user_metrics"]["dms_joined"].append({
+            'num_dms_joined': user_dms,
+            'time_stamp': int(time.time())
+        })
+    elif user_metrics["messages_sent"][-1]["num_messages_sent"] != user["message_count"]:
+        user["user_metrics"]["messages_sent"].append({
+            'num_messages_sent': user["message_count"], 
+            'time_stamp': int(time.time())
+        })
+    
+    # Get latest number of channels/dms joined and messages sent
+    num_channels_joined = user_metrics["channels_joined"][-1]["num_channels_joined"]
+    num_dms_joined = user_metrics["dms_joined"][-1]["num_dms_joined"]
+    num_messages_sent = user_metrics["messages_sent"][-1]["num_messages_sent"]
 
+    # Find the divisor for calculating involvement rate
     divisor = num_channels_joined + num_dms_joined + num_messages_sent
 
+    # Find the number of current channels and active dms and total messages of Workspace
     num_channels = len(store["channels"])
     num_dms = len(store["dms"])
     num_msgs = len(store["dm_messages"]) + len(store["channel_messages"])
 
+    # Find the denominator of calculating involvement rate
     denominator = num_channels + num_dms + num_msgs
 
+    # Set involvement rate to 0 if denominator is zero otherwise get the rate
     involvement = 0.0 if denominator == 0 else divisor / denominator
     
+    # Cap involvement rate
     if involvement > 1:
         involvement = 1.0
     
     user["user_metrics"]["involvement_rate"] = involvement
 
-    store["users"] = users
     data_store.set(store)
     return user["user_metrics"]
 
