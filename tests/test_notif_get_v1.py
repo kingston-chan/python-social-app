@@ -144,3 +144,11 @@ def test_fail_dm_msg(clear,user1,user2):
     rh.message_senddm(user1["token"], dm["dm_id"], "{} Hello".format('@' + rh.user_profile(user2["token"],user2["auth_user_id"]).json()["user"]["handle_str"])).json()["message_id"]
     response = requests.get(f"{url}/notifications/get/v1", params={"token" : user2["token"]})
     assert response.json()["notifications"] == []
+
+def test_tag_no_handle(clear, user1, user2):
+    channel = rh.channels_create(user1["token"], "channel", True).json()["channel_id"]
+    rh.channel_join(user2["token"], channel)
+    rh.message_send(user2["token"], channel, "@ Hello")
+    assert rh.notifications_get(user1["token"]).json()["notifications"] == []
+    assert rh.notifications_get(user2["token"]).json()["notifications"] == []
+    

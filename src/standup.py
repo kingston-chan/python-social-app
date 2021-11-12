@@ -3,8 +3,7 @@ from src.error import InputError, AccessError
 from src.message import message_send_v1, find_item
 from src.user import users_stats_v1, user_stats_v1
 from src.other import save
-import time
-import threading
+import time, threading
 
 def standup_thread_send_msg(auth_user_id, channel_id):
     """Helper function to send buffered standup messages when standup ends"""

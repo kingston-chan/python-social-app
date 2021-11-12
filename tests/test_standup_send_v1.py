@@ -43,10 +43,10 @@ def test_standup_send_invalid_channel_id(clear, first_user_data):
 def test_standup_send_thousand_characters(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
     channel_1 = response.json()["channel_id"]
-
+    rh.standup_start(first_user_data["token"], channel_1, 1)
     response = rh.standup_send(first_user_data["token"], channel_1, "a"*1001)
-
     assert response.status_code == 400
+    time.sleep(1)
 
 def test_standup_send_not_active(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
@@ -56,15 +56,14 @@ def test_standup_send_not_active(clear, first_user_data):
 
     assert response.status_code == 400
 
-
 def test_standup_send_valid(clear, first_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
     channel_1 = response.json()["channel_id"]
 
     rh.standup_start(first_user_data["token"], channel_1, 1)
     response = rh.standup_send(first_user_data["token"], channel_1, "message")
-    
     assert response.status_code == 200
+    time.sleep(1)
     
 def test_standup_send_from_second_channel(clear, first_user_data):
     rh.channels_create(first_user_data["token"], "channel_1", True)
@@ -73,8 +72,8 @@ def test_standup_send_from_second_channel(clear, first_user_data):
 
     rh.standup_start(first_user_data["token"], channel_2, 1)
     response = rh.standup_send(first_user_data["token"], channel_2, "message")
-    
     assert response.status_code == 200
+    time.sleep(1)
     
 def test_standup_send_from_second_user(clear, first_user_data, second_user_data):
     response = rh.channels_create(first_user_data["token"], "channel_1", True)
