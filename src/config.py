@@ -1,4 +1,4 @@
-port = 8079
+port = 8077
 
 url = f"http://localhost:{port}/"
 
