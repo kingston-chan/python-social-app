@@ -2,6 +2,7 @@ from src.data_store import data_store
 from src.error import InputError, AccessError
 from src.message import message_send_v1, find_item
 from src.user import users_stats_v1, user_stats_v1
+from src.other import save
 import time
 import threading
 
@@ -39,6 +40,7 @@ def standup_thread_send_msg(auth_user_id, channel_id):
     # Check user/workspace stats
     users_stats_v1()
     user_stats_v1(auth_user_id)
+    save()
     return
 
 def standup_start_v1(auth_user_id, channel_id, length):
