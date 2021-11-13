@@ -12,6 +12,8 @@ Functions to:
 from src.data_store import data_store
 from src.channel import assign_user_info
 from src.error import InputError
+from string import ascii_letters, digits
+from random import choice
 import re, time
 import urllib.request
 import urllib.error
