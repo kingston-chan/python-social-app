@@ -321,9 +321,6 @@ def user_profile_uploadphoto_v1(auth_user_id, img_url, x_start, y_start, x_end, 
 
     # Save imgurl onto the user's profile_img_url key
     login_user[0]['profile_img_url'] = f"{url}/imgurl/{img_name}.jpg"
-    print(login_user[0]['profile_img_url'])
-
-    # Increment img_count and set data_store
     data_store.set(store)
 
 def users_stats_v1():
