@@ -162,7 +162,6 @@ def channel_join(token, channel_id):
     """
     return requests.post(f"{url}/channel/join/v2", json={ "token": token, "channel_id": channel_id })
 
-
 def channel_invite(token, channel_id, u_id):
     """
     Invites a user with ID u_id to join a channel with ID channel_id. Once invited, the user is added to 
@@ -676,3 +675,23 @@ def standup_send(token, channel_id, message):
         "message": message
     }
     return requests.post(f"{url}/standup/send/v1", json=info)
+
+# ==== Extra Mark ==== #
+def channel_kick(token, channel_id, u_id):
+    """
+    Make user with user id u_id an owner of the channel.
+
+    Arguments
+        token (JWT token)
+        channel_id (int)
+        u_id (int)
+
+    Return value
+        Returns the response of the channel/addowner/v1 request which contains json {}
+    """
+    info = { 
+        "token": token, 
+        "channel_id": channel_id,
+        "u_id": u_id 
+    }
+    return requests.post(f"{url}/channel/kick/v1", json=info)
