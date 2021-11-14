@@ -8,7 +8,7 @@ Extra features:
     - Members can enter /time
         - They can either do:
             - /time local - which gives the time and date for the local region (Sydney/Australia) or
-            - /time [region] - which gives teh time and date for the specific region they have input.
+            - /time [region] - which gives the time and date for the specific region they have input.
         - There is also /time help which provides a link for all regions that can be inputted.
 - Added dark and light mode
 - Predictive text box to show a list of commands to the user
