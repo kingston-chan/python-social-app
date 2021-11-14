@@ -78,3 +78,23 @@ meeting: 2:45 pm - 5:00 pm
 4:15 - 4:30 = Found a few problems with the code regarding channel_addowner and channel_removeowner
 4:30 - 5:00 = Fixed up the issues and merge requested it in before the leaderboards ran.
 
+**Iteration 3**
+
+Taken from wiki from project-backend on gitlab
+
+Meeting 8th November 8pm
+8:00pm - 8:20pm
+
+We talked about user_profile_uploadphoto, Josh was in charge of this function.
+There's a problem with changing the route from 'static' to 'imgurl'
+As well as the location of the static/imgurl folder
+Keefe assisted with it.
+8:20pm - 8:50pm
+
+Abbas and Kingston seperate from the group to work on the notifications function.
+8:50pm - 9:10pm
+
+The user_profile_uploadphoto problem was solved.
+Abbas and Kingston came back.
+Julian was working on user_stats_v1
+
