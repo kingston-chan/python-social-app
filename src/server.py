@@ -250,6 +250,7 @@ def message_send():
         message_state = wordbomb_send(data["channel_id"], data["message"], user_id)
         if message_state:
             next_bomb_msg = wordbomb_next_bomb(data["channel_id"], user_id)
+            message_send_v1(user_id, data["channel_id"], data["message"])
             new_message = message_send_v1(user_id, data["channel_id"], next_bomb_msg)
         else:
             new_message = message_send_v1(user_id, data["channel_id"], data["message"])
