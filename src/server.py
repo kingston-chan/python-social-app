@@ -258,7 +258,7 @@ def message_send():
         try:
             data["message"].split()[1]
         except IndexError:
-            raise InputError(description="Invalid use of command, proper usage is: /translate language message")
+            raise InputError(description="Invalid use of command, proper usage is: /translate language message") from InputError
         translated_msg = commands_translate(data["message"].split()[1], ' '.join(data["message"].split()[2:]))
         new_message = message_send_v1(user_id, data["channel_id"], translated_msg)
     elif data["message"].split(' ', 1)[0] == "/wordbomb":
