@@ -168,7 +168,7 @@ def wordbomb_next_bomb(channel_id, user_id):
     random_word = r.get_random_word()
     while len(random_word) < 3 or not random_word.isalpha():
         random_word = r.get_random_word()
-    
+    random_word = random_word.lower()
     substring_len = random.randint(2,3)
     substring_start = random.randint(0,len(random_word)-substring_len)
     
