@@ -20,7 +20,7 @@ from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
 from src.standup import standup_start_v1, standup_active_v1, standup_send_v1
 from src.search import search_v1
 from src.notifications import notifications_v1
-from src.commands import commands_translate
+from src.commands import commands_translate, commands_find_user
 
 def quit_gracefully(*args):
     '''For coverage'''
@@ -250,21 +250,31 @@ def message_send():
         try:
             data["message"].split()[1]
         except IndexError:
-            raise InputError(description="Invalid use of command, proper usage is: /translate <language> <message>")
+            raise InputError(description="Invalid use of command, proper usage is: /translate language message")
         translated_msg = commands_translate(data["message"].split()[1], ' '.join(data["message"].split()[2:]))
         new_message = message_send_v1(user_id, data["channel_id"], translated_msg)
+
     elif data["message"].split(' ', 1)[0] == "/kick":
         try:
-            data["message"].split()[1]
+            handle = data["message"].split()[1]
         except IndexError:
-            raise InputError(description="Invalid use of command, proper usage is: /kick <user>")
-        channel_kick_v1(user_id, data["message"].split()[1], ' '.join(data["message"].split()[2]))
+            raise InputError(description="Invalid use of command, proper usage is: /kick <handle>")
+        channel_kick_v1(user_id, data["channel_id"], commands_find_user(handle))
+        new_message = message_send_v1(user_id, data["channel_id"], f"UNSW Streams: {handle} has been kicked off the channel.")
     elif data["message"].split(' ', 1)[0] == "/ban":
         try:
-            data["message"].split()[1]
+            handle = data["message"].split()[1]
         except IndexError:
-            raise InputError(description="Invalid use of command, proper usage is: /ban <user>")
-        channel_ban_v1(user_id, data["message"].split()[1], ' '.join(data["message"].split()[2]))
+            raise InputError(description="Invalid use of command, proper usage is: /ban <handle>") 
+        channel_ban_v1(user_id, data["channel_id"], commands_find_user(handle))
+        new_message = message_send_v1(user_id, data["channel_id"], f"UNSW Streams: {handle} has been banned from the channel.")    
+    elif data["message"].split(' ', 1)[0] == "/unban":
+        try:
+            handle = data["message"].split()[1]
+        except IndexError:
+            raise InputError(description="Invalid use of command, proper usage is: /unban <handle>")
+        channel_unban_v1(user_id, data["channel_id"], commands_find_user(handle))
+        new_message = message_send_v1(user_id, data["channel_id"], f"UNSW Streams: {handle} has been unbanned from the channel.")
     else:
         new_message = message_send_v1(user_id, data["channel_id"], data["message"])
     

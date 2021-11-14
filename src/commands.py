@@ -11,9 +11,15 @@ def commands_translate(target_language, message):
         raise InputError(description="Invalid use of command, proper usage is: /translate language message")
 
     try:
-        translation = translator.translate(message, dest=target_language)
+        translation = translator.translate(text=message, dest=target_language)
     except ValueError:
         raise InputError(description="Invalid use of command, proper usage is: /translate language message")
     
     return f"{translation.origin} ({translation.src}) --> {translation.text} ({translation.dest})"
+
+def commands_find_user(handle):
+    store = data_store.get()
+    users = store['users']
+    valid_user = list(filter(lambda user: handle == user['handle'], users))
+    return valid_user[0]["id"]
     
