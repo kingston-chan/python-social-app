@@ -9,9 +9,6 @@ image: comp1531/basic:20T3
 stages:
   - checks
 
-before_script:
-   -python--version -
-   pip3 install - r requirements.txt
 
 pytest:
   stage: checks
