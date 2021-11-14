@@ -101,6 +101,7 @@ def channels_create_v1(auth_user_id, name, is_public):
         'owner_members': [auth_user_id],
         'owner_permissions': [auth_user_id],
         'all_members': [auth_user_id],
+        'ban_list': [],
         'is_public': is_public,
         'standup': {'active': False, 'auth_user_id': None, 'time_finish': None},
         'standup_queue': []
