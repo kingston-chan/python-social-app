@@ -136,13 +136,13 @@ def test_utilization_change_when_leaving_channel_dm(clear_and_register, create_c
 # Workspace changes only when messages are sent
 def test_workspace_stats_with_delayed_messages(clear_and_register, create_channel, create_dm):
     # Send a message in the dm and channel in three seconds
-    rh.message_sendlater(clear_and_register, create_channel, "hello", int(time.time()) + 3)
-    rh.message_sendlaterdm(clear_and_register, create_dm, "hello", int(time.time()) + 4)
+    rh.message_sendlater(clear_and_register, create_channel, "hello", int(time.time()) + 2)
+    rh.message_sendlaterdm(clear_and_register, create_dm, "hello", int(time.time()) + 2)
 
     assert len(rh.users_stats(clear_and_register).json()["workspace_stats"]["messages_exist"]) == 1
     assert rh.users_stats(clear_and_register).json()["workspace_stats"]["messages_exist"][-1]["num_messages_exist"] == 0
 
-    time.sleep(4)
+    time.sleep(2)
     assert len(rh.users_stats(clear_and_register).json()["workspace_stats"]["messages_exist"]) == 3
     assert rh.users_stats(clear_and_register).json()["workspace_stats"]["messages_exist"][-1]["num_messages_exist"] == 2
 
