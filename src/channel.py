@@ -455,14 +455,6 @@ def channel_kick_v1(auth_user_id, channel_id, u_id):
         raise InputError(description="Authorised user is kicking themself.")
     elif (auth_user_id in valid_channel[0]["owner_members"] or auth_user_id in valid_channel[0]["owner_permissions"]) and (u_id in valid_channel[0]["owner_members"] or u_id in valid_channel[0]["owner_permissions"]):
         raise InputError(description="Authorised user is kicking another owner.")
-
-    # Check if auth user is a owner
-    if u_id in valid_channel[0]["owner_members"]:
-        valid_channel[0]["owner_members"].remove(u_id)
-    
-    # Revoke permissions if owner/global owner
-    if u_id in valid_channel[0]["owner_permissions"]:
-        valid_channel[0]["owner_permissions"].remove(u_id)
     
     valid_channel[0]["all_members"].remove(u_id)
     
