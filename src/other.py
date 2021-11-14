@@ -15,7 +15,6 @@ def clear_v1():
     store['dm_id_gen'] = 0
     store['message_id_gen'] = 0
     store['session_count'] = 0
-    store['img_count'] = 0
     store['password_reset_codes'].clear()
     store['metrics']['channels_exist'].clear()
     store['metrics']['dms_exist'].clear()

@@ -12,6 +12,8 @@ Functions to:
 from src.data_store import data_store
 from src.channel import assign_user_info
 from src.error import InputError
+from string import ascii_letters, digits
+from random import choice
 import re, time
 import urllib.request
 import urllib.error
@@ -281,7 +283,6 @@ def user_profile_uploadphoto_v1(auth_user_id, img_url, x_start, y_start, x_end, 
    # Get variables from store
     store = data_store.get()
     users = store["users"]
-    img_count = store["img_count"]
     
     # Locate user
     login_user = list(filter(lambda user: user["id"] == auth_user_id, users))
@@ -293,7 +294,8 @@ def user_profile_uploadphoto_v1(auth_user_id, img_url, x_start, y_start, x_end, 
         raise InputError("img_url returning HTTP status other than 200.")
     # Make image_string variable then url_retrieve it
     # If it does not work, InputError
-    image_string = f"./imgurl/{img_count}.jpg"
+    img_name = ''.join(choice(digits + ascii_letters) for i in range(20))
+    image_string = f"./imgurl/{img_name}.jpg"
     try:
         urllib.request.urlretrieve(img_url, image_string)
     except Exception:
@@ -320,11 +322,7 @@ def user_profile_uploadphoto_v1(auth_user_id, img_url, x_start, y_start, x_end, 
     cropped.save(image_string)
 
     # Save imgurl onto the user's profile_img_url key
-    login_user[0]['profile_img_url'] = f"{url}/imgurl/{img_count}.jpg"
-    print(login_user[0]['profile_img_url'])
-
-    # Increment img_count and set data_store
-    store["img_count"] += 1
+    login_user[0]['profile_img_url'] = f"{url}/imgurl/{img_name}.jpg"
     data_store.set(store)
 
 def users_stats_v1():

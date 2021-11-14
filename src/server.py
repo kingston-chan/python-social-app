@@ -3,7 +3,7 @@ from json import dumps
 from flask import Flask, request, send_from_directory
 from flask_cors import CORS
 from flask_mail import Mail, Message
-from src.error import AccessError
+from src.error import AccessError, InputError
 from src import config
 from src.channels import channels_create_v1, channels_list_v1
 from src.data_store import data_store
@@ -20,6 +20,7 @@ from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
 from src.standup import standup_start_v1, standup_active_v1, standup_send_v1
 from src.search import search_v1
 from src.notifications import notifications_v1
+from src.commands import commands_translate
 
 def quit_gracefully(*args):
     '''For coverage'''
@@ -245,7 +246,16 @@ def channel_removeowner():
 def message_send():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
-    new_message = message_send_v1(user_id, data["channel_id"], data["message"])
+    if data["message"].split(' ', 1)[0] == "/translate":
+        try:
+            data["message"].split()[1]
+        except IndexError:
+            raise InputError(description="Invalid use of command, proper usage is: /translate language message")
+        translated_msg = commands_translate(data["message"].split()[1], ' '.join(data["message"].split()[2:]))
+        new_message = message_send_v1(user_id, data["channel_id"], translated_msg)
+    else:
+        new_message = message_send_v1(user_id, data["channel_id"], data["message"])
+    
     store = data_store.get()
     for user in store["users"]:
         if user_id == user["id"]:

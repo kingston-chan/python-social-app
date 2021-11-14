@@ -79,38 +79,38 @@ def test_default_photo(clear, user1):
 def test_valid_photo(clear, user1):
     response = rh.user_profile_uploadphoto(user1['token'], SAMPLE_JPEG_IMG_LINK, 0, 0, 700, 700)
     assert response.status_code == 200
-
-    response = requests.get(f"{url}/imgurl/0.jpg")
+    user1_prof = rh.user_profile(user1["token"], user1["auth_user_id"]).json()["user"]
+    response = requests.get(user1_prof["profile_img_url"])
     assert response.status_code == 200
 
 def test_valid_photos(clear, user1):
     response = rh.user_profile_uploadphoto(user1['token'], SAMPLE_JPEG_IMG_LINK, 0, 0, 700, 700)
     assert response.status_code == 200
-
-    response = requests.get(f"{url}/imgurl/0.jpg")
+    user1_prof = rh.user_profile(user1["token"], user1["auth_user_id"]).json()["user"]
+    response = requests.get(user1_prof["profile_img_url"])
     assert response.status_code == 200
 
     response = rh.user_profile_uploadphoto(user1['token'], SAMPLE_JPEG_IMG_LINK2, 0, 0, 700, 700)
     assert response.status_code == 200
-
-    response = requests.get(f"{url}/imgurl/1.jpg")
+    user1_prof = rh.user_profile(user1["token"], user1["auth_user_id"]).json()["user"]
+    response = requests.get(user1_prof["profile_img_url"])
     assert response.status_code == 200
 
 def test_mulitple_users(clear, user1, user2, user3):
     response = rh.user_profile_uploadphoto(user1['token'], SAMPLE_JPEG_IMG_LINK, 0, 0, 700, 700)
     assert response.status_code == 200
-
-    response = requests.get(f"{url}/imgurl/0.jpg")
+    user1_prof = rh.user_profile(user1["token"], user1["auth_user_id"]).json()["user"]
+    response = requests.get(user1_prof["profile_img_url"])
     assert response.status_code == 200
 
     response = rh.user_profile_uploadphoto(user2['token'], SAMPLE_JPEG_IMG_LINK, 0, 0, 700, 700)
     assert response.status_code == 200
-
-    response = requests.get(f"{url}/imgurl/1.jpg")
+    user2_prof = rh.user_profile(user2["token"], user2["auth_user_id"]).json()["user"]
+    response = requests.get(user2_prof["profile_img_url"])
     assert response.status_code == 200
 
     response = rh.user_profile_uploadphoto(user3['token'], SAMPLE_JPEG_IMG_LINK2, 0, 0, 700, 700)
     assert response.status_code == 200
-
-    response = requests.get(f"{url}/imgurl/2.jpg")
+    user3_prof = rh.user_profile(user3["token"], user3["auth_user_id"]).json()["user"]
+    response = requests.get(user3_prof["profile_img_url"])
     assert response.status_code == 200
