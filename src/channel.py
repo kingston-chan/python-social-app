@@ -418,4 +418,47 @@ def channel_removeowner_v1(auth_user_id, channel_id, u_id):
 
     return {}
 
+def channel_kick_v1(auth_user_id, channel_id, u_id):
+    """
+    Auth_user_id leaves the channel by being removed from the channels
+    all_members list and if owner, owner_members and owner_permissions lists
+
+    Arguments:
+    auth_user_id (integer) - id of the user joining the channel
+    channel_id (integer) - id of the channel
+
+    Exceptions:
+    InputError - Occurs when given:
+                    - channel_id does not exist/invalid
+    AccessError - Occurs when given:
+                    - Authorised user is not a member of the channel
+
+    Return value:
+        Returns an empty dictionary when user successfully leaves the channel
+    """
+    
+    # Find channel corresponding to channel_id
+    store = data_store.get()
+    valid_channel = list(filter(lambda channel: channel["id"] == channel_id, store["channels"]))
+    
+    if not valid_channel:
+        raise InputError(description="Invalid channel id.")
+
+    # Check if auth user id is in the members list
+    if auth_user_id not in valid_channel[0]["all_members"]:
+        raise AccessError(description="Authorised user is not member of the channel.")
+    elif u_id not in valid_channel[0]["all_members"]:
+        raise InputError(description="Authorised user is kicking invalid user.")
+    elif auth_user_id not in valid_channel[0]["owner_members"] or auth_user_id not in valid_channel[0]["owner_permissions"]:
+        raise AccessError(description="Authorised user is not an owner of the channel.")
+    elif auth_user_id is u_id:
+        raise InputError(description="Authorised user is kicking themself.")
+    elif (auth_user_id in valid_channel[0]["owner_members"] or auth_user_id in valid_channel[0]["owner_permissions"]) and (u_id in valid_channel[0]["owner_members"] or u_id in valid_channel[0]["owner_permissions"]):
+        raise InputError(description="Authorised user is kicking another owner.")
+    
+    valid_channel[0]["all_members"].remove(u_id)
+    
+    data_store.set(store)
+    return {}
+    
 
