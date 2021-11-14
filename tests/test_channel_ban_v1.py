@@ -22,10 +22,14 @@ def user3():
     return rh.auth_register("user3@email.com", "password", "user", "three").json()
 
 # ==== Helper Functions ==== #
-def create_channel(creater_token, invited_members_token, is_public):
-    channel_id = rh.channels_create(creater_token, "chan_name", is_public).json()['channel_id']
-    for member_token in invited_members_token:
-        rh.channel_join(member_token, channel_id)
+def create_channel(creator_token, invited_members, is_public):
+    channel_id = rh.channels_create(creator_token, "chan_name", is_public).json()['channel_id']
+    if is_public:
+        for member in invited_members:
+            rh.channel_join(member, channel_id)
+    else:
+        for member in invited_members:
+            rh.channel_invite(creator_token, channel_id, member)
     return channel_id
 
 # ==== Tests - Errors ==== #
@@ -187,7 +191,7 @@ def test_valid_bans_in_public(clear, user1, user2, user3):
     assert join_response.status_code == 403
 
 def test_valid_bans_in_private(clear, user1, user2, user3):
-    channel_id = create_channel(user1["token"], [user2["token"], user3["token"]], False)
+    channel_id = create_channel(user1["token"], [user2["auth_user_id"], user3["auth_user_id"]], False)
 
     expected_output = {
         "name": "chan_name",
@@ -237,7 +241,7 @@ def test_valid_bans_in_private(clear, user1, user2, user3):
 
     expected_output = {
         "name": "chan_name",
-        "is_public": True,
+        "is_public": False,
         "owner_members": [
             {
                 'u_id': user1["auth_user_id"],
@@ -278,7 +282,7 @@ def test_valid_bans_in_private(clear, user1, user2, user3):
 
     expected_output = {
         "name": "chan_name",
-        "is_public": True,
+        "is_public": False,
         "owner_members": [
             {
                 'u_id': user1["auth_user_id"],

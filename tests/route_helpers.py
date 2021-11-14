@@ -678,20 +678,17 @@ def standup_send(token, channel_id, message):
 
 # ==== Extra Mark ==== #
 def channel_kick(token, channel_id, u_id):
-    """
-    Make user with user id u_id an owner of the channel.
-
-    Arguments
-        token (JWT token)
-        channel_id (int)
-        u_id (int)
-
-    Return value
-        Returns the response of the channel/addowner/v1 request which contains json {}
-    """
     info = { 
         "token": token, 
         "channel_id": channel_id,
         "u_id": u_id 
     }
     return requests.post(f"{url}/channel/kick/v1", json=info)
+
+def channel_ban(token, channel_id, u_id):
+    info = { 
+        "token": token, 
+        "channel_id": channel_id,
+        "u_id": u_id 
+    }
+    return requests.post(f"{url}/channel/ban/v1", json=info)
