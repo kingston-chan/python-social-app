@@ -12,7 +12,6 @@ from src.error import InputError
 from src import config
 from string import digits, ascii_letters
 from random import choice
-import urllib.request
 from src.config import url
 import hashlib, jwt, re, secrets, time
 
