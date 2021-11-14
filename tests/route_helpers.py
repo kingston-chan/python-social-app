@@ -692,3 +692,11 @@ def channel_ban(token, channel_id, u_id):
         "u_id": u_id 
     }
     return requests.post(f"{url}/channel/ban/v1", json=info)
+
+def channel_unban(token, channel_id, u_id):
+    info = { 
+        "token": token, 
+        "channel_id": channel_id,
+        "u_id": u_id 
+    }
+    return requests.post(f"{url}/channel/unban/v1", json=info)

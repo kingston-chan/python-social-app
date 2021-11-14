@@ -261,11 +261,11 @@ def test_valid_unban_in_private(clear, user1, user2):
     assert unban_response.status_code == 200
 
     invite_response = rh.channel_invite(user1["token"], channel_id, user2["auth_user_id"])
-    assert invite_response.status_code == 400
+    assert invite_response.status_code == 200
 
     expected_output = {
         "name": "chan_name",
-        "is_public": True,
+        "is_public": False,
         "owner_members": [
             {
                 'u_id': user1["auth_user_id"],

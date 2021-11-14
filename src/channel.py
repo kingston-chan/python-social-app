@@ -476,5 +476,26 @@ def channel_ban_v1(auth_user_id, channel_id, u_id):
     
     data_store.set(store)
     return {}
+
+def channel_unban_v1(auth_user_id, channel_id, u_id):
+    # Find channel corresponding to channel_id
+    store = data_store.get()
+    valid_channel = list(filter(lambda channel: channel["id"] == channel_id, store["channels"]))
     
+    if not valid_channel:
+        raise InputError(description="Invalid channel id.")
+
+    # Check if auth user id is in the members list
+    if auth_user_id not in valid_channel[0]["all_members"]:
+        raise AccessError(description="Authorised user is not member of the channel.")
+    elif auth_user_id not in valid_channel[0]["owner_members"] or auth_user_id not in valid_channel[0]["owner_permissions"]:
+        raise AccessError(description="Authorised user is not an owner of the channel.")
+    elif u_id not in valid_channel[0]["ban_list"]:
+        raise InputError(description="User is not banned.")
+
+    
+    valid_channel[0]["ban_list"].remove(u_id)
+    
+    data_store.set(store)
+    return {}
 
