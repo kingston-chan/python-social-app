@@ -20,7 +20,7 @@ from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
 from src.standup import standup_start_v1, standup_active_v1, standup_send_v1
 from src.search import search_v1
 from src.notifications import notifications_v1
-from src.commands import commands_translate, commands_find_user
+from src.commands import commands_translate, wordbomb_next_bomb, wordbomb_start, wordbomb_active, wordbomb_send, commands_find_user
 
 def quit_gracefully(*args):
     '''For coverage'''
@@ -246,14 +246,21 @@ def channel_removeowner():
 def message_send():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
-    if data["message"].split(' ', 1)[0] == "/translate":
+    if wordbomb_active(data["channel_id"], user_id):
+        message_state = wordbomb_send(data["channel_id"], data["message"], user_id)
+        if message_state:
+            next_bomb_msg = wordbomb_next_bomb(data["channel_id"], user_id)
+            new_message = message_send_v1(user_id, data["channel_id"], next_bomb_msg)
+        else:
+            new_message = message_send_v1(user_id, data["channel_id"], data["message"])
+
+    elif data["message"].split(' ', 1)[0] == "/translate":
         try:
             data["message"].split()[1]
         except IndexError:
-            raise InputError(description="Invalid use of command, proper usage is: /translate language message")
+            raise InputError(description="Invalid use of command, proper usage is: /translate language message") from InputError
         translated_msg = commands_translate(data["message"].split()[1], ' '.join(data["message"].split()[2:]))
         new_message = message_send_v1(user_id, data["channel_id"], translated_msg)
-
     elif data["message"].split(' ', 1)[0] == "/kick":
         try:
             handle = data["message"].split()[1]
@@ -275,6 +282,12 @@ def message_send():
             raise InputError(description="Invalid use of command, proper usage is: /unban <handle>")
         channel_unban_v1(user_id, data["channel_id"], commands_find_user(handle))
         new_message = message_send_v1(user_id, data["channel_id"], f"UNSW Streams: {handle} has been unbanned from the channel.")
+    elif data["message"].split(' ', 1)[0] == "/wordbomb":
+        if wordbomb_active(data["channel_id"], user_id):
+            raise InputError(description="Wordbomb already active.")
+        wordbomb_start(data["channel_id"], user_id)
+        next_bomb_msg = wordbomb_next_bomb(data["channel_id"], user_id)
+        new_message = message_send_v1(user_id, data["channel_id"], next_bomb_msg)
     else:
         new_message = message_send_v1(user_id, data["channel_id"], data["message"])
     

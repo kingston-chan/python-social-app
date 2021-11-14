@@ -104,7 +104,8 @@ def channels_create_v1(auth_user_id, name, is_public):
         'ban_list': [],
         'is_public': is_public,
         'standup': {'active': False, 'auth_user_id': None, 'time_finish': None},
-        'standup_queue': []
+        'standup_queue': [],
+        'wordbomb': {'active': False, 'user_turn': None, 'turn_count': 0, 'bomb_str': None, 'lives':{}}
     }
 
     store['channels'].append(new_channel)
