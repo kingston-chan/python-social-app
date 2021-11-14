@@ -5,5 +5,10 @@ Extra features:
     - Channel owners can also unban members in channels with '/unban [handle]'
     - Translation command which translates a given message with a given language i.e. '/translate [Language to translate to] [message]'
     - Word bomb game command that starts a word bomb game (given some letters make a word with it). Command: '/wordbomb'
+    - Members can enter /time
+        - They can either do:
+            - /time local - which gives the time and date for the local region (Sydney/Australia) or
+            - /time [region] - which gives teh time and date for the specific region they have input.
+        - There is also /time help which provides a link for all regions that can be inputted.
 - Added dark and light mode
 - Predictive text box to show a list of commands to the user
