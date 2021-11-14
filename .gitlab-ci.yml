@@ -9,7 +9,6 @@ image: comp1531/basic:20T3
 stages:
   - checks
 
-
 pytest:
   stage: checks
   script:
