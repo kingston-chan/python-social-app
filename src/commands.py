@@ -71,6 +71,7 @@ def wordbomb_send(channel_id, message, user_id):
     store = data_store.get()
     channels = store['channels']
     valid_channel = find_item(channel_id, channels, "id")
+    message = message.lower()
     
     if valid_channel[0]["wordbomb"]["bomb_str"] in message and message in english_words_lower_set:
         return True
@@ -81,7 +82,7 @@ def wordbomb_send(channel_id, message, user_id):
 def wordbomb_next_bomb(channel_id, user_id):
     r = RandomWords()
     random_word = r.get_random_word()
-    while len(random_word) < 3:
+    while len(random_word) < 3 and not random_word.isalpha():
         random_word = r.get_random_word()
     
     substring_len = random.randint(2,3)
