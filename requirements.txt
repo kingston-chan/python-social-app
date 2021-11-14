@@ -47,3 +47,4 @@ mailslurp-client==15.0.3
 googletrans==3.1.0a0
 english-words==1.0.4
 Random-Word==1.0.7
+pytz==2021.3

@@ -7,7 +7,9 @@ import time, threading
 from random_word import RandomWords
 from english_words import english_words_lower_set
 import random
-
+import pytz
+import datetime
+import time
 def commands_translate(target_language, message):
     """
     translates a message into the desired language when given the command:
@@ -29,7 +31,6 @@ def commands_translate(target_language, message):
     translator = Translator()
     if not message:
         raise InputError(description="Invalid use of command, proper usage is: /translate language message")
-
     try:
         translation = translator.translate(text=message, dest=target_language)
     except ValueError:
@@ -42,7 +43,29 @@ def commands_find_user(handle):
     users = store['users']
     valid_user = list(filter(lambda user: handle == user['handle'], users))
     return valid_user[0]["id"]
-    
+
+def commands_time(tz):
+    if tz == "local":
+        spec_timezone = datetime.datetime.now(pytz.timezone('Australia/Sydney'))
+        return f"Local Date & Time (Australia/Sydney): {spec_timezone.strftime('%d/%m/%Y %H:%M:%S %Z %z')}"
+    elif tz == "help":
+        return "UNSW Streams: Go on this link to find possible times: https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568"
+    else:
+        try:
+            spec_timezone = datetime.datetime.now(pytz.timezone(tz))
+            print(pytz.timezone(tz))
+            if str(pytz.timezone(tz)) == str(spec_timezone.strftime('%Z')):
+                return f"Date & Time in {tz}: {spec_timezone.strftime('%d/%m/%Y %H:%M:%S')}"
+            else:
+                return f"Date & Time in {tz}: {spec_timezone.strftime('%d/%m/%Y %H:%M:%S %Z %z')}" 
+        except pytz.exceptions.UnknownTimeZoneError or TypeError:
+            try: 
+                spec_timezone = datetime.datetime.now(tz.upper())
+                return f"Date & Time in {tz}: {spec_timezone.strftime('%d/%m/%Y %H:%M:%S %Z %z')}"
+            except pytz.exceptions.UnknownTimeZoneError or TypeError:
+                raise InputError(description="Invalid use of command, proper usages are: /time <timezone>, /time local. For help, type '/time help'") from InputError
+
+
 def wordbomb_start(channel_id, user_id):
     """
     Starts a wordbomb session when the user enters the command /wordbomb
