@@ -291,9 +291,12 @@ def message_send():
     elif data["message"].split(' ', 1)[0] == "/time":
         try:
             command = data["message"].split(' ', 1)[1]
-            new_message = message_send_v1(user_id, data["channel_id"], commands_time(command))
         except IndexError:
-            raise InputError(description="Invalid use of command, proper usages are: /time <timezone>, /time all, /time local")
+            raise InputError(description="Invalid use of command, proper usages are: /time <timezone> or /time local. For help, type '/time help'")
+        try:
+            new_message = message_send_v1(user_id, data["channel_id"], commands_time(command))
+        except TypeError:
+            raise InputError(description="Invalid use of command, proper usages are: /time <timezone>, /time local. For help, type '/time help'") from InputError
     else:
         new_message = message_send_v1(user_id, data["channel_id"], data["message"])
     

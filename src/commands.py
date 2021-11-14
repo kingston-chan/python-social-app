@@ -7,9 +7,9 @@ import time, threading
 from random_word import RandomWords
 from english_words import english_words_lower_set
 import random
-from pytz import common_timezones
+import pytz
 import datetime
-
+import time
 def commands_translate(target_language, message):
     translator = Translator()
     if not message:
@@ -27,25 +27,27 @@ def commands_find_user(handle):
     valid_user = list(filter(lambda user: handle == user['handle'], users))
     return valid_user[0]["id"]
 
-def commands_time(command):
-    if command.lower() == "all":
-        return all_common_timezones
-    else:
-        return specific_timezone(command.lower())
-
-def all_common_timezones():
-    return common_timezones
-
-def specific_timezone(timezone):
-    if timezone == "local":
-        local_datetime = datetime.datetime.now(datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo)
-        return f"Date & Time in {local_datetime} : {local_datetime.strftime('%Y:%m:%d %H:%M:%S %Z %z')}"
+def commands_time(tz):
+    if tz == "local":
+        spec_timezone = datetime.datetime.now(pytz.timezone('Australia/Sydney'))
+        return f"Local Date & Time (Australia/Sydney): {spec_timezone.strftime('%d/%m/%Y %H:%M:%S %Z %z')}"
+    elif tz == "help":
+        return "UNSW Streams: Go on this link to find possible times: https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568"
     else:
         try:
-            spec_timezone = datetime.datetime.now(timezone)
-            return f"Date & Time in {timezone.upper()} : {spec_timezone.strftime('%Y:%m:%d %H:%M:%S %Z %z')}"
-        except ValueError:
-            raise InputError(description="Invalid use of command, proper usages are: /time <timezone>, /time all, /time local")
+            spec_timezone = datetime.datetime.now(pytz.timezone(tz))
+            print(pytz.timezone(tz))
+            if str(pytz.timezone(tz)) == str(spec_timezone.strftime('%Z')):
+                return f"Date & Time in {tz}: {spec_timezone.strftime('%d/%m/%Y %H:%M:%S')}"
+            else:
+                return f"Date & Time in {tz}: {spec_timezone.strftime('%d/%m/%Y %H:%M:%S %Z %z')}" 
+        except pytz.exceptions.UnknownTimeZoneError or TypeError:
+            try: 
+                spec_timezone = datetime.datetime.now(tz.upper())
+                return f"Date & Time in {tz}: {spec_timezone.strftime('%d/%m/%Y %H:%M:%S %Z %z')}"
+            except pytz.exceptions.UnknownTimeZoneError or TypeError:
+                raise InputError(description="Invalid use of command, proper usages are: /time <timezone>, /time local. For help, type '/time help'") from InputError
+
 
 def wordbomb_start(channel_id, user_id):
     store = data_store.get()
