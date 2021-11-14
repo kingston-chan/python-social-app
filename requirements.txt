@@ -45,3 +45,5 @@ pycodestyle==2.7.0
 flask-mail==0.9.1
 mailslurp-client==15.0.3
 googletrans==3.1.0a0
+english-words==1.0.4
+Random-Word==1.0.7
