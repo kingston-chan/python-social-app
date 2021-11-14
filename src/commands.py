@@ -9,6 +9,23 @@ from english_words import english_words_lower_set
 import random
 
 def commands_translate(target_language, message):
+    """
+    translates a message into the desired language when given the command:
+    /translate target_language message
+
+    Arguments:
+    target_language (string) - the language to be translated to
+    message (string) - the message to be translated
+
+    Exceptions:
+    InputError - Occurs when given:
+                    - command is in an incorrect format
+
+    Return value:
+        returns the translated message in the format:
+        original_message (language) --> translated_message (language)
+    """
+
     translator = Translator()
     if not message:
         raise InputError(description="Invalid use of command, proper usage is: /translate language message")
@@ -27,6 +44,22 @@ def commands_find_user(handle):
     return valid_user[0]["id"]
     
 def wordbomb_start(channel_id, user_id):
+    """
+    Starts a wordbomb session when the user enters the command /wordbomb
+
+    Arguments:
+    channel_id (integer) - the id of the channel
+    user_id (string) - the user who started a wordbomb game
+
+    Exceptions:
+    InputError - Occurs when:
+                    - channel doesnt exist
+    AccessError - Occurs when:
+                    - user is not a member of the channel
+
+    Return value:
+        none
+    """
     store = data_store.get()
     channels = store['channels']
 
@@ -55,6 +88,22 @@ def wordbomb_start(channel_id, user_id):
     return
 
 def wordbomb_active(channel_id, user_id):
+    """
+    checks if there is an active wordbomb session
+
+    Arguments:
+    channel_id (integer) - the id of the channel
+    user_id (string) - the user who started a wordbomb game
+
+    Exceptions:
+    InputError - Occurs when:
+                    - channel doesnt exist
+    AccessError - Occurs when:
+                    - user is not a member of the channel
+
+    Return value:
+        boolean - True if there is an active session, False otherwise
+    """
     store = data_store.get()
     channels = store['channels']
 
@@ -73,10 +122,25 @@ def wordbomb_active(channel_id, user_id):
 
 
 def wordbomb_send(channel_id, message, user_id):
+    """
+    Starts a wordbomb session when the user enters the command /wordbomb
+
+    Arguments:
+    channel_id (integer) - the id of the channel
+    message (string) - the message the user entered
+
+    Exceptions:
+        None
+
+    Return value:
+        boolean - True if the word is valid, False 
+    """
     store = data_store.get()
     channels = store['channels']
     valid_channel = find_item(channel_id, channels, "id")
     message = message.lower()
+    if valid_channel[0]["wordbomb"]["user_turn"] != user_id:
+        return False
     
     if valid_channel[0]["wordbomb"]["bomb_str"] in message and message in english_words_lower_set:
         return True
@@ -85,9 +149,24 @@ def wordbomb_send(channel_id, message, user_id):
 
 
 def wordbomb_next_bomb(channel_id, user_id):
+    """
+    Generates a 'bomb' for the next user
+
+    Arguments:
+    channel_id (integer) - the id of the channel
+    user_id (integer) - the user who started a wordbomb game 
+                        or sent the most recent message
+
+    Exceptions:
+        None
+
+    Return value:
+        next_bomb_msg - contains an ascii art of a bomb containing the
+        word to be guessed
+    """
     r = RandomWords()
     random_word = r.get_random_word()
-    while len(random_word) < 3 and not random_word.isalpha():
+    while len(random_word) < 3 or not random_word.isalpha():
         random_word = r.get_random_word()
     
     substring_len = random.randint(2,3)
@@ -131,13 +210,28 @@ Word Bomb
                 """)
 
     turn_count = valid_channel[0]["wordbomb"]["turn_count"]
-    explode_timer = threading.Timer(12, wordbomb_explode, args=(channel_id, user_id, turn_count))
+    explode_timer = threading.Timer(8, wordbomb_explode, args=(channel_id, valid_channel[0]["wordbomb"]["user_turn"], turn_count))
     explode_timer.start()
 
     data_store.set(store)
     return next_bomb_msg
 
 def wordbomb_explode(channel_id, user_id, turn_count):
+    """
+    Threading function: 8 seconds after a wordbomb_next_bomb is called
+    this function is called, if it is still the same turn as when the thread
+    was started the bomb will explode and the player will lose
+
+    Arguments:
+    channel_id (integer) - the id of the channel
+    user_id (integer) - the user whose turn it was when the thread was started
+
+    Exceptions:
+        None
+
+    Return value:
+        none
+    """
     store = data_store.get()
     channels = store['channels']
 
