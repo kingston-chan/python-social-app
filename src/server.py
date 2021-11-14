@@ -12,7 +12,7 @@ from src.auth import auth_register_v1, auth_login_v1, auth_logout_v1, auth_passw
 import jwt
 from src.other import clear_v1
 from src.channels import channels_listall_v1
-from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1, channel_kick_v1
+from src.channel import channel_join_v1, channel_leave_v1, channel_messages_v1, channel_invite_v1, channel_details_v1, channel_addowner_v1, channel_removeowner_v1, channel_kick_v1, channel_ban_v1, channel_unban_v1
 from src.dm import dm_details_v1, dm_create_v1, dm_leave_v1, dm_messages_v1, dm_list_v1, dm_remove_v1
 from src.user import list_all_users, user_profile_v1, user_profile_setname_v1, user_profile_setemail_v1, user_profile_sethandle_v1, users_stats_v1, user_stats_v1, user_profile_uploadphoto_v1
 from src.message import message_send_v1, message_edit_v1, message_remove_v1, message_senddm_v1, message_share_v1, message_sendlater_v1, message_sendlaterdm_v1, message_pin_v1, message_react_v1, message_unpin_v1,message_unreact_v1
@@ -20,7 +20,7 @@ from src.admin import admin_user_remove_v1, admin_userpermission_change_v1
 from src.standup import standup_start_v1, standup_active_v1, standup_send_v1
 from src.search import search_v1
 from src.notifications import notifications_v1
-from src.commands import commands_translate, wordbomb_next_bomb, wordbomb_start, wordbomb_active, wordbomb_send
+from src.commands import commands_translate, wordbomb_next_bomb, wordbomb_start, wordbomb_active, wordbomb_send, commands_find_user
 
 def quit_gracefully(*args):
     '''For coverage'''
@@ -261,14 +261,33 @@ def message_send():
             raise InputError(description="Invalid use of command, proper usage is: /translate language message") from InputError
         translated_msg = commands_translate(data["message"].split()[1], ' '.join(data["message"].split()[2:]))
         new_message = message_send_v1(user_id, data["channel_id"], translated_msg)
+    elif data["message"].split(' ', 1)[0] == "/kick":
+        try:
+            handle = data["message"].split()[1]
+        except IndexError:
+            raise InputError(description="Invalid use of command, proper usage is: /kick <handle>")
+        channel_kick_v1(user_id, data["channel_id"], commands_find_user(handle))
+        new_message = message_send_v1(user_id, data["channel_id"], f"UNSW Streams: {handle} has been kicked off the channel.")
+    elif data["message"].split(' ', 1)[0] == "/ban":
+        try:
+            handle = data["message"].split()[1]
+        except IndexError:
+            raise InputError(description="Invalid use of command, proper usage is: /ban <handle>") 
+        channel_ban_v1(user_id, data["channel_id"], commands_find_user(handle))
+        new_message = message_send_v1(user_id, data["channel_id"], f"UNSW Streams: {handle} has been banned from the channel.")    
+    elif data["message"].split(' ', 1)[0] == "/unban":
+        try:
+            handle = data["message"].split()[1]
+        except IndexError:
+            raise InputError(description="Invalid use of command, proper usage is: /unban <handle>")
+        channel_unban_v1(user_id, data["channel_id"], commands_find_user(handle))
+        new_message = message_send_v1(user_id, data["channel_id"], f"UNSW Streams: {handle} has been unbanned from the channel.")
     elif data["message"].split(' ', 1)[0] == "/wordbomb":
         if wordbomb_active(data["channel_id"], user_id):
-            raise InputError(description="wordbomb already active")
-
+            raise InputError(description="Wordbomb already active.")
         wordbomb_start(data["channel_id"], user_id)
         next_bomb_msg = wordbomb_next_bomb(data["channel_id"], user_id)
         new_message = message_send_v1(user_id, data["channel_id"], next_bomb_msg)
-
     else:
         new_message = message_send_v1(user_id, data["channel_id"], data["message"])
     
@@ -605,12 +624,34 @@ def send_js(path):
     return send_from_directory(APP.static_url_path, path)
 
 #===== extra mark functions =====#
-# channel/leave/v1
+# channel/kick/v1
 @APP.route("/channel/kick/v1", methods=['POST'])
 def channel_kick():
     data = request.get_json()
     user_id = check_valid_token_and_session(data["token"])
     channel_kick_v1(user_id, data["channel_id"], data["u_id"])
+    users_stats_v1()
+    user_stats_v1(user_id)
+    save()
+    return dumps({})
+
+# channel/ban/v1
+@APP.route("/channel/ban/v1", methods=['POST'])
+def channel_ban():
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    channel_ban_v1(user_id, data["channel_id"], data["u_id"])
+    users_stats_v1()
+    user_stats_v1(user_id)
+    save()
+    return dumps({})
+
+# channel/unban/v1
+@APP.route("/channel/unban/v1", methods=['POST'])
+def channel_unban():
+    data = request.get_json()
+    user_id = check_valid_token_and_session(data["token"])
+    channel_unban_v1(user_id, data["channel_id"], data["u_id"])
     users_stats_v1()
     user_stats_v1(user_id)
     save()
